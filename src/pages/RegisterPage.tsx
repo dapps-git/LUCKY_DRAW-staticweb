@@ -50,26 +50,23 @@ export function RegisterPage() {
       <Confetti active={confetti} />
 
       {/* Header Navigation */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between border-b border-white/10 px-4 py-4 md:px-8">
-        <div>
-          <p className="text-[10px] tracking-[0.3em] text-[#f3d48a]">MALAPPURAM · KERALA</p>
-          <Link to="/" className="font-display text-base tracking-wider md:text-lg">
-            Valanchery Festival
-          </Link>
-        </div>
-        <nav className="flex items-center gap-3 text-xs font-light tracking-wider md:gap-6 md:text-sm">
-          <Link to="/register" className="border-b border-[#f3d48a] pb-0.5 text-[#f3d48a]">
+      <header className="mx-auto flex max-w-6xl items-center justify-between border-b border-white/10 px-3 py-3.5 sm:px-6 md:px-8">
+        <Link to="/" className="font-display text-sm tracking-wider sm:text-base md:text-lg whitespace-nowrap">
+          Valanchery Festival
+        </Link>
+        <nav className="flex items-center gap-2 text-[10px] font-light tracking-wider sm:gap-4 sm:text-xs md:gap-6 md:text-sm">
+          <Link to="/register" className="border-b border-[#f3d48a] pb-0.5 text-[#f3d48a] whitespace-nowrap">
             REGISTER
           </Link>
-          <Link to="/login" className="text-white/70 transition hover:text-[#f3d48a]">
-            CHECK TICKET
+          <Link to="/login" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
+            CHECK PASS
           </Link>
-          <Link to="/winners" className="text-white/70 transition hover:text-[#f3d48a]">
+          <Link to="/winners" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             WINNERS
           </Link>
           <Link
             to="/admin/login"
-            className="border border-white/20 px-2.5 py-1 text-[11px] text-white/60 transition hover:border-[#f3d48a] hover:text-[#f3d48a]"
+            className="border border-white/20 px-2 py-0.5 text-[10px] text-white/60 transition hover:border-[#f3d48a] hover:text-[#f3d48a] sm:px-2.5 sm:py-1 sm:text-[11px] whitespace-nowrap"
           >
             ADMIN
           </Link>
@@ -79,10 +76,7 @@ export function RegisterPage() {
       {/* Hero Section */}
       <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-10 pt-6 sm:px-6 md:gap-12 md:pb-16 md:pt-10 lg:grid-cols-2">
         <div>
-          <div className="inline-block border border-[#d4a017]/40 bg-[#d4a017]/10 px-3 py-1 text-[10px] tracking-[0.35em] text-[#f3d48a] sm:text-xs">
-            FESTIVAL CAMPAIGN 2026
-          </div>
-          <h1 className="font-display animate-fade-up mt-4 text-3xl font-light leading-[1.1] tracking-wide sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="font-display animate-fade-up text-3xl font-light leading-[1.1] tracking-wide sm:text-4xl md:text-5xl lg:text-6xl">
             VALANCHERY
             <br />
             <span className="font-normal text-[#f3d48a]">FESTIVAL 2026</span>

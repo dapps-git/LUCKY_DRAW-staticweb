@@ -84,10 +84,9 @@ export function AdminLayout() {
     <div className="min-h-screen bg-[#f4eee6] text-[#140d10]">
       {/* Desktop Sidebar */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-white/10 bg-[#12080c] text-white lg:flex">
-        <div className="border-b border-white/10 px-5 py-6">
-          <p className="text-[10px] tracking-[0.3em] text-[#d4a017]">VALANCHERY FESTIVAL</p>
-          <p className="font-display text-lg font-light tracking-wider">Control Room 2026</p>
-          <p className="mt-0.5 text-[11px] font-light text-white/40">Lucky Draw Management</p>
+        <div className="border-b border-white/10 px-5 py-5">
+          <p className="font-display text-base font-light tracking-wider text-white">Valanchery Festival</p>
+          <p className="mt-0.5 text-[11px] font-light text-[#d4a017]">Control Room 2026</p>
         </div>
         <div className="flex-1 py-4">{nav}</div>
       </aside>
@@ -99,8 +98,8 @@ export function AdminLayout() {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col border-r border-white/10 bg-[#12080c] text-white">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
               <div>
-                <p className="text-[10px] tracking-[0.25em] text-[#d4a017]">VALANCHERY</p>
-                <p className="font-display text-base font-light">Festival Control</p>
+                <p className="font-display text-base font-light tracking-wider text-white">Valanchery Festival</p>
+                <p className="text-[11px] font-light text-[#d4a017]">Control Room 2026</p>
               </div>
               <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white">
                 <X size={20} />

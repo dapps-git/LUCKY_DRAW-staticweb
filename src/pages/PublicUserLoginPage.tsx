@@ -57,26 +57,23 @@ export function PublicUserLoginPage() {
   return (
     <div className="festival-hero min-h-screen text-white">
       {/* Top Bar */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between border-b border-white/10 px-4 py-4 md:px-8">
-        <div>
-          <p className="text-[10px] tracking-[0.3em] text-[#f3d48a]">VALANCHERY FESTIVAL 2026</p>
-          <Link to="/register" className="font-display text-base tracking-wider md:text-lg">
-            Lucky Draw Portal
-          </Link>
-        </div>
-        <nav className="flex items-center gap-3 text-xs font-light tracking-wider md:gap-6 md:text-sm">
-          <Link to="/register" className="text-white/70 transition hover:text-[#f3d48a]">
+      <header className="mx-auto flex max-w-6xl items-center justify-between border-b border-white/10 px-3 py-3.5 sm:px-6 md:px-8">
+        <Link to="/register" className="font-display text-sm tracking-wider sm:text-base md:text-lg whitespace-nowrap">
+          Valanchery Festival
+        </Link>
+        <nav className="flex items-center gap-2 text-[10px] font-light tracking-wider sm:gap-4 sm:text-xs md:gap-6 md:text-sm">
+          <Link to="/register" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             REGISTER
           </Link>
-          <Link to="/login" className="border-b border-[#f3d48a] pb-0.5 text-[#f3d48a]">
-            CHECK TICKET
+          <Link to="/login" className="border-b border-[#f3d48a] pb-0.5 text-[#f3d48a] whitespace-nowrap">
+            CHECK PASS
           </Link>
-          <Link to="/winners" className="text-white/70 transition hover:text-[#f3d48a]">
+          <Link to="/winners" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             WINNERS
           </Link>
           <Link
             to="/admin/login"
-            className="border border-white/20 px-2.5 py-1 text-[11px] text-white/60 transition hover:border-[#f3d48a] hover:text-[#f3d48a]"
+            className="border border-white/20 px-2 py-0.5 text-[10px] text-white/60 transition hover:border-[#f3d48a] hover:text-[#f3d48a] sm:px-2.5 sm:py-1 sm:text-[11px] whitespace-nowrap"
           >
             ADMIN
           </Link>
