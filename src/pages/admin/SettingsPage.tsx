@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Toast } from '../../components/Toast'
+import { useApp } from '../../context/AppContext'
 
 export function SettingsPage() {
+  const { resetToDefaultData } = useApp()
   const [toast, setToast] = useState('')
 
   return (
@@ -43,13 +45,25 @@ export function SettingsPage() {
           Running in offline-first client storage mode. All participant registrations and lucky draw winners are safely preserved in this browser.
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setToast('Settings successfully saved!')}
             className="border border-[#6b1020] bg-[#6b1020] px-6 py-2.5 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
           >
             SAVE SETTINGS
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Reset all participants, draws and winners to default initial demo dataset?')) {
+                resetToDefaultData()
+                setToast('Demo data restored to original initial state!')
+              }
+            }}
+            className="border border-black/20 bg-[#f7f0e6] px-5 py-2.5 text-xs font-light tracking-wider text-black transition hover:bg-black/5"
+          >
+            RESET TO DEFAULT DEMO DATA
           </button>
         </div>
       </div>

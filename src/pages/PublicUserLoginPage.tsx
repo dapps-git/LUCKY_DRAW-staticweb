@@ -6,7 +6,7 @@ import { formatDate, maskPhone } from '../lib/format'
 import type { Participant } from '../types'
 
 export function PublicUserLoginPage() {
-  const { data, nextDraw, getPrize } = useApp()
+  const { data, nextDraw, getPrize, getDraw } = useApp()
   const [query, setQuery] = useState('')
   const [, setSearched] = useState(false)
   const [participant, setParticipant] = useState<Participant | null>(null)
@@ -142,80 +142,106 @@ export function PublicUserLoginPage() {
         </div>
 
         {/* Digital Ticket Result */}
-        {participant && (
-          <div className="animate-reveal mx-auto mt-10 max-w-2xl border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#240b12] to-[#0d0407] p-6 shadow-2xl md:p-8">
-            {/* Ticket Header */}
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/15 pb-5">
-              <div>
-                <span className="inline-flex items-center gap-1.5 border border-emerald-500/50 bg-emerald-950/40 px-2.5 py-1 text-[11px] font-light tracking-widest text-emerald-300">
-                  <ShieldCheck size={13} /> {participant.eligibility.toUpperCase()} · {participant.status.toUpperCase()}
-                </span>
-                <h2 className="font-display mt-3 text-xl font-light tracking-wide text-white md:text-3xl">
-                  {participant.name}
-                </h2>
-                <p className="mt-1 text-xs font-light text-white/60">Registered on {formatDate(participant.registeredAt)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] tracking-widest text-white/40">ENTRY PASS ID</p>
-                <p className="font-mono text-base font-light tracking-wider text-[#f3d48a] md:text-xl">
-                  {participant.id}
-                </p>
-              </div>
-            </div>
+        {participant && (() => {
+          const winRecord = data.winners.find((w) => w.participantId === participant.id)
+          const wonPrize = winRecord ? getPrize(winRecord.prizeId) : undefined
+          const wonDraw = winRecord ? getDraw(winRecord.drawId) : undefined
 
-            {/* Ticket Body Grid */}
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="border border-white/10 bg-black/30 p-4">
-                <p className="text-[10px] tracking-widest text-white/40 uppercase">Mobile Number</p>
-                <p className="mt-1 text-sm font-light text-white">{maskPhone(participant.phone)}</p>
-              </div>
-              <div className="border border-white/10 bg-black/30 p-4">
-                <p className="text-[10px] tracking-widest text-white/40 uppercase">Festival Location</p>
-                <p className="mt-1 text-sm font-light text-white">{participant.location}</p>
-              </div>
-              <div className="border border-white/10 bg-black/30 p-4 sm:col-span-2">
-                <p className="text-[10px] tracking-widest text-white/40 uppercase">Registered Address</p>
-                <p className="mt-1 text-sm font-light text-white/80">{participant.address}</p>
-              </div>
-            </div>
-
-            {/* Upcoming Draw Status */}
-            {nextDraw && (
-              <div className="mt-6 border border-[#d4a017]/30 bg-[#d4a017]/10 p-4">
-                <div className="flex items-center gap-2 text-xs font-light tracking-widest text-[#f3d48a]">
-                  <Sparkles size={14} /> ELIGIBLE FOR UPCOMING DRAW
+          return (
+            <div className="animate-reveal mx-auto mt-10 max-w-2xl border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#240b12] to-[#0d0407] p-6 shadow-2xl md:p-8">
+              {/* Ticket Header */}
+              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/15 pb-5">
+                <div>
+                  {winRecord ? (
+                    <span className="inline-flex items-center gap-1.5 border border-amber-400/80 bg-amber-400/20 px-2.5 py-1 text-[11px] font-medium tracking-widest text-amber-300 animate-pulse">
+                      <Trophy size={13} /> OFFICIAL FESTIVAL WINNER
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 border border-emerald-500/50 bg-emerald-950/40 px-2.5 py-1 text-[11px] font-light tracking-widest text-emerald-300">
+                      <ShieldCheck size={13} /> {participant.eligibility.toUpperCase()} · IN LIVE POOL
+                    </span>
+                  )}
+                  <h2 className="font-display mt-3 text-xl font-light tracking-wide text-white md:text-3xl">
+                    {participant.name}
+                  </h2>
+                  <p className="mt-1 text-xs font-light text-white/60">Registered on {formatDate(participant.registeredAt)}</p>
                 </div>
-                <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-sm font-light text-white">
-                    Draw #{String(nextDraw.number).padStart(2, '0')} · {upcomingPrize?.name ?? 'Grand Prize'}
+                <div className="text-right">
+                  <p className="text-[10px] tracking-widest text-white/40">ENTRY PASS ID</p>
+                  <p className="font-mono text-base font-light tracking-wider text-[#f3d48a] md:text-xl">
+                    {participant.id}
                   </p>
-                  <p className="text-xs font-light text-[#f3d48a]">Draw Date: {formatDate(nextDraw.date)}</p>
                 </div>
               </div>
-            )}
 
-            {/* Bottom Actions */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 pt-6">
-              <div className="flex items-center gap-2 text-xs font-light text-white/60">
-                <QrCode size={16} className="text-[#f3d48a]" /> Verified Digital Entry Pass
+              {/* Winner Announcement Banner */}
+              {winRecord && wonPrize && (
+                <div className="mt-6 border-2 border-[#d4a017] bg-[#2a0d16] p-4 text-center">
+                  <p className="text-[10px] tracking-[0.35em] text-[#f3d48a] uppercase">CONGRATULATIONS WINNER</p>
+                  <h3 className="font-display mt-1 text-xl text-white sm:text-2xl">
+                    Won Draw #{wonDraw ? String(wonDraw.number).padStart(2, '0') : ''} · {wonPrize.name}
+                  </h3>
+                  <p className="mt-1 font-mono text-sm text-[#f3d48a]">{wonPrize.value}</p>
+                  <p className="mt-2 text-xs font-light text-white/60">
+                    Confirmed on {formatDate(winRecord.date)} · Contact committee to claim your prize
+                  </p>
+                </div>
+              )}
+
+              {/* Ticket Body Grid */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="border border-white/10 bg-black/30 p-4">
+                  <p className="text-[10px] tracking-widest text-white/40 uppercase">Mobile Number</p>
+                  <p className="mt-1 text-sm font-light text-white">{maskPhone(participant.phone)}</p>
+                </div>
+                <div className="border border-white/10 bg-black/30 p-4">
+                  <p className="text-[10px] tracking-widest text-white/40 uppercase">Festival Location</p>
+                  <p className="mt-1 text-sm font-light text-white">{participant.location}</p>
+                </div>
+                <div className="border border-white/10 bg-black/30 p-4 sm:col-span-2">
+                  <p className="text-[10px] tracking-widest text-white/40 uppercase">Registered Address</p>
+                  <p className="mt-1 text-sm font-light text-white/80">{participant.address}</p>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <Link
-                  to="/winners"
-                  className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-light tracking-wider text-white transition hover:border-[#f3d48a] hover:text-[#f3d48a]"
-                >
-                  <Trophy size={13} /> Winners List
-                </Link>
-                <Link
-                  to="/register"
-                  className="inline-flex items-center gap-1.5 border border-[#d4a017] bg-[#d4a017] px-4 py-2 text-xs font-medium tracking-wider text-[#140d10] transition hover:bg-[#e5b32e]"
-                >
-                  Register Another <ArrowRight size={13} />
-                </Link>
+
+              {/* Upcoming Draw Status (only if not won) */}
+              {!winRecord && nextDraw && (
+                <div className="mt-6 border border-[#d4a017]/30 bg-[#d4a017]/10 p-4">
+                  <div className="flex items-center gap-2 text-xs font-light tracking-widest text-[#f3d48a]">
+                    <Sparkles size={14} /> ELIGIBLE FOR UPCOMING DRAW
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-sm font-light text-white">
+                      Draw #{String(nextDraw.number).padStart(2, '0')} · {upcomingPrize?.name ?? 'Grand Prize'}
+                    </p>
+                    <p className="text-xs font-light text-[#f3d48a]">Draw Date: {formatDate(nextDraw.date)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Actions */}
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-white/15 pt-6">
+                <div className="flex items-center gap-2 text-xs font-light text-white/60">
+                  <QrCode size={16} className="text-[#f3d48a]" /> Verified Digital Entry Pass
+                </div>
+                <div className="flex gap-3">
+                  <Link
+                    to="/winners"
+                    className="inline-flex items-center gap-1.5 border border-white/20 px-4 py-2 text-xs font-light tracking-wider text-white transition hover:border-[#f3d48a] hover:text-[#f3d48a]"
+                  >
+                    <Trophy size={13} /> Winners List
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-1.5 border border-[#d4a017] bg-[#d4a017] px-4 py-2 text-xs font-medium tracking-wider text-[#140d10] transition hover:bg-[#e5b32e]"
+                  >
+                    Register Another <ArrowRight size={13} />
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Feature Highlights */}
         <div className="mt-16 grid gap-6 md:grid-cols-3">

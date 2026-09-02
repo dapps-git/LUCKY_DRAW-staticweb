@@ -3,28 +3,85 @@ import { LOCATIONS } from '../../data/mockData'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate, isValidIndianPhone } from '../../lib/format'
 import type { Participant, ParticipantStatus } from '../../types'
-import { Search, Eye, Edit, Trash2, X } from 'lucide-react'
+import { Search, Eye, Edit, Trash2, X, Trophy, Plus, ShieldCheck } from 'lucide-react'
 
-const PAGE = 8
+const PAGE = 10
 
 export function ParticipantsPage() {
-  const { data, updateParticipant, deleteParticipant } = useApp()
+  const { data, updateParticipant, deleteParticipant, registerParticipant, getPrize, getDraw } = useApp()
   const [q, setQ] = useState('')
   const [location, setLocation] = useState('')
   const [status, setStatus] = useState('')
+  const [winnerFilter, setWinnerFilter] = useState('')
   const [page, setPage] = useState(1)
   const [view, setView] = useState<Participant | null>(null)
   const [edit, setEdit] = useState<Participant | null>(null)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newParticipant, setNewParticipant] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    location: LOCATIONS[0],
+  })
+  const [addError, setAddError] = useState('')
+
+  // Map of participantId -> winner details
+  const winnerMap = useMemo(() => {
+    const map = new Map<string, { drawNumber: number; prizeName: string; date: string }>()
+    data.winners.forEach((w) => {
+      const draw = getDraw(w.drawId)
+      const prize = getPrize(w.prizeId)
+      map.set(w.participantId, {
+        drawNumber: draw?.number ?? 0,
+        prizeName: prize?.name ?? 'Prize',
+        date: w.date,
+      })
+    })
+    return map
+  }, [data.winners, getDraw, getPrize])
 
   const filtered = useMemo(() => {
-    return data.participants.filter((p) => {
+    return [...data.participants].reverse().filter((p) => {
+      const isWinner = winnerMap.has(p.id)
       const hit = `${p.id} ${p.name} ${p.phone} ${p.location}`.toLowerCase().includes(q.toLowerCase())
-      return hit && (!location || p.location === location) && (!status || p.status === status)
+      const locationMatch = !location || p.location === location
+      const statusMatch = !status || p.status === status
+      const winnerMatch =
+        !winnerFilter ||
+        (winnerFilter === 'winner' && isWinner) ||
+        (winnerFilter === 'eligible' && !isWinner && p.status === 'Active')
+
+      return hit && locationMatch && statusMatch && winnerMatch
     })
-  }, [data.participants, q, location, status])
+  }, [data.participants, q, location, status, winnerFilter, winnerMap])
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE))
   const rows = filtered.slice((page - 1) * PAGE, page * PAGE)
+
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setAddError('')
+    if (!newParticipant.name.trim()) {
+      setAddError('Name is required')
+      return
+    }
+    if (!isValidIndianPhone(newParticipant.phone)) {
+      setAddError('Please enter a valid 10-digit mobile number')
+      return
+    }
+    const res = registerParticipant({
+      name: newParticipant.name.trim(),
+      phone: newParticipant.phone.trim(),
+      address: newParticipant.address.trim() || 'Valanchery',
+      location: newParticipant.location,
+    })
+    if (!res.ok) {
+      setAddError(res.error)
+      return
+    }
+    setShowAddModal(false)
+    setNewParticipant({ name: '', phone: '', address: '', location: LOCATIONS[0] })
+  }
 
   return (
     <div>
@@ -34,9 +91,16 @@ export function ParticipantsPage() {
             Participants Directory
           </h1>
           <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
-            Total {data.participants.length} registered festival entries
+            Total {data.participants.length} registered entries ({data.winners.length} winners,{' '}
+            {data.participants.length - data.winners.length} active in pool)
           </p>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
+        >
+          <Plus size={15} /> ADD PARTICIPANT
+        </button>
       </div>
 
       {/* Filter Controls */}
@@ -71,6 +135,19 @@ export function ParticipantsPage() {
         </select>
 
         <select
+          value={winnerFilter}
+          onChange={(e) => {
+            setWinnerFilter(e.target.value)
+            setPage(1)
+          }}
+          className="border border-black/15 bg-white px-3 py-2 text-xs font-light text-black outline-none sm:text-sm"
+        >
+          <option value="">All Draw Eligibility</option>
+          <option value="eligible">Eligible for Next Draws</option>
+          <option value="winner">Past Winners (Excluded)</option>
+        </select>
+
+        <select
           value={status}
           onChange={(e) => {
             setStatus(e.target.value)
@@ -94,53 +171,60 @@ export function ParticipantsPage() {
               <th className="px-3 py-3">Phone</th>
               <th className="px-3 py-3">Location</th>
               <th className="px-3 py-3">Registered</th>
-              <th className="px-3 py-3">Status</th>
+              <th className="px-3 py-3">Draw Status</th>
               <th className="px-3 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} className="border-b border-black/5 hover:bg-[#faf7f2]">
-                <td className="px-3 py-3 font-mono text-xs font-normal text-[#6b1020]">{p.id}</td>
-                <td className="px-3 py-3 font-medium text-[#140d10]">{p.name}</td>
-                <td className="px-3 py-3 text-black/70">{p.phone}</td>
-                <td className="px-3 py-3 text-black/70">{p.location}</td>
-                <td className="px-3 py-3 text-black/60">{formatShortDate(p.registeredAt)}</td>
-                <td className="px-3 py-3">
-                  <span
-                    className={`inline-block px-2 py-0.5 text-[10px] font-medium uppercase ${
-                      p.status === 'Active'
-                        ? 'border border-emerald-600/30 bg-emerald-50 text-emerald-700'
-                        : 'border border-red-600/30 bg-red-50 text-red-700'
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </td>
-                <td className="px-3 py-3 text-right">
-                  <div className="inline-flex gap-2">
-                    <button
-                      onClick={() => setView(p)}
-                      className="border border-black/10 px-2 py-1 text-[11px] font-light text-black/70 hover:border-black hover:text-black"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => setEdit({ ...p })}
-                      className="border border-black/10 px-2 py-1 text-[11px] font-light text-black/70 hover:border-black hover:text-black"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteParticipant(p.id)}
-                      className="border border-red-200 px-2 py-1 text-[11px] font-light text-red-700 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {rows.map((p) => {
+              const winInfo = winnerMap.get(p.id)
+              return (
+                <tr key={p.id} className="border-b border-black/5 hover:bg-[#faf7f2]">
+                  <td className="px-3 py-3 font-mono text-xs font-normal text-[#6b1020]">{p.id}</td>
+                  <td className="px-3 py-3 font-medium text-[#140d10]">{p.name}</td>
+                  <td className="px-3 py-3 text-black/70">{p.phone}</td>
+                  <td className="px-3 py-3 text-black/70">{p.location}</td>
+                  <td className="px-3 py-3 text-black/60">{formatShortDate(p.registeredAt)}</td>
+                  <td className="px-3 py-3">
+                    {winInfo ? (
+                      <span className="inline-flex items-center gap-1 border border-amber-500/50 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-900 uppercase">
+                        <Trophy size={11} className="text-amber-600" /> Won Draw #{String(winInfo.drawNumber).padStart(2, '0')}
+                      </span>
+                    ) : p.status === 'Active' ? (
+                      <span className="inline-block border border-emerald-600/30 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 uppercase">
+                        In Live Pool
+                      </span>
+                    ) : (
+                      <span className="inline-block border border-red-600/30 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 uppercase">
+                        Inactive
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <div className="inline-flex gap-2">
+                      <button
+                        onClick={() => setView(p)}
+                        className="border border-black/10 px-2 py-1 text-[11px] font-light text-black/70 hover:border-black hover:text-black"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => setEdit({ ...p })}
+                        className="border border-black/10 px-2 py-1 text-[11px] font-light text-black/70 hover:border-black hover:text-black"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteParticipant(p.id)}
+                        className="border border-red-200 px-2 py-1 text-[11px] font-light text-red-700 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
             {rows.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-xs text-black/50">
@@ -175,6 +259,66 @@ export function ParticipantsPage() {
         </div>
       </div>
 
+      {/* Quick Add Modal */}
+      {showAddModal && (
+        <Modal onClose={() => setShowAddModal(false)} title="Add Participant (Direct)">
+          <form onSubmit={handleAddSubmit} className="space-y-3">
+            {addError && <p className="text-xs text-red-600">{addError}</p>}
+            <div>
+              <label className="block text-[11px] text-black/60 uppercase">Full Name *</label>
+              <input
+                required
+                className="mt-1 w-full border border-black/20 bg-white px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                placeholder="e.g. Muhammed Shafi"
+                value={newParticipant.name}
+                onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-black/60 uppercase">Phone Number *</label>
+              <input
+                required
+                className="mt-1 w-full border border-black/20 bg-white px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                placeholder="10-digit mobile number"
+                value={newParticipant.phone}
+                onChange={(e) => setNewParticipant({ ...newParticipant, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-black/60 uppercase">Address</label>
+              <input
+                className="mt-1 w-full border border-black/20 bg-white px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                placeholder="House / Street"
+                value={newParticipant.address}
+                onChange={(e) => setNewParticipant({ ...newParticipant, address: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-black/60 uppercase">Location</label>
+              <select
+                className="mt-1 w-full border border-black/20 bg-white px-3 py-2 text-xs font-light outline-none"
+                value={newParticipant.location}
+                onChange={(e) => setNewParticipant({ ...newParticipant, location: e.target.value })}
+              >
+                {LOCATIONS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="w-full border border-[#6b1020] bg-[#6b1020] py-2.5 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
+              >
+                CONFIRM & REGISTER
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* View Modal */}
       {view && (
         <Modal onClose={() => setView(null)} title="Participant Details">
@@ -201,8 +345,21 @@ export function ParticipantsPage() {
             </div>
             <div>
               <p className="text-[10px] text-black/50 uppercase">Status & Eligibility</p>
-              <p className="text-sm text-emerald-700">{view.status} · {view.eligibility}</p>
+              <p className="text-sm text-emerald-700">
+                {view.status} · {view.eligibility}
+              </p>
             </div>
+            {winnerMap.has(view.id) && (
+              <div className="border border-amber-500/50 bg-amber-50 p-3 text-amber-900">
+                <p className="flex items-center gap-1.5 font-medium">
+                  <Trophy size={14} /> Won Lucky Draw #{winnerMap.get(view.id)?.drawNumber}
+                </p>
+                <p className="text-xs mt-1">Prize: {winnerMap.get(view.id)?.prizeName}</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  (Excluded from upcoming draws as per single-win rule)
+                </p>
+              </div>
+            )}
           </div>
         </Modal>
       )}

@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AnimatedNumber } from '../../components/AnimatedNumber'
 import { useApp } from '../../context/AppContext'
-import { DEMO_STATS } from '../../data/mockData'
 import { formatDate, maskPhone } from '../../lib/format'
 import { Sparkles, ArrowRight, Trophy } from 'lucide-react'
 
@@ -11,11 +10,11 @@ export function DashboardPage() {
   const recent = [...data.winners].reverse().slice(0, 4)
 
   const cards = [
-    ['Total Registered', DEMO_STATS.totalParticipants],
-    ['Total Lucky Draws', DEMO_STATS.totalLuckyDraws],
+    ['Total Registered', data.participants.length],
+    ['Total Lucky Draws', data.draws.length],
     ['Completed Draws', data.draws.filter((d) => d.status === 'Completed').length],
     ['Total Winners', data.winners.length],
-    ['Prizes In Vault', DEMO_STATS.totalPrizes],
+    ['Prizes In Vault', data.prizes.length],
   ] as const
 
   return (
@@ -61,7 +60,7 @@ export function DashboardPage() {
               <p className="text-xs text-white/50">{prize.value}</p>
             </div>
             <p className="mt-4 text-xs font-light text-white/60">
-              {DEMO_STATS.totalParticipants.toLocaleString('en-IN')} Eligible participants in this raffle pool.
+              {eligibleParticipants.length} Eligible participants in this raffle pool ({data.winners.length} past winners excluded).
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link

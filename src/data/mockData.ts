@@ -1,33 +1,82 @@
 import type { AppData } from '../types'
 
-export const DEMO_STATS = {
-  totalParticipants: 1248,
-  totalLuckyDraws: 10,
-  completedDraws: 3,
-  upcomingDrawLabel: '15 Sep 2026',
-  totalWinners: 3,
-  totalPrizes: 10,
-}
-
-export const NEXT_DRAW_AT = '2026-09-15T18:00:00+05:30'
-
 export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
 export const ADMIN_PASSWORD = 'Admin@2026'
 
+export const GIFT_PRESETS = [
+  {
+    name: 'Smart TV',
+    value: '₹42,000',
+    description: '55-inch 4K Ultra HD Smart LED Television.',
+    image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=900&q=80',
+    category: 'Electronics',
+  },
+  {
+    name: 'Smartphone',
+    value: '₹35,000',
+    description: 'Flagship 5G smartphone with high-performance camera.',
+    image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
+    category: 'Mobile',
+  },
+  {
+    name: 'Premium Laptop',
+    value: '₹58,000',
+    description: 'High-speed 16GB RAM laptop for work, study and coding.',
+    image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80',
+    category: 'Computers',
+  },
+  {
+    name: 'Double-Door Refrigerator',
+    value: '₹32,000',
+    description: 'Energy-efficient frost-free refrigerator for home.',
+    image: 'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=900&q=80',
+    category: 'Home Appliances',
+  },
+  {
+    name: 'Front-Load Washing Machine',
+    value: '₹28,000',
+    description: 'Fully automatic inverter front-load washing machine.',
+    image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
+    category: 'Home Appliances',
+  },
+  {
+    name: 'Festival Gold Hamper',
+    value: '₹75,000',
+    description: 'Grand festive gold coin hamper and celebration voucher.',
+    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=900&q=80',
+    category: 'Gold & Luxury',
+  },
+  {
+    name: 'Smart Watch',
+    value: '₹12,000',
+    description: 'AMOLED display smartwatch with health & fitness tracking.',
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80',
+    category: 'Wearables',
+  },
+  {
+    name: 'Festival Shopping Voucher',
+    value: '₹10,000',
+    description: 'Shopping voucher redeemable at all Valanchery partner stores.',
+    image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80',
+    category: 'Vouchers',
+  },
+  {
+    name: 'Air Fryer & Microwave Combo',
+    value: '₹18,000',
+    description: 'Digital convection microwave and healthy air fryer set.',
+    image: 'https://images.unsplash.com/photo-1585659722983-3a675dabf23d?auto=format&fit=crop&w=900&q=80',
+    category: 'Kitchen',
+  },
+]
+
 export const PRIZE_IMAGES = {
-  smartphone:
-    'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
-  tv: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=900&q=80',
-  laptop:
-    'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80',
-  fridge:
-    'https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?auto=format&fit=crop&w=900&q=80',
-  washer:
-    'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
-  voucher:
-    'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80',
-  festival:
-    'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=900&q=80',
+  smartphone: GIFT_PRESETS[1].image,
+  tv: GIFT_PRESETS[0].image,
+  laptop: GIFT_PRESETS[2].image,
+  fridge: GIFT_PRESETS[3].image,
+  washer: GIFT_PRESETS[4].image,
+  voucher: GIFT_PRESETS[7].image,
+  festival: GIFT_PRESETS[5].image,
 }
 
 export const seedData: AppData = {
@@ -42,15 +91,6 @@ export const seedData: AppData = {
       status: 'Awarded',
     },
     {
-      id: 'prize-laptop',
-      name: 'Laptop',
-      description: 'Premium laptop for work, study and celebration.',
-      value: '₹58,000',
-      image: PRIZE_IMAGES.laptop,
-      assignedDrawId: 'draw-03',
-      status: 'Awarded',
-    },
-    {
       id: 'prize-voucher',
       name: 'Gift Voucher',
       description: 'Festival shopping voucher valid at partner stores.',
@@ -60,9 +100,18 @@ export const seedData: AppData = {
       status: 'Awarded',
     },
     {
+      id: 'prize-laptop',
+      name: 'Laptop',
+      description: 'Premium laptop for work, study and celebration.',
+      value: '₹58,000',
+      image: PRIZE_IMAGES.laptop,
+      assignedDrawId: 'draw-03',
+      status: 'Assigned',
+    },
+    {
       id: 'prize-phone',
       name: 'Smartphone',
-      description: 'Flagship smartphone — the next lucky draw prize.',
+      description: 'Flagship smartphone — the upcoming lucky draw prize.',
       value: '₹35,000',
       image: PRIZE_IMAGES.smartphone,
       assignedDrawId: 'draw-04',
@@ -99,14 +148,14 @@ export const seedData: AppData = {
   draws: [
     { id: 'draw-01', number: 1, date: '2026-08-15', prizeId: 'prize-tv', winnerCount: 1, status: 'Completed' },
     { id: 'draw-02', number: 2, date: '2026-08-30', prizeId: 'prize-voucher', winnerCount: 1, status: 'Completed' },
-    { id: 'draw-03', number: 3, date: '2026-09-01', prizeId: 'prize-laptop', winnerCount: 1, status: 'Completed' },
-    { id: 'draw-04', number: 4, date: '2026-09-15', prizeId: 'prize-phone', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-05', number: 5, date: '2026-09-30', prizeId: 'prize-fridge', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-06', number: 6, date: '2026-10-15', prizeId: 'prize-washer', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-07', number: 7, date: '2026-10-30', prizeId: 'prize-laptop', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-08', number: 8, date: '2026-11-15', prizeId: 'prize-tv', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-09', number: 9, date: '2026-11-30', prizeId: 'prize-phone', winnerCount: 1, status: 'Upcoming' },
-    { id: 'draw-10', number: 10, date: '2026-12-15', prizeId: 'prize-festival', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-03', number: 3, date: '2026-09-15', prizeId: 'prize-laptop', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-04', number: 4, date: '2026-09-30', prizeId: 'prize-phone', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-05', number: 5, date: '2026-10-15', prizeId: 'prize-fridge', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-06', number: 6, date: '2026-10-30', prizeId: 'prize-washer', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-07', number: 7, date: '2026-11-15', prizeId: 'prize-laptop', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-08', number: 8, date: '2026-11-30', prizeId: 'prize-tv', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-09', number: 9, date: '2026-12-15', prizeId: 'prize-phone', winnerCount: 1, status: 'Upcoming' },
+    { id: 'draw-10', number: 10, date: '2026-12-30', prizeId: 'prize-festival', winnerCount: 1, status: 'Upcoming' },
   ],
   participants: [
     { id: 'VF2026-00101', name: 'Muhammed Saleel', phone: '9876543210', address: 'Near Town Juma Masjid, Main Road', location: 'Valanchery', registeredAt: '2026-06-12', eligibility: 'Eligible', status: 'Active' },
@@ -124,36 +173,15 @@ export const seedData: AppData = {
     { id: 'VF2026-00113', name: 'Amna Beevi', phone: '7012345678', address: 'Beevi Manzil, Mosque Lane', location: 'Tirur', registeredAt: '2026-07-22', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00114', name: 'Arjun Menon', phone: '9388123456', address: 'Menon House, Stadium Road', location: 'Kuttippuram', registeredAt: '2026-07-26', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00115', name: 'Zainab KP', phone: '8134567890', address: 'KP House, Market Road', location: 'Edappal', registeredAt: '2026-08-02', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00116', name: 'Ravi Chandran', phone: '9846009988', address: 'Chandran Nivas, Panchayat Road', location: 'Ponnani', registeredAt: '2026-08-06', eligibility: 'Ineligible', status: 'Inactive' },
+    { id: 'VF2026-00116', name: 'Ravi Chandran', phone: '9846009988', address: 'Chandran Nivas, Panchayat Road', location: 'Ponnani', registeredAt: '2026-08-06', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00117', name: 'Hiba Fathima', phone: '9744123789', address: 'Fathima Villa, New Bypass', location: 'Valanchery', registeredAt: '2026-08-10', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00118', name: 'Sameer Banu', phone: '8089786543', address: 'Banu Residency, Civil Station', location: 'Malappuram', registeredAt: '2026-08-14', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00119', name: 'Anwar Hussain', phone: '9995678123', address: 'Hussain House, Clock Tower', location: 'Kottakkal', registeredAt: '2026-08-18', eligibility: 'Eligible', status: 'Active' },
     { id: 'VF2026-00120', name: 'Rishana P', phone: '9567890123', address: 'P House, Hospital Junction', location: 'Perinthalmanna', registeredAt: '2026-08-22', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00121', name: 'Farhan Musthafa', phone: '9895123890', address: 'Farhan Villa, South Bazar', location: 'Valanchery', registeredAt: '2026-08-23', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00122', name: 'Jasna Fathima', phone: '9744567890', address: 'Green Valley, Chemmad Road', location: 'Malappuram', registeredAt: '2026-08-24', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00123', name: 'Midhun Raj', phone: '9446781234', address: 'Raj Nivas, Beach Road', location: 'Ponnani', registeredAt: '2026-08-24', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00124', name: 'Shafi Kolathur', phone: '9895345612', address: 'Kolathur House, Main Road', location: 'Valanchery', registeredAt: '2026-08-25', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00125', name: 'Ananya Varma', phone: '9995123478', address: 'Varma Palace, Temple Gate', location: 'Kottakkal', registeredAt: '2026-08-25', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00126', name: 'Aslam Cherukara', phone: '8089456123', address: 'Cherukara House, Railway Station Road', location: 'Tirur', registeredAt: '2026-08-26', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00127', name: 'Safiya Beegum', phone: '9567451289', address: 'Beegum Villa, Bypass', location: 'Perinthalmanna', registeredAt: '2026-08-26', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00128', name: 'Rahul Nambiar', phone: '9745789012', address: 'Nambiar Gardens, College Junction', location: 'Edappal', registeredAt: '2026-08-27', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00129', name: 'Thasneem Banu', phone: '9847678123', address: 'Banu Cottage, Town Hall Road', location: 'Kuttippuram', registeredAt: '2026-08-27', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00130', name: 'Haris Karingapara', phone: '8606789012', address: 'Karingapara Manzil, Mini Stadium Road', location: 'Valanchery', registeredAt: '2026-08-28', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00131', name: 'Gopika Suresh', phone: '9388456712', address: 'Suresh Nivas, River View Road', location: 'Kuttippuram', registeredAt: '2026-08-28', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00132', name: 'Mansoor Ahammed', phone: '7012890123', address: 'Ahammed Villa, Jubilee Road', location: 'Perinthalmanna', registeredAt: '2026-08-29', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00133', name: 'Razeena Parveen', phone: '8134123456', address: 'Parveen Manzil, Chanthappadi', location: 'Ponnani', registeredAt: '2026-08-29', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00134', name: 'Sreejith Panicker', phone: '9846234567', address: 'Panicker Madam, Ayurveda College Road', location: 'Kottakkal', registeredAt: '2026-08-30', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00135', name: 'Dilsha Dilshad', phone: '9744890123', address: 'Dilshad House, Court Road', location: 'Tirur', registeredAt: '2026-08-30', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00136', name: 'Faisal Babu', phone: '9895890123', address: 'Babu Residency, High School Road', location: 'Edappal', registeredAt: '2026-08-31', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00137', name: 'Sharafudheen KV', phone: '8089234567', address: 'KV Manzil, Kozhikode Road', location: 'Valanchery', registeredAt: '2026-08-31', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00138', name: 'Meera Namboodiri', phone: '9995890123', address: 'Namboodiri Illam, Fort Road', location: 'Malappuram', registeredAt: '2026-09-01', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00139', name: 'Basil Noufal', phone: '9567234567', address: 'Noufal Cottage, Bus Stand Lane', location: 'Tirur', registeredAt: '2026-09-01', eligibility: 'Eligible', status: 'Active' },
-    { id: 'VF2026-00140', name: 'Anshad Moideen', phone: '9745234567', address: 'Moideen Villa, Market Road', location: 'Valanchery', registeredAt: '2026-09-01', eligibility: 'Eligible', status: 'Active' },
   ],
   winners: [
     { id: 'win-01', drawId: 'draw-01', participantId: 'VF2026-00101', prizeId: 'prize-tv', date: '2026-08-15', status: 'Confirmed' },
     { id: 'win-02', drawId: 'draw-02', participantId: 'VF2026-00102', prizeId: 'prize-voucher', date: '2026-08-30', status: 'Confirmed' },
-    { id: 'win-03', drawId: 'draw-03', participantId: 'VF2026-00111', prizeId: 'prize-laptop', date: '2026-09-01', status: 'Confirmed' },
   ],
 }
 
@@ -167,3 +195,5 @@ export const LOCATIONS = [
   'Kottakkal',
   'Perinthalmanna',
 ]
+
+export const NEXT_DRAW_AT = '2026-09-15T18:00:00+05:30'

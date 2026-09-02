@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Gift, Sparkles, ShieldCheck, Check, ArrowRight } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { DEMO_STATS, LOCATIONS, NEXT_DRAW_AT } from '../data/mockData'
+import { LOCATIONS, NEXT_DRAW_AT } from '../data/mockData'
 import { isValidIndianPhone } from '../lib/format'
 import { useCountdown } from '../hooks/useCountdown'
 import { Confetti } from '../components/Confetti'
 
 export function RegisterPage() {
-  const { registerParticipant, nextDraw, getPrize } = useApp()
+  const { data, registerParticipant, nextDraw, getPrize } = useApp()
   const countdown = useCountdown(NEXT_DRAW_AT)
   const prize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
 
@@ -106,7 +106,7 @@ export function RegisterPage() {
           <div className="mt-8 flex items-center gap-6 border-t border-white/10 pt-4 text-xs font-light text-white/60">
             <div>
               <p className="font-mono text-sm font-normal text-[#f3d48a]">
-                {DEMO_STATS.totalParticipants.toLocaleString('en-IN')}+
+                {data.participants.length}
               </p>
               <p className="text-[10px] tracking-wider uppercase">Registered</p>
             </div>
