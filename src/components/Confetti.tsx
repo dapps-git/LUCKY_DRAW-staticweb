@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+// Confetti & Party Popper effect component
 
 export function Confetti({ active }: { active: boolean }) {
   if (!active) return null
