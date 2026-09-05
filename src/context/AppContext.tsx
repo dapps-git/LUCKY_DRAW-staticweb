@@ -126,7 +126,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           valid: false,
           status: 'Used',
-          message: `This coupon has already been redeemed by ${registeredUser.name}.`,
+          message: 'This coupon is already taken.',
         }
       }
 
@@ -134,12 +134,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const found = coupons.find((c) => c.id === cleanId)
       if (found) {
         if (found.status === 'Used') {
-          const usedDate = found.usedAt ? ` on ${found.usedAt}` : ''
           return {
             valid: false,
             status: 'Used',
             coupon: found,
-            message: `This coupon has already been used${usedDate}${found.usedByParticipantName ? ` by ${found.usedByParticipantName}` : ''}.`,
+            message: 'This coupon is already taken.',
           }
         }
         return { valid: true, status: 'Unused', coupon: found, message: 'Valid Festival Coupon! Ready for entry.' }
@@ -241,11 +240,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       registerParticipant: async (input) => {
         const phone = input.phone.replace(/\D/g, '').slice(-10)
-
-        // Local duplicate check
-        if (data.participants.some((p) => p.phone.slice(-10) === phone)) {
-          return { ok: false, error: 'This phone number is already registered.' }
-        }
 
         let cleanCouponId = ''
         if (input.couponId) {
@@ -362,10 +356,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // fallback
         }
 
-        const existingPhones = new Set(data.participants.map((p) => p.phone.replace(/\D/g, '').slice(-10)))
         const existingIds = [...data.participants.map((p) => p.id)]
         const newParticipants: Participant[] = []
-        let duplicates = 0
         let invalid = 0
 
         inputs.forEach((input) => {
@@ -374,11 +366,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             invalid++
             return
           }
-          if (existingPhones.has(phone)) {
-            duplicates++
-            return
-          }
-          existingPhones.add(phone)
           const id = nextParticipantId(existingIds)
           existingIds.push(id)
           newParticipants.push({
@@ -401,7 +388,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }))
         }
 
-        return { added: newParticipants.length, duplicates, invalid }
+        return { added: newParticipants.length, duplicates: 0, invalid }
       },
       updateParticipant: (id, patch) => {
         api.updateParticipant(id, patch).catch(() => {})

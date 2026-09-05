@@ -35,12 +35,6 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Please enter a valid 10-digit mobile number' })
     }
 
-    // Check duplicate phone
-    const existingParticipant = await Participant.findOne({ phone })
-    if (existingParticipant) {
-      return res.status(400).json({ ok: false, error: 'This phone number is already registered in the lucky draw.' })
-    }
-
     // Check coupon if provided
     let cleanCoupon = ''
     if (rawCoupon) {
@@ -49,7 +43,7 @@ router.post('/register', async (req, res) => {
         // Check if coupon already used by someone else
         const usedBy = await Participant.findOne({ couponId: cleanCoupon })
         if (usedBy) {
-          return res.status(400).json({ ok: false, error: `This coupon has already been redeemed by ${usedBy.name}.` })
+          return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
         }
       }
     }
@@ -112,11 +106,8 @@ router.post('/bulk', async (req, res) => {
     const inputs: Array<{ name: string; phone: string; address?: string; location?: string; couponId?: string }> =
       req.body.participants || []
 
-    const existingPhones = new Set((await Participant.find({}, { phone: 1 }).lean()).map((p) => p.phone))
     const now = new Date().toISOString().slice(0, 10)
-
     let added = 0
-    let duplicates = 0
     let invalid = 0
     const toInsert = []
 
@@ -126,11 +117,6 @@ router.post('/bulk', async (req, res) => {
         invalid++
         continue
       }
-      if (existingPhones.has(phone)) {
-        duplicates++
-        continue
-      }
-      existingPhones.add(phone)
       const id = await getNextParticipantId()
 
       toInsert.push({

@@ -9,14 +9,6 @@
   --ink: #140d10;
 }
 
-/* Enforce zero border-radius across all elements */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  border-radius: 0 !important;
-}
-
 html,
 body,
 #root {
@@ -26,23 +18,18 @@ body,
 body {
   margin: 0;
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.02em;
   color: var(--ink);
-  background: #090507;
+  background: #f8f6f0;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-display {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.01em;
 }
 
 .font-heading {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 400;
-  letter-spacing: 0.05em;
 }
 
 /* Mobile responsive font sizing helpers */

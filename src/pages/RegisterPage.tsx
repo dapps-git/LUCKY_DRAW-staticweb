@@ -87,7 +87,7 @@ export function RegisterPage() {
       } else if (result.status === 'Used') {
         setTokenStatus({
           status: 'Used',
-          message: result.message || 'This coupon has already been redeemed and cannot be used again.',
+          message: 'This coupon is already taken.',
         })
       } else {
         setTokenStatus({
@@ -282,9 +282,9 @@ export function RegisterPage() {
                             <p className="font-mono text-xs font-bold tracking-wider text-red-900">
                               {formatCouponDisplay(form.couponId)}
                             </p>
-                            <p className="text-[10px] font-bold text-red-700 mt-0.5">COUPON ALREADY REDEEMED</p>
+                            <p className="text-[10px] font-bold text-red-700 mt-0.5">COUPON IS ALREADY TAKEN</p>
                             <p className="text-[10px] text-red-600 leading-tight mt-0.5">
-                              {tokenStatus.message || 'This coupon has already been used and cannot be registered again.'}
+                              This coupon has already been redeemed.
                             </p>
                           </div>
                         </div>

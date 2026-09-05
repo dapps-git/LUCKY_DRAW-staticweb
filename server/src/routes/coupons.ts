@@ -34,12 +34,7 @@ router.get('/validate/:id', async (req, res) => {
       return res.json({
         valid: false,
         status: 'Used',
-        message: `This coupon has already been redeemed by ${registeredUser.name}.`,
-        usedBy: {
-          name: registeredUser.name,
-          phone: registeredUser.phone,
-          participantId: registeredUser.id,
-        },
+        message: 'This coupon is already taken.',
       })
     }
 
@@ -47,13 +42,10 @@ router.get('/validate/:id', async (req, res) => {
     const existingCoupon = await Coupon.findOne({ id: cleanId })
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {
-        const usedDate = existingCoupon.usedAt ? ` on ${existingCoupon.usedAt}` : ''
         return res.json({
           valid: false,
           status: 'Used',
-          message: `This coupon has already been used${usedDate}${
-            existingCoupon.usedByParticipantName ? ` by ${existingCoupon.usedByParticipantName}` : ''
-          }.`,
+          message: 'This coupon is already taken.',
         })
       }
       return res.json({
