@@ -2,6 +2,7 @@ export type Eligibility = 'Eligible' | 'Ineligible'
 export type ParticipantStatus = 'Active' | 'Inactive'
 export type DrawStatus = 'Upcoming' | 'Live' | 'Completed'
 export type PrizeStatus = 'Available' | 'Assigned' | 'Awarded'
+export type CouponStatus = 'Unused' | 'Used'
 
 export interface Participant {
   id: string
@@ -12,6 +13,29 @@ export interface Participant {
   registeredAt: string
   eligibility: Eligibility
   status: ParticipantStatus
+  couponId?: string
+}
+
+export interface Coupon {
+  id: string // 10-digit unique string e.g. "7294018253"
+  batchId: string
+  status: CouponStatus
+  createdAt: string
+  usedAt?: string
+  usedByParticipantId?: string
+  usedByParticipantName?: string
+  usedByParticipantPhone?: string
+}
+
+export interface CouponBatch {
+  id: string
+  name: string
+  count: number
+  startId: string
+  endId: string
+  createdAt: string
+  unusedCount: number
+  usedCount: number
 }
 
 export interface Prize {
@@ -47,4 +71,7 @@ export interface AppData {
   prizes: Prize[]
   draws: Draw[]
   winners: Winner[]
+  coupons?: Coupon[]
+  batches?: CouponBatch[]
 }
+

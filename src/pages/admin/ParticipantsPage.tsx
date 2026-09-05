@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { LOCATIONS } from '../../data/mockData'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate, isValidIndianPhone } from '../../lib/format'
+import { formatParticipantsForExcelCsv, downloadCsvFile } from '../../lib/exportCsv'
 import type { Participant, ParticipantStatus } from '../../types'
-import { Search, Eye, Edit, Trash2, X, Trophy, Plus, ShieldCheck } from 'lucide-react'
+import { Search, Eye, Edit, Trash2, X, Trophy, Plus, Download, ShieldCheck } from 'lucide-react'
 
 const PAGE = 10
 
@@ -58,6 +59,11 @@ export function ParticipantsPage() {
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE))
   const rows = filtered.slice((page - 1) * PAGE, page * PAGE)
 
+  const handleExportCsv = () => {
+    const content = formatParticipantsForExcelCsv(filtered)
+    downloadCsvFile(content, `Valanchery-Participants-Export-${filtered.length}.csv`)
+  }
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setAddError('')
@@ -95,12 +101,21 @@ export function ParticipantsPage() {
             {data.participants.length - data.winners.length} active in pool)
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
-        >
-          <Plus size={15} /> ADD PARTICIPANT
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleExportCsv}
+            className="inline-flex items-center gap-1.5 border border-black/20 bg-[#f7f0e6] px-3.5 py-2 text-xs font-light tracking-wider text-black transition hover:bg-black/5"
+            title="Export to Excel formatted CSV without scientific notation"
+          >
+            <Download size={14} /> EXPORT EXCEL (.CSV)
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
+          >
+            <Plus size={15} /> ADD PARTICIPANT
+          </button>
+        </div>
       </div>
 
       {/* Filter Controls */}
@@ -168,6 +183,7 @@ export function ParticipantsPage() {
             <tr>
               <th className="px-3 py-3">ID</th>
               <th className="px-3 py-3">Name</th>
+              <th className="px-3 py-3">Token / Coupon ID</th>
               <th className="px-3 py-3">Phone</th>
               <th className="px-3 py-3">Location</th>
               <th className="px-3 py-3">Registered</th>
@@ -182,6 +198,15 @@ export function ParticipantsPage() {
                 <tr key={p.id} className="border-b border-black/5 hover:bg-[#faf7f2]">
                   <td className="px-3 py-3 font-mono text-xs font-normal text-[#6b1020]">{p.id}</td>
                   <td className="px-3 py-3 font-medium text-[#140d10]">{p.name}</td>
+                  <td className="px-3 py-3 font-mono text-xs">
+                    {p.couponId ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-[#f3d48a]/20 px-1.5 py-0.5 text-xs font-medium text-[#8c6710]">
+                        🎫 {p.couponId}
+                      </span>
+                    ) : (
+                      <span className="text-black/30">—</span>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-black/70">{p.phone}</td>
                   <td className="px-3 py-3 text-black/70">{p.location}</td>
                   <td className="px-3 py-3 text-black/60">{formatShortDate(p.registeredAt)}</td>
@@ -326,6 +351,11 @@ export function ParticipantsPage() {
             <div className="border border-[#d4a017]/40 bg-[#f7f0e6] p-3">
               <p className="text-[10px] tracking-wider text-black/50 uppercase">Festival ID</p>
               <p className="font-mono text-base font-medium text-[#6b1020]">{view.id}</p>
+              {view.couponId && (
+                <p className="mt-1 font-mono text-xs text-[#8c6710]">
+                  🎫 Token ID: <span className="font-bold">{view.couponId}</span>
+                </p>
+              )}
             </div>
             <div>
               <p className="text-[10px] text-black/50 uppercase">Full Name</p>
@@ -374,6 +404,15 @@ export function ParticipantsPage() {
                 className="mt-1 w-full border border-black/20 bg-white px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
                 value={edit.name}
                 onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-black/60 uppercase">Token / Coupon ID</label>
+              <input
+                className="mt-1 w-full border border-black/20 bg-white px-3 py-2 font-mono text-xs font-light outline-none focus:border-[#d4a017]"
+                placeholder="10-digit token ID"
+                value={edit.couponId || ''}
+                onChange={(e) => setEdit({ ...edit, couponId: e.target.value })}
               />
             </div>
             <div>

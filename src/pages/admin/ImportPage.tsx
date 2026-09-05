@@ -1,64 +1,115 @@
 import { useState } from 'react'
-import { Upload, Download, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
+import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useApp } from '../../context/AppContext'
+import { seedData } from '../../data/mockData'
+import { formatParticipantsForExcelCsv, downloadCsvFile, parseCsvText } from '../../lib/exportCsv'
 
 type Stage = 'idle' | 'uploading' | 'validating' | 'done'
 
 export function ImportPage() {
+  const { data, bulkRegisterParticipants } = useApp()
   const [stage, setStage] = useState<Stage>('idle')
   const [fileName, setFileName] = useState('')
+  const [stats, setStats] = useState({
+    totalRows: 0,
+    added: 0,
+    duplicates: 0,
+    invalid: 0,
+  })
 
-  const run = (name: string) => {
-    setFileName(name)
-    setStage('uploading')
-    setTimeout(() => setStage('validating'), 1000)
-    setTimeout(() => setStage('done'), 2200)
+  // Download complete 20 participants sample template formatted specifically for Microsoft Excel
+  const downloadSampleTemplate = () => {
+    const csvContent = formatParticipantsForExcelCsv(seedData.participants)
+    downloadCsvFile(csvContent, 'Valanchery-Festival-Sample-20-Participants.csv')
   }
 
-  const downloadTemplate = () => {
-    const csv =
-      'Full Name,Phone Number,Address,Location\nMuhammed Saleel,9876543210,Main Road,Valanchery\nAisha Rahman,9745123489,Kottakkal Road,Malappuram\n'
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = 'VF2026-Sample-Participants.csv'
-    a.click()
+  // Export all current registered participants to CSV
+  const downloadCurrentParticipants = () => {
+    const csvContent = formatParticipantsForExcelCsv(data.participants)
+    downloadCsvFile(csvContent, `Valanchery-Festival-Live-Participants-${data.participants.length}.csv`)
+  }
+
+  const handleFileUpload = (file: File) => {
+    setFileName(file.name)
+    setStage('uploading')
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result as string
+      setStage('validating')
+
+      setTimeout(() => {
+        try {
+          const parsed = parseCsvText(text)
+          if (parsed.length === 0) {
+            setStats({ totalRows: 0, added: 0, duplicates: 0, invalid: 1 })
+            setStage('done')
+            return
+          }
+
+          const res = bulkRegisterParticipants(parsed)
+          setStats({
+            totalRows: parsed.length,
+            added: res.added,
+            duplicates: res.duplicates,
+            invalid: res.invalid,
+          })
+          setStage('done')
+        } catch {
+          setStats({ totalRows: 0, added: 0, duplicates: 0, invalid: 1 })
+          setStage('done')
+        }
+      }, 700)
+    }
+    reader.readAsText(file)
   }
 
   return (
     <div>
       <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
-        Bulk Participant Import
+        Bulk Participant Import & Export
       </h1>
       <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
-        Import participant lists from Excel (.xlsx, .xls) or CSV files directly into the lucky draw pool.
+        Import or export participant lists from Excel (.xlsx, .csv) with full phone number formatting and duplicate prevention.
       </p>
 
       {/* Upload Zone */}
-      <label className="mt-6 flex min-h-[220px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-[#d4a017] bg-white p-6 text-center transition hover:border-[#6b1020] hover:bg-[#faf7f2]">
+      <label className="mt-6 flex min-h-[200px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-[#d4a017] bg-white p-6 text-center transition hover:border-[#6b1020] hover:bg-[#faf7f2]">
         <div className="flex h-12 w-12 items-center justify-center border border-[#6b1020]/20 bg-[#f7f0e6] text-[#6b1020]">
           <Upload size={22} />
         </div>
-        <p className="mt-3 text-sm font-medium text-[#140d10]">Click or Drag & Drop Excel Spreadsheet</p>
-        <p className="mt-1 text-xs font-light text-black/50">Supports .xlsx, .xls, .csv with standard participant columns</p>
+        <p className="mt-3 text-sm font-medium text-[#140d10]">Click or Drag & Drop CSV / Excel Spreadsheet</p>
+        <p className="mt-1 text-xs font-light text-black/50">Supports .csv, .txt files with Name, Phone, Address, Location</p>
         <input
           type="file"
-          accept=".xlsx,.xls,.csv"
+          accept=".csv,.txt,.xlsx,.xls"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0]
-            if (f) run(f.name)
+            if (f) handleFileUpload(f)
           }}
         />
       </label>
 
+      {/* Download Action Buttons */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <button
-          onClick={downloadTemplate}
-          className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2.5 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
-        >
-          <Download size={14} /> DOWNLOAD SAMPLE TEMPLATE (.CSV)
-        </button>
-        <span className="text-xs font-light text-black/50">Template contains: Name, Phone, Address, Location</span>
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            onClick={downloadSampleTemplate}
+            className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2.5 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
+          >
+            <Download size={14} /> DOWNLOAD SAMPLE TEMPLATE (20 PARTICIPANTS)
+          </button>
+          <button
+            onClick={downloadCurrentParticipants}
+            className="inline-flex items-center gap-1.5 border border-black/20 bg-[#f7f0e6] px-4 py-2.5 text-xs font-light tracking-wider text-black transition hover:bg-black/5"
+          >
+            <Download size={14} /> EXPORT LIVE PARTICIPANTS ({data.participants.length})
+          </button>
+        </div>
+        <span className="text-xs font-light text-black/60">
+          ✨ Formatted for Microsoft Excel (prevents 9.88E+09 scientific notation)
+        </span>
       </div>
 
       {stage !== 'idle' && (
@@ -67,19 +118,19 @@ export function ImportPage() {
             <FileSpreadsheet size={16} className="text-[#6b1020]" /> {fileName}
           </div>
           <p className="font-display mt-2 text-xl font-light text-[#140d10]">
-            {stage === 'uploading' && 'Uploading spreadsheet…'}
-            {stage === 'validating' && 'Validating phone numbers and locations…'}
-            {stage === 'done' && 'Import Successful & Validated'}
+            {stage === 'uploading' && 'Reading spreadsheet rows…'}
+            {stage === 'validating' && 'Validating phone numbers, removing duplicates & registering…'}
+            {stage === 'done' && 'Spreadsheet Processed Successfully'}
           </p>
 
           {stage === 'done' && (
             <>
               <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  ['Total Rows Parsed', '500'],
-                  ['Successfully Added', '480'],
-                  ['Duplicates Ignored', '15'],
-                  ['Invalid Mobile Nos', '5'],
+                  ['Total Rows Parsed', String(stats.totalRows)],
+                  ['Successfully Added', String(stats.added)],
+                  ['Duplicates Ignored', String(stats.duplicates)],
+                  ['Invalid Mobile Nos', String(stats.invalid)],
                 ].map(([k, v]) => (
                   <div key={k} className="border border-black/10 bg-[#f7f0e6] p-4">
                     <p className="text-[10px] font-light tracking-wider text-black/50 uppercase">{k}</p>
@@ -88,32 +139,11 @@ export function ImportPage() {
                 ))}
               </div>
 
-              <h3 className="mt-8 font-display text-base font-light text-[#140d10]">
-                Failed Validation Records
-              </h3>
-              <div className="mt-2 overflow-x-auto border border-black/10">
-                <table className="w-full text-left text-xs font-light">
-                  <thead className="border-b border-black/10 bg-[#f7f0e6] text-[10px] uppercase text-black/60">
-                    <tr>
-                      <th className="px-3 py-2">Row #</th>
-                      <th className="px-3 py-2">Issue Reason</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-black/5">
-                      <td className="px-3 py-2 font-mono">Row 42</td>
-                      <td className="px-3 py-2 text-red-700">Invalid phone format (must be 10 digits)</td>
-                    </tr>
-                    <tr className="border-b border-black/5">
-                      <td className="px-3 py-2 font-mono">Row 118</td>
-                      <td className="px-3 py-2 text-red-700">Missing participant full name</td>
-                    </tr>
-                    <tr>
-                      <td className="px-3 py-2 font-mono">Row 301</td>
-                      <td className="px-3 py-2 text-amber-700">Duplicate mobile number already registered</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="mt-6 border border-emerald-500/30 bg-emerald-50 p-4 text-xs font-light text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>
+                  <strong>{stats.added} new participants</strong> have been added to the festival database and are now eligible for live lucky draws!
+                </span>
               </div>
             </>
           )}
@@ -122,3 +152,4 @@ export function ImportPage() {
     </div>
   )
 }
+

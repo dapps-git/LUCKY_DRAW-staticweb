@@ -5,6 +5,7 @@ import { AppProvider } from './context/AppContext'
 import { AdminLoginPage } from './pages/admin/AdminLoginPage'
 import { AdminWinnersPage } from './pages/admin/AdminWinnersPage'
 import { DashboardPage } from './pages/admin/DashboardPage'
+import { CouponsPage } from './pages/admin/CouponsPage'
 import { DrawSchedulePage } from './pages/admin/DrawSchedulePage'
 import { ImportPage } from './pages/admin/ImportPage'
 import { LuckyDrawPage } from './pages/admin/LuckyDrawPage'
@@ -44,6 +45,7 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
             <Route path="participants" element={<ParticipantsPage />} />
             <Route path="import" element={<ImportPage />} />
             <Route path="lucky-draws" element={<LuckyDrawsPage />} />

@@ -183,6 +183,30 @@ export const seedData: AppData = {
     { id: 'win-01', drawId: 'draw-01', participantId: 'VF2026-00101', prizeId: 'prize-tv', date: '2026-08-15', status: 'Confirmed' },
     { id: 'win-02', drawId: 'draw-02', participantId: 'VF2026-00102', prizeId: 'prize-voucher', date: '2026-08-30', status: 'Confirmed' },
   ],
+  batches: [
+    {
+      id: 'BATCH-SEED-01',
+      name: 'Launch Promotional Batch (10 Coupons)',
+      count: 10,
+      startId: '7492018401',
+      endId: '7492018410',
+      createdAt: '2026-08-01T10:00:00.000Z',
+      unusedCount: 8,
+      usedCount: 2,
+    },
+  ],
+  coupons: [
+    { id: '7492018401', batchId: 'BATCH-SEED-01', status: 'Used', createdAt: '2026-08-01T10:00:00.000Z', usedAt: '2026-08-05', usedByParticipantId: 'VF2026-00101', usedByParticipantName: 'Muhammed Saleel', usedByParticipantPhone: '9876543210' },
+    { id: '7492018402', batchId: 'BATCH-SEED-01', status: 'Used', createdAt: '2026-08-01T10:00:00.000Z', usedAt: '2026-08-06', usedByParticipantId: 'VF2026-00102', usedByParticipantName: 'Aisha Rahman', usedByParticipantPhone: '9745123489' },
+    { id: '7492018403', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018404', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018405', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018406', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018407', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018408', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018409', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: '7492018410', batchId: 'BATCH-SEED-01', status: 'Unused', createdAt: '2026-08-01T10:00:00.000Z' },
+  ],
 }
 
 export const LOCATIONS = [
