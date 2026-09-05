@@ -137,7 +137,7 @@ router.post('/bulk', async (req, res) => {
       await Participant.insertMany(toInsert)
     }
 
-    res.json({ ok: true, added, duplicates, invalid })
+    res.json({ ok: true, added, duplicates: 0, invalid })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
