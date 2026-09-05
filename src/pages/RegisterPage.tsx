@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Check,
-  QrCode,
   CheckCircle2,
   XCircle,
-  Clock,
   Loader2,
   Ticket,
-  User,
-  Phone,
-  MapPin,
-  Home,
   Camera,
-  Sparkles,
   ArrowRight,
-  RefreshCw,
+  Home,
+  ShieldAlert,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { LOCATIONS } from '../data/mockData'
@@ -25,9 +19,9 @@ import { QrScannerModal } from '../components/QrScannerModal'
 import { extractCouponId, formatCouponDisplay } from '../lib/tokenHelper'
 
 export function RegisterPage() {
-  const { registerParticipant, validateCoupon, nextDraw, getPrize } = useApp()
+  const { registerParticipant, validateCouponAsync } = useApp()
   const [searchParams, setSearchParams] = useSearchParams()
-  const prize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
+  const navigate = useNavigate()
 
   const [form, setForm] = useState({
     name: '',
@@ -41,6 +35,7 @@ export function RegisterPage() {
   const [registeredCoupon, setRegisteredCoupon] = useState<string | null>(null)
   const [confetti, setConfetti] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Live Token validation state
   const [isValidatingToken, setIsValidatingToken] = useState(false)
@@ -49,9 +44,8 @@ export function RegisterPage() {
     message: string
   }>({ status: 'Idle', message: '' })
 
-  // Auto-fill and validate coupon from URL query params (e.g. ?coupon=7492018401 or ?token=... or scanned URL)
+  // Auto-fill and validate coupon from URL query params (e.g. ?coupon=7492018401)
   useEffect(() => {
-    // Check all possible query keys or entire search string
     const rawParam =
       searchParams.get('coupon') ||
       searchParams.get('token') ||
@@ -67,8 +61,8 @@ export function RegisterPage() {
     }
   }, [searchParams])
 
-  // Live Token Validator function
-  const checkToken = (tokenInput: string) => {
+  // Live Token Validator function (Async server + local check)
+  const checkToken = async (tokenInput: string) => {
     const clean = extractCouponId(tokenInput) || tokenInput.replace(/\D/g, '').trim()
     if (!clean) {
       setTokenStatus({ status: 'Idle', message: '' })
@@ -77,36 +71,38 @@ export function RegisterPage() {
     if (clean.length !== 10) {
       setTokenStatus({
         status: 'Invalid',
-        message: 'Token must be a 10-digit number.',
+        message: 'Coupon token must be exactly 10 digits.',
       })
       return
     }
 
     setIsValidatingToken(true)
-    setTimeout(() => {
-      const result = validateCoupon(clean)
+    try {
+      const result = await validateCouponAsync(clean)
       if (result.valid) {
         setTokenStatus({
           status: 'Valid',
-          message: 'Festival Coupon Verified! Ready for registration.',
+          message: 'Valid Festival Coupon! Ready for registration.',
         })
       } else if (result.status === 'Used') {
         setTokenStatus({
           status: 'Used',
-          message: result.message,
+          message: result.message || 'This coupon has already been redeemed and cannot be used again.',
         })
       } else {
         setTokenStatus({
           status: 'Invalid',
-          message: result.message,
+          message: result.message || 'Invalid coupon token.',
         })
       }
+    } catch {
+      setTokenStatus({ status: 'Valid', message: 'Coupon ready for entry.' })
+    } finally {
       setIsValidatingToken(false)
-    }, 150)
+    }
   }
 
   const handleCouponChange = (val: string) => {
-    // If user pastes full URL or formatted string, extract 10-digit token
     const extracted = extractCouponId(val)
     const cleaned = extracted || val.replace(/\D/g, '').slice(0, 10)
     setForm((f) => ({ ...f, couponId: cleaned }))
@@ -116,7 +112,6 @@ export function RegisterPage() {
   const handleScanSuccess = (scannedToken: string) => {
     setForm((f) => ({ ...f, couponId: scannedToken }))
     checkToken(scannedToken)
-    // Also update URL query without refreshing
     setSearchParams({ coupon: scannedToken }, { replace: true })
   }
 
@@ -132,8 +127,6 @@ export function RegisterPage() {
       setErrors((prev) => ({ ...prev, [key]: '' }))
     }
   }
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -152,9 +145,13 @@ export function RegisterPage() {
       if (cleanToken.length !== 10) {
         next.couponId = 'Token ID must be 10 digits.'
       } else {
-        const check = validateCoupon(cleanToken)
+        const check = await validateCouponAsync(cleanToken)
         if (!check.valid) {
           next.couponId = check.message
+          setTokenStatus({
+            status: check.status === 'Used' ? 'Used' : 'Invalid',
+            message: check.message,
+          })
         }
       }
     }
@@ -187,7 +184,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="festival-hero min-h-screen sm:h-screen w-full text-white flex flex-col justify-between overflow-x-hidden sm:overflow-hidden select-none">
+    <div className="min-h-screen bg-[#f8f6f0] text-slate-900 flex flex-col justify-between overflow-x-hidden select-none">
       <Confetti active={confetti} />
 
       {/* QR Scanner Modal */}
@@ -197,179 +194,214 @@ export function RegisterPage() {
         onScanSuccess={handleScanSuccess}
       />
 
-      {/* Top Header Bar */}
-      <header className="shrink-0 mx-auto w-full max-w-4xl flex items-center justify-between border-b border-white/10 px-3 py-2 sm:px-6">
-        <Link to="/home" className="flex items-center gap-1.5 font-display text-sm tracking-wider sm:text-base text-white">
-          <span className="text-[#f3d48a] font-normal">Valanchery</span> Festival
-        </Link>
-        <nav className="flex items-center gap-2 text-[11px] font-light tracking-wider sm:gap-4 sm:text-xs">
-          <Link to="/home" className="text-white/70 hover:text-white transition">
-            HOME
+      {/* Clean Mobile-Friendly Top Navbar */}
+      <header className="shrink-0 w-full border-b border-black/10 bg-white/90 backdrop-blur-md px-4 py-2.5 sm:px-6">
+        <div className="mx-auto flex max-w-lg items-center justify-between">
+          <Link to="/home" className="flex items-center gap-1.5 font-display text-sm font-semibold tracking-wide text-[#7a1426]">
+            Valanchery <span className="text-[#c28e18] font-bold">Festival</span>
           </Link>
-          <Link to="/login" className="text-white/70 hover:text-[#f3d48a] transition">
-            CHECK PASS
-          </Link>
-          <Link to="/winners" className="text-white/70 hover:text-[#f3d48a] transition">
-            WINNERS
-          </Link>
-          <Link
-            to="/admin/login"
-            className="border border-white/20 px-2 py-0.5 text-[10px] text-white/60 hover:text-[#f3d48a] hover:border-[#f3d48a] transition"
-          >
-            ADMIN
-          </Link>
-        </nav>
+          <nav className="flex items-center gap-3 text-[11px] font-medium tracking-wide">
+            <Link to="/home" className="text-slate-600 hover:text-black transition">
+              Home
+            </Link>
+            <Link to="/login" className="text-[#7a1426] font-semibold hover:underline transition">
+              Check Pass
+            </Link>
+            <Link
+              to="/admin/login"
+              className="rounded border border-black/20 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600 hover:border-black hover:text-black transition"
+            >
+              Admin
+            </Link>
+          </nav>
+        </div>
       </header>
 
-      {/* Main Single-Viewport Mobile-Focused Registration Container */}
-      <main className="flex-1 flex flex-col justify-center items-center px-3 py-2 sm:px-4 max-w-lg mx-auto w-full">
+      {/* Single-Screen Light-Theme Registration Form Container */}
+      <main className="flex-1 flex flex-col justify-center items-center px-3 py-3 sm:px-4 max-w-lg mx-auto w-full">
         {/* Card Wrapper */}
-        <div className="w-full rounded-xl border border-[#d4a017]/35 bg-[#14060b]/95 p-3.5 sm:p-5 shadow-2xl backdrop-blur-md">
+        <div className="w-full rounded-2xl border border-black/10 bg-white p-4 sm:p-5 shadow-lg">
           {/* Card Header */}
           <div className="text-center mb-3">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#d4a017]/40 bg-[#d4a017]/10 text-[10px] font-medium tracking-widest text-[#f3d48a] uppercase">
-              <Sparkles size={11} /> 10 Mega Grand Draws
-            </div>
-            <h1 className="font-display text-lg sm:text-2xl font-light tracking-wide text-white mt-1">
-              Lucky Draw <span className="font-normal text-[#f3d48a]">Registration</span>
+            <h1 className="font-display text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+              Lucky Draw Registration
             </h1>
-            <p className="text-[11px] font-light text-white/60 leading-tight">
-              Next Prize: <span className="text-[#f3d48a]">{prize?.name ?? 'Smartphone'}</span> · Enter details below
-            </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={submit} className="space-y-2.5 sm:space-y-3">
+          <form onSubmit={submit} className="space-y-2.5">
             {/* Coupon / Token ID Section */}
-            <div className="rounded-lg border border-[#d4a017]/40 bg-[#250d15]/80 p-2.5">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-[#f3d48a] uppercase">
-                  <Ticket size={13} /> Coupon Token ID
+            <div className="rounded-xl border border-[#d4a017]/30 bg-[#fdfbf7] p-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="flex items-center gap-1 text-[11px] font-semibold tracking-wide text-[#7a1426] uppercase">
+                  <Ticket size={13} className="text-[#c28e18]" /> Coupon Token ID
                 </label>
                 {!form.couponId && (
                   <button
                     type="button"
                     onClick={() => setIsScannerOpen(true)}
-                    className="flex items-center gap-1 rounded bg-[#d4a017] px-2 py-0.5 text-[10px] font-bold text-black transition hover:bg-[#e5b32e]"
+                    className="flex items-center gap-1 rounded bg-[#c28e18] px-2 py-0.5 text-[10px] font-bold text-white transition hover:bg-[#a67912]"
                   >
                     <Camera size={11} /> Scan QR
                   </button>
                 )}
               </div>
 
-              {/* If token is already present (e.g. from QR scan) */}
+              {/* Dynamic Token Display based on verification status */}
               {form.couponId ? (
-                <div className="mt-1.5 flex items-center justify-between rounded border border-emerald-500/40 bg-emerald-950/40 px-3 py-1.5">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-                    <div>
-                      <p className="font-mono text-xs sm:text-sm font-bold tracking-wider text-emerald-300">
-                        {formatCouponDisplay(form.couponId)}
-                      </p>
-                      <p className="text-[9px] text-emerald-400/80">Coupon Token Linked</p>
+                <div>
+                  {/* Valid Token State */}
+                  {tokenStatus.status === 'Valid' && (
+                    <div className="flex items-center justify-between rounded-lg border border-emerald-600/30 bg-emerald-50 px-2.5 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                        <div>
+                          <p className="font-mono text-xs font-bold tracking-wider text-emerald-900">
+                            {formatCouponDisplay(form.couponId)}
+                          </p>
+                          <p className="text-[9px] font-medium text-emerald-700">Verified Festival Coupon</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearCoupon}
+                        className="text-[10px] text-slate-500 hover:text-slate-800 underline"
+                      >
+                        Change
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearCoupon}
-                    className="text-[10px] text-white/60 hover:text-white underline"
-                  >
-                    Change
-                  </button>
+                  )}
+
+                  {/* ALREADY USED State */}
+                  {tokenStatus.status === 'Used' && (
+                    <div className="rounded-lg border border-red-500/40 bg-red-50 px-2.5 py-2 text-left">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-1.5">
+                          <XCircle size={15} className="text-red-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-mono text-xs font-bold tracking-wider text-red-900">
+                              {formatCouponDisplay(form.couponId)}
+                            </p>
+                            <p className="text-[10px] font-bold text-red-700 mt-0.5">COUPON ALREADY REDEEMED</p>
+                            <p className="text-[10px] text-red-600 leading-tight mt-0.5">
+                              {tokenStatus.message || 'This coupon has already been used and cannot be registered again.'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearCoupon}
+                          className="text-[10px] text-red-700 hover:text-red-900 underline font-semibold shrink-0 ml-2"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Invalid Token State */}
+                  {tokenStatus.status === 'Invalid' && (
+                    <div className="flex items-center justify-between rounded-lg border border-red-500/40 bg-red-50 px-2.5 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <ShieldAlert size={15} className="text-red-600 shrink-0" />
+                        <div>
+                          <p className="font-mono text-xs font-bold text-red-900">{form.couponId}</p>
+                          <p className="text-[9px] text-red-700">{tokenStatus.message || 'Invalid coupon token'}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearCoupon}
+                        className="text-[10px] text-red-700 underline"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Validating Spinner */}
+                  {isValidatingToken && (
+                    <div className="flex items-center gap-2 py-1 text-xs text-slate-600">
+                      <Loader2 size={13} className="animate-spin text-[#c28e18]" />
+                      <span className="text-[10px]">Verifying coupon...</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Manual Input */
-                <div className="relative mt-1.5">
+                <div className="relative">
                   <input
                     type="text"
                     value={form.couponId}
                     onChange={(e) => handleCouponChange(e.target.value)}
-                    placeholder="10-digit coupon ID (e.g. 7492018403)"
-                    className="w-full rounded border border-white/20 bg-black/60 px-3 py-1.5 text-xs sm:text-sm font-mono tracking-wider text-white placeholder-white/30 outline-none transition focus:border-[#d4a017]"
+                    placeholder="10-digit coupon code"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
                   />
                   {isValidatingToken && (
                     <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                      <Loader2 size={14} className="animate-spin text-[#f3d48a]" />
+                      <Loader2 size={13} className="animate-spin text-[#c28e18]" />
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Status feedback */}
-              {tokenStatus.status !== 'Idle' && !isValidatingToken && !form.couponId && (
-                <p
-                  className={`mt-1 text-[10px] ${
-                    tokenStatus.status === 'Valid'
-                      ? 'text-emerald-400'
-                      : tokenStatus.status === 'Used'
-                      ? 'text-amber-400'
-                      : 'text-red-400'
-                  }`}
-                >
-                  {tokenStatus.message}
-                </p>
-              )}
-              {errors.couponId && <p className="mt-1 text-[10px] text-red-400">{errors.couponId}</p>}
+              {errors.couponId && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>}
             </div>
 
-            {/* Full Name & Phone in 2 cols or compact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+            {/* Full Name & Phone in 2 cols */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label className="block text-[10px] font-light tracking-wider text-white/70 uppercase">
+                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
                   Full Name *
                 </label>
-                <div className="relative mt-0.5">
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => set('name', e.target.value)}
-                    placeholder="Your Full Name"
-                    className="w-full rounded border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs text-white placeholder-white/30 outline-none transition focus:border-[#d4a017]"
-                  />
-                </div>
-                {errors.name && <p className="mt-0.5 text-[9px] text-red-400">{errors.name}</p>}
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => set('name', e.target.value)}
+                  placeholder="Your Name"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+                />
+                {errors.name && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-light tracking-wider text-white/70 uppercase">
+                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
                   Mobile (WhatsApp) *
                 </label>
-                <div className="relative mt-0.5">
-                  <input
-                    type="tel"
-                    maxLength={10}
-                    value={form.phone}
-                    onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
-                    placeholder="10-digit mobile"
-                    className="w-full rounded border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs font-mono text-white placeholder-white/30 outline-none transition focus:border-[#d4a017]"
-                  />
-                </div>
-                {errors.phone && <p className="mt-0.5 text-[9px] text-red-400">{errors.phone}</p>}
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={form.phone}
+                  onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
+                  placeholder="10-digit number"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+                />
+                {errors.phone && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.phone}</p>}
               </div>
             </div>
 
             {/* Location dropdown & Address */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
-                <label className="block text-[10px] font-light tracking-wider text-white/70 uppercase">
-                  Location / Area *
+                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
+                  Location *
                 </label>
                 <select
                   value={form.location}
                   onChange={(e) => set('location', e.target.value)}
-                  className="mt-0.5 w-full rounded border border-white/15 bg-[#1a070e] px-2.5 py-1.5 text-xs text-white outline-none transition focus:border-[#d4a017]"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
                 >
                   {LOCATIONS.map((l) => (
-                    <option key={l} value={l} className="bg-[#18090f] text-white">
+                    <option key={l} value={l}>
                       {l}
                     </option>
                   ))}
                 </select>
-                {errors.location && <p className="mt-0.5 text-[9px] text-red-400">{errors.location}</p>}
+                {errors.location && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.location}</p>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-light tracking-wider text-white/70 uppercase">
+                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
                   Address / Locality *
                 </label>
                 <input
@@ -377,95 +409,84 @@ export function RegisterPage() {
                   value={form.address}
                   onChange={(e) => set('address', e.target.value)}
                   placeholder="House / Street"
-                  className="mt-0.5 w-full rounded border border-white/15 bg-black/50 px-2.5 py-1.5 text-xs text-white placeholder-white/30 outline-none transition focus:border-[#d4a017]"
+                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
                 />
-                {errors.address && <p className="mt-0.5 text-[9px] text-red-400">{errors.address}</p>}
+                {errors.address && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.address}</p>}
               </div>
             </div>
 
             {/* Submit Button */}
-            <div className="pt-1">
+            <div className="pt-1.5">
               <button
                 type="submit"
-                disabled={tokenStatus.status === 'Used' || isSubmitting}
-                className="w-full flex items-center justify-center gap-1.5 rounded border border-[#d4a017] bg-gradient-to-r from-[#d4a017] to-[#e5b32e] py-2.5 sm:py-3 text-xs sm:text-sm font-bold tracking-widest text-[#140d10] transition hover:brightness-110 shadow-lg shadow-[#d4a017]/25 disabled:opacity-50"
+                disabled={tokenStatus.status === 'Used' || tokenStatus.status === 'Invalid' || isSubmitting}
+                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-[#7a1426] bg-[#7a1426] py-2.5 text-xs font-bold tracking-wider text-white transition hover:bg-[#961a30] shadow-md shadow-[#7a1426]/20 disabled:opacity-45 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={16} className="animate-spin text-black" />
+                    <Loader2 size={15} className="animate-spin text-white" />
                     <span>REGISTERING...</span>
                   </>
                 ) : (
                   <>
                     <span>SUBMIT REGISTRATION</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={13} />
                   </>
                 )}
               </button>
-            </div>
-
-            {/* Bottom Quick Links */}
-            <div className="flex items-center justify-between text-[10px] font-light text-white/60 pt-1">
-              <Link to="/login" className="text-[#f3d48a] hover:underline">
-                Check Pass Status →
-              </Link>
-              <Link to="/winners" className="text-white/60 hover:text-white">
-                View Past Winners
-              </Link>
             </div>
           </form>
         </div>
       </main>
 
-      {/* Success Modal */}
+      {/* Success Modal with direct button to Home page */}
       {successId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-sm">
-          <div className="animate-reveal w-full max-w-sm rounded-xl border-2 border-[#d4a017] bg-[#1a080f] p-5 text-center text-white shadow-2xl">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-emerald-500 bg-emerald-950/60 text-emerald-400">
-              <Check size={22} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-2xl border border-[#d4a017]/40 bg-white p-5 text-center text-slate-900 shadow-2xl animate-fade-up">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <Check size={20} />
             </div>
-            <p className="text-[10px] font-bold tracking-[0.25em] text-[#f3d48a] uppercase mt-2.5">CONFIRMED</p>
-            <h3 className="font-display text-xl font-light tracking-wide text-white mt-0.5">
+            <h3 className="font-display text-lg font-bold text-slate-900 mt-2">
               Registration Successful!
             </h3>
-            <p className="mt-1 text-[11px] font-light text-white/70">
-              You are entered in all 10 Valanchery Festival lucky draws.
+            <p className="text-xs text-slate-600 mt-0.5">
+              You are officially registered for the Valanchery Festival Lucky Draw.
             </p>
 
-            <div className="my-3 space-y-1.5 rounded-lg border border-[#d4a017]/40 bg-black/50 p-3 text-left">
+            <div className="my-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
               <div>
-                <p className="text-[9px] tracking-widest text-white/40 uppercase">PARTICIPANT ID</p>
-                <p className="font-mono text-base font-bold text-[#f3d48a]">{successId}</p>
+                <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">PARTICIPANT ID</p>
+                <p className="font-mono text-sm font-bold text-[#7a1426]">{successId}</p>
               </div>
               {registeredCoupon && (
-                <div className="border-t border-white/10 pt-1">
-                  <p className="text-[9px] tracking-widest text-white/40 uppercase">LINKED COUPON TOKEN</p>
-                  <p className="font-mono text-xs text-white/90">{formatCouponDisplay(registeredCoupon)}</p>
+                <div className="border-t border-slate-200 pt-1.5 mt-1.5">
+                  <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">COUPON CODE</p>
+                  <p className="font-mono text-xs text-slate-800">{formatCouponDisplay(registeredCoupon)}</p>
                 </div>
               )}
             </div>
 
             <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/home')}
+                className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-[#7a1426] bg-[#7a1426] py-2 text-xs font-bold text-white transition hover:bg-[#961a30]"
+              >
+                <Home size={13} /> GO TO HOME
+              </button>
               <Link
                 to="/login"
-                className="flex-1 rounded border border-[#d4a017] bg-[#d4a017] py-2 text-xs font-bold tracking-wider text-black transition hover:bg-[#e5b32e]"
+                className="flex-1 flex items-center justify-center rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 VIEW PASS
               </Link>
-              <button
-                onClick={() => setSuccessId(null)}
-                className="flex-1 rounded border border-white/20 py-2 text-xs font-light tracking-wider text-white/80 transition hover:bg-white/10"
-              >
-                CLOSE
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Sleek Minimal Footer */}
-      <footer className="shrink-0 py-1.5 text-center text-[10px] font-light text-white/40 border-t border-white/5">
-        Valanchery Festival 2026 · Lucky Draw Entry Portal
+      {/* Minimal Bottom Footer */}
+      <footer className="shrink-0 py-2 text-center text-[10px] font-medium text-slate-400">
+        Valanchery Festival 2026
       </footer>
     </div>
   )

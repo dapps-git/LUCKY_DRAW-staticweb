@@ -153,16 +153,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     const validateCouponAsync = async (couponId: string): Promise<CouponValidationResult> => {
+      const localCheck = validateCoupon(couponId)
+      if (!localCheck.valid && localCheck.status === 'Used') {
+        return localCheck
+      }
+
       try {
         const cleanId = couponId ? couponId.replace(/\D/g, '').trim() : ''
         if (cleanId.length === 10) {
           const res = await api.validateCoupon(cleanId)
-          if (res) return res
+          if (res && (res.status === 'Used' || res.status === 'Invalid' || res.valid)) {
+            return res
+          }
         }
       } catch {
-        // fallback to local sync
+        // fallback to local check
       }
-      return validateCoupon(couponId)
+      return localCheck
     }
 
     return {
