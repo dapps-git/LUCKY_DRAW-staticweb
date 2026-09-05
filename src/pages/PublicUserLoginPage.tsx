@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { QrCode, Search, Sparkles, Trophy, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { formatDate, maskPhone } from '../lib/format'
+import { api } from '../lib/api'
 import type { Participant } from '../types'
 
 export function PublicUserLoginPage() {
@@ -14,7 +15,9 @@ export function PublicUserLoginPage() {
 
   const upcomingPrize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
 
-  const handleLookup = (e: React.FormEvent) => {
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSearched(true)
@@ -26,8 +29,23 @@ export function PublicUserLoginPage() {
       return
     }
 
-    const digitsOnly = clean.replace(/\D/g, '')
+    setIsSearching(true)
+    try {
+      // 1. Try real-time MongoDB API lookup
+      const apiRes = await api.lookupParticipant(clean)
+      if (apiRes.ok && apiRes.participant) {
+        setParticipant(apiRes.participant)
+        setError('')
+        return
+      }
+    } catch {
+      // fallback
+    } finally {
+      setIsSearching(false)
+    }
 
+    // 2. Fallback to local participants state
+    const digitsOnly = clean.replace(/\D/g, '')
     const found = data.participants.find((p) => {
       const matchId = p.id.toLowerCase() === clean
       const matchPhone = digitsOnly && p.phone.replace(/\D/g, '').endsWith(digitsOnly.slice(-10))
@@ -113,9 +131,10 @@ export function PublicUserLoginPage() {
                 </div>
                 <button
                   type="submit"
-                  className="border border-[#d4a017] bg-[#d4a017] px-6 py-3 text-xs font-medium tracking-widest text-[#140d10] transition hover:bg-[#e5b32e]"
+                  disabled={isSearching}
+                  className="border border-[#d4a017] bg-[#d4a017] px-6 py-3 text-xs font-medium tracking-widest text-[#140d10] transition hover:bg-[#e5b32e] disabled:opacity-50"
                 >
-                  VERIFY PASS
+                  {isSearching ? 'VERIFYING...' : 'VERIFY PASS'}
                 </button>
               </div>
             </div>

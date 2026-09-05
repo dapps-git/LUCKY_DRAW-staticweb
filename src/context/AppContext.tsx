@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ADMIN_EMAIL, ADMIN_PASSWORD, seedData } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
+import { api } from '../lib/api'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
 const AUTH_KEY = 'vf2026_admin_auth'
@@ -17,14 +18,13 @@ interface CouponValidationResult {
 interface AppContextValue {
   data: AppData
   isAdmin: boolean
-  login: (email: string, password: string) => boolean
+  isOnline: boolean
+  login: (email: string, password: string) => Promise<boolean> | boolean
   logout: () => void
-  registerParticipant: (input: Omit<Participant, 'id' | 'registeredAt' | 'eligibility' | 'status'>) =>
-    | { ok: true; id: string }
-    | { ok: false; error: string }
+  registerParticipant: (input: Omit<Participant, 'id' | 'registeredAt' | 'eligibility' | 'status'>) => Promise<{ ok: true; id: string } | { ok: false; error: string }>
   bulkRegisterParticipants: (
     inputs: Array<Omit<Participant, 'id' | 'registeredAt' | 'eligibility' | 'status'>>,
-  ) => { added: number; duplicates: number; invalid: number }
+  ) => Promise<{ added: number; duplicates: number; invalid: number }>
   updateParticipant: (id: string, patch: Partial<Participant>) => void
   deleteParticipant: (id: string) => void
   addPrize: (prize: Omit<Prize, 'id'>) => string
@@ -33,9 +33,7 @@ interface AppContextValue {
   assignPrizeToDraw: (drawId: string, prizeId: string) => void
   addDraw: (draw: Omit<Draw, 'id'>) => void
   updateDraw: (id: string, patch: Partial<Draw>) => void
-  confirmWinner: (participantId: string, drawId: string, customPrizeId?: string) =>
-    | { ok: true; winnerId: string }
-    | { ok: false; error: string }
+  confirmWinner: (participantId: string, drawId: string, customPrizeId?: string) => Promise<{ ok: true; winnerId: string } | { ok: false; error: string }>
   getPrize: (id: string) => Prize | undefined
   getParticipant: (id: string) => Participant | undefined
   getDraw: (id: string) => Draw | undefined
@@ -45,42 +43,24 @@ interface AppContextValue {
   // Coupon System Methods
   coupons: Coupon[]
   batches: CouponBatch[]
-  generateCouponBatch: (count: number, name?: string) => { batch: CouponBatch; coupons: Coupon[] }
+  generateCouponBatch: (count: number, name?: string) => Promise<{ batch: CouponBatch; coupons: Coupon[] }>
   validateCoupon: (couponId: string) => CouponValidationResult
+  validateCouponAsync: (couponId: string) => Promise<CouponValidationResult>
   deleteCouponBatch: (batchId: string) => void
   resetToDefaultData: () => void
+  refreshData: () => Promise<void>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
 
-function loadData(): AppData {
+function loadLocalData(): AppData {
   try {
     const raw = localStorage.getItem(DATA_KEY)
-    if (!raw) {
-      // Fallback check old key
-      const oldRaw = localStorage.getItem('vf2026_app_data_v2')
-      if (oldRaw) {
-        const parsedOld = JSON.parse(oldRaw) as AppData
-        return {
-          ...seedData,
-          ...parsedOld,
-          coupons: seedData.coupons || [],
-          batches: seedData.batches || [],
-        }
-      }
-      return seedData
-    }
+    if (!raw) return seedData
     const parsed = JSON.parse(raw) as AppData
-    if (!parsed.participants?.length) return seedData
-
-    // Merge missing seed items
-    const existingIds = new Set(parsed.participants.map((p) => p.id))
-    const missing = seedData.participants.filter((p) => !existingIds.has(p.id))
-    
     return {
       ...seedData,
       ...parsed,
-      participants: [...parsed.participants, ...missing],
       coupons: parsed.coupons?.length ? parsed.coupons : (seedData.coupons || []),
       batches: parsed.batches?.length ? parsed.batches : (seedData.batches || []),
     }
@@ -91,8 +71,28 @@ function loadData(): AppData {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem(AUTH_KEY) === '1')
-  const [data, setData] = useState<AppData>(loadData)
+  const [data, setData] = useState<AppData>(loadLocalData)
+  const [isOnline, setIsOnline] = useState(false)
 
+  // Fetch initial data from MongoDB Atlas
+  const refreshData = async () => {
+    try {
+      const serverData = await api.getAllData()
+      if (serverData.prizes.length || serverData.draws.length || serverData.participants.length) {
+        setData(serverData)
+        setIsOnline(true)
+      }
+    } catch (err) {
+      console.warn('Backend offline, using local state:', err)
+      setIsOnline(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshData()
+  }, [])
+
+  // Keep local backup
   useEffect(() => {
     localStorage.setItem(DATA_KEY, JSON.stringify(data))
   }, [data])
@@ -105,7 +105,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const coupons = data.coupons || []
     const batches = data.batches || []
 
-    // WINNER EXCLUSION: Any participant who has already won is strictly excluded from future draws
     const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
     const eligibleParticipants = data.participants.filter(
       (p) => p.eligibility === 'Eligible' && p.status === 'Active' && !winnerParticipantIds.has(p.id),
@@ -116,32 +115,74 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .sort((a, b) => a.date.localeCompare(b.date))[0]
 
     const validateCoupon = (couponId: string): CouponValidationResult => {
-      const cleanId = couponId.replace(/\D/g, '').trim()
+      const cleanId = couponId ? couponId.replace(/\D/g, '').trim() : ''
       if (!cleanId || cleanId.length !== 10) {
-        return { valid: false, status: 'Invalid', message: 'Token ID must be exactly 10 digits.' }
+        return { valid: false, status: 'Invalid', message: 'Token ID must be a 10-digit festival code.' }
       }
-      const found = coupons.find((c) => c.id === cleanId)
-      if (!found) {
-        return { valid: false, status: 'Invalid', message: 'This coupon / token ID does not exist in the system.' }
-      }
-      if (found.status === 'Used') {
-        const usedDate = found.usedAt ? ` on ${found.usedAt}` : ''
+
+      // Check if already used by any participant
+      const registeredUser = data.participants.find((p) => p.couponId === cleanId)
+      if (registeredUser) {
         return {
           valid: false,
           status: 'Used',
-          coupon: found,
-          message: `This coupon has already been used${usedDate}${found.usedByParticipantName ? ` by ${found.usedByParticipantName}` : ''}.`,
+          message: `This coupon has already been redeemed by ${registeredUser.name}.`,
         }
       }
-      return { valid: true, status: 'Unused', coupon: found, message: 'Valid coupon! Ready for registration.' }
+
+      // Check in coupons list
+      const found = coupons.find((c) => c.id === cleanId)
+      if (found) {
+        if (found.status === 'Used') {
+          const usedDate = found.usedAt ? ` on ${found.usedAt}` : ''
+          return {
+            valid: false,
+            status: 'Used',
+            coupon: found,
+            message: `This coupon has already been used${usedDate}${found.usedByParticipantName ? ` by ${found.usedByParticipantName}` : ''}.`,
+          }
+        }
+        return { valid: true, status: 'Unused', coupon: found, message: 'Valid Festival Coupon! Ready for entry.' }
+      }
+
+      return {
+        valid: true,
+        status: 'Unused',
+        message: 'Valid Festival Coupon! Ready for entry.',
+      }
+    }
+
+    const validateCouponAsync = async (couponId: string): Promise<CouponValidationResult> => {
+      try {
+        const cleanId = couponId ? couponId.replace(/\D/g, '').trim() : ''
+        if (cleanId.length === 10) {
+          const res = await api.validateCoupon(cleanId)
+          if (res) return res
+        }
+      } catch {
+        // fallback to local sync
+      }
+      return validateCoupon(couponId)
     }
 
     return {
       data,
       isAdmin,
+      isOnline,
       coupons,
       batches,
-      login: (email, password) => {
+      refreshData,
+      login: async (email, password) => {
+        try {
+          const res = await api.login(email, password)
+          if (res.ok) {
+            localStorage.setItem(AUTH_KEY, '1')
+            setIsAdmin(true)
+            return true
+          }
+        } catch {
+          // fallback
+        }
         if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
           localStorage.setItem(AUTH_KEY, '1')
           setIsAdmin(true)
@@ -154,32 +195,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false)
       },
       validateCoupon,
-      generateCouponBatch: (count: number, name?: string) => {
+      validateCouponAsync,
+      generateCouponBatch: async (count: number, name?: string) => {
+        try {
+          const res = await api.generateBatch(count, name)
+          if (res.ok) {
+            setData((prev) => ({
+              ...prev,
+              batches: [res.batch, ...(prev.batches || [])],
+              coupons: [...(prev.coupons || []), ...res.coupons],
+            }))
+            return { batch: res.batch, coupons: res.coupons }
+          }
+        } catch (e) {
+          console.warn('API generate batch failed, falling back to local:', e)
+        }
+
         const existingIds = new Set(coupons.map((c) => c.id))
         const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, name)
-
         setData((prev) => ({
           ...prev,
           batches: [batch, ...(prev.batches || [])],
           coupons: [...(prev.coupons || []), ...newCoupons],
         }))
-
         return { batch, coupons: newCoupons }
       },
-      deleteCouponBatch: (batchId: string) => {
+      deleteCouponBatch: async (batchId: string) => {
+        try {
+          await api.deleteBatch(batchId)
+        } catch {
+          // ignore
+        }
         setData((prev) => ({
           ...prev,
           batches: (prev.batches || []).filter((b) => b.id !== batchId),
           coupons: (prev.coupons || []).filter((c) => c.batchId !== batchId),
         }))
       },
-      registerParticipant: (input) => {
+      registerParticipant: async (input) => {
         const phone = input.phone.replace(/\D/g, '').slice(-10)
+
+        // Local duplicate check
         if (data.participants.some((p) => p.phone.slice(-10) === phone)) {
           return { ok: false, error: 'This phone number is already registered.' }
         }
 
-        // Validate coupon if provided
         let cleanCouponId = ''
         if (input.couponId) {
           cleanCouponId = input.couponId.replace(/\D/g, '').trim()
@@ -189,21 +249,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        try {
+          const apiRes = await api.registerParticipant({
+            name: input.name.trim(),
+            phone,
+            address: input.address.trim(),
+            location: input.location,
+            couponId: cleanCouponId || undefined,
+          })
+
+          if (apiRes.ok && apiRes.participant) {
+            setData((prev) => {
+              const now = new Date().toISOString().slice(0, 10)
+              const updatedCoupons = cleanCouponId
+                ? (prev.coupons || []).map((c) =>
+                    c.id === cleanCouponId
+                      ? {
+                          ...c,
+                          status: 'Used' as const,
+                          usedAt: now,
+                          usedByParticipantId: apiRes.id,
+                          usedByParticipantName: input.name.trim(),
+                          usedByParticipantPhone: phone,
+                        }
+                      : c
+                  )
+                : prev.coupons
+
+              return {
+                ...prev,
+                participants: [apiRes.participant!, ...prev.participants],
+                coupons: updatedCoupons,
+              }
+            })
+            return { ok: true, id: apiRes.id }
+          } else if (!apiRes.ok && apiRes.error) {
+            return { ok: false, error: apiRes.error }
+          }
+        } catch (e) {
+          console.warn('API register error, saving locally:', e)
+        }
+
+        // Fallback local save
         const id = nextParticipantId(data.participants.map((p) => p.id))
+        const now = new Date().toISOString().slice(0, 10)
         const participant: Participant = {
           ...input,
           phone,
           id,
           couponId: cleanCouponId || undefined,
-          registeredAt: new Date().toISOString().slice(0, 10),
+          registeredAt: now,
           eligibility: 'Eligible',
           status: 'Active',
         }
 
-        // Mark coupon as used if redeemed
-        const now = new Date().toISOString().slice(0, 10)
-        const updatedCoupons = cleanCouponId
-          ? coupons.map((c) =>
+        let updatedCoupons = coupons
+        if (cleanCouponId) {
+          const existing = coupons.find((c) => c.id === cleanCouponId)
+          if (existing) {
+            updatedCoupons = coupons.map((c) =>
               c.id === cleanCouponId
                 ? {
                     ...c,
@@ -215,32 +319,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   }
                 : c
             )
-          : coupons
-
-        // Update batch counts if applicable
-        const targetCoupon = cleanCouponId ? coupons.find((c) => c.id === cleanCouponId) : null
-        const updatedBatches = targetCoupon
-          ? batches.map((b) =>
-              b.id === targetCoupon.batchId
-                ? {
-                    ...b,
-                    unusedCount: Math.max(0, b.unusedCount - 1),
-                    usedCount: b.usedCount + 1,
-                  }
-                : b
-            )
-          : batches
+          } else {
+            updatedCoupons = [
+              ...coupons,
+              {
+                id: cleanCouponId,
+                batchId: 'BATCH-EXTERNAL',
+                status: 'Used' as const,
+                createdAt: now,
+                usedAt: now,
+                usedByParticipantId: id,
+                usedByParticipantName: input.name.trim(),
+                usedByParticipantPhone: phone,
+              },
+            ]
+          }
+        }
 
         setData((prev) => ({
           ...prev,
-          participants: [...prev.participants, participant],
+          participants: [participant, ...prev.participants],
           coupons: updatedCoupons,
-          batches: updatedBatches,
         }))
 
         return { ok: true, id }
       },
-      bulkRegisterParticipants: (inputs) => {
+      bulkRegisterParticipants: async (inputs) => {
+        try {
+          const res = await api.bulkRegisterParticipants(inputs)
+          if (res.ok) {
+            await refreshData()
+            return res
+          }
+        } catch {
+          // fallback
+        }
+
         const existingPhones = new Set(data.participants.map((p) => p.phone.replace(/\D/g, '').slice(-10)))
         const existingIds = [...data.participants.map((p) => p.id)]
         const newParticipants: Participant[] = []
@@ -276,19 +390,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (newParticipants.length > 0) {
           setData((prev) => ({
             ...prev,
-            participants: [...prev.participants, ...newParticipants],
+            participants: [...newParticipants, ...prev.participants],
           }))
         }
 
         return { added: newParticipants.length, duplicates, invalid }
       },
       updateParticipant: (id, patch) => {
+        api.updateParticipant(id, patch).catch(() => {})
         setData((prev) => ({
           ...prev,
           participants: prev.participants.map((p) => (p.id === id ? { ...p, ...patch } : p)),
         }))
       },
       deleteParticipant: (id) => {
+        api.deleteParticipant(id).catch(() => {})
         setData((prev) => ({
           ...prev,
           participants: prev.participants.filter((p) => p.id !== id),
@@ -297,20 +413,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       addPrize: (prize) => {
         const id = `prize-${Date.now()}`
+        api.addPrize(prize).catch(() => {})
         const newPrize: Prize = { ...prize, id }
         setData((prev) => ({ ...prev, prizes: [...prev.prizes, newPrize] }))
         return id
       },
       updatePrize: (id, patch) => {
+        api.updatePrize(id, patch).catch(() => {})
         setData((prev) => ({
           ...prev,
           prizes: prev.prizes.map((p) => (p.id === id ? { ...p, ...patch } : p)),
         }))
       },
       deletePrize: (id) => {
+        api.deletePrize(id).catch(() => {})
         setData((prev) => ({ ...prev, prizes: prev.prizes.filter((p) => p.id !== id) }))
       },
       assignPrizeToDraw: (drawId, prizeId) => {
+        api.updateDraw(drawId, { prizeId }).catch(() => {})
+        api.updatePrize(prizeId, { assignedDrawId: drawId, status: 'Assigned' }).catch(() => {})
         setData((prev) => ({
           ...prev,
           draws: prev.draws.map((d) => (d.id === drawId ? { ...d, prizeId } : d)),
@@ -321,16 +442,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       addDraw: (draw) => {
         const id = `draw-${Date.now()}`
+        api.addDraw(draw).catch(() => {})
         setData((prev) => ({ ...prev, draws: [...prev.draws, { ...draw, id }] }))
       },
       updateDraw: (id, patch) => {
+        api.updateDraw(id, patch).catch(() => {})
         setData((prev) => ({
           ...prev,
           draws: prev.draws.map((d) => (d.id === id ? { ...d, ...patch } : d)),
         }))
       },
-      confirmWinner: (participantId, drawId, customPrizeId) => {
-        // Validation: Ensure participant hasn't already won
+      confirmWinner: async (participantId, drawId, customPrizeId) => {
         if (winnerParticipantIds.has(participantId)) {
           return { ok: false, error: 'This participant has already won a prize in a previous draw!' }
         }
@@ -340,18 +462,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         const awardedPrizeId = customPrizeId || draw.prizeId
         const winnerId = `win-${Date.now()}`
+        const now = new Date().toISOString().slice(0, 10)
+
+        try {
+          const res = await api.confirmWinner(participantId, drawId, awardedPrizeId)
+          if (res.ok && res.winner) {
+            await refreshData()
+            return { ok: true, winnerId: res.winnerId || winnerId }
+          }
+        } catch {
+          // fallback
+        }
+
         const winner: Winner = {
           id: winnerId,
           drawId,
           participantId,
           prizeId: awardedPrizeId,
-          date: new Date().toISOString().slice(0, 10),
+          date: now,
           status: 'Confirmed',
         }
 
         setData((prev) => ({
           ...prev,
-          winners: [...prev.winners, winner],
+          winners: [winner, ...prev.winners],
           draws: prev.draws.map((d) =>
             d.id === drawId ? { ...d, prizeId: awardedPrizeId, status: 'Completed' as const } : d,
           ),
@@ -374,7 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setData(seedData)
       },
     }
-  }, [data, isAdmin])
+  }, [data, isAdmin, isOnline])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

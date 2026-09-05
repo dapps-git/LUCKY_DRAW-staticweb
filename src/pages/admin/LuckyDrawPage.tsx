@@ -390,8 +390,8 @@ export function LuckyDrawPage() {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
-                onClick={() => {
-                  const res = confirmWinner(winner.id, nextDraw.id, activePrize.id)
+                onClick={async () => {
+                  const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
                   if (res.ok) {
                     setShowModal(false)
                     setToast(`Winner "${winner.name}" officially confirmed with ${activePrize.name}!`)

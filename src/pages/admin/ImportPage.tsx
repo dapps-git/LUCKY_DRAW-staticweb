@@ -38,7 +38,7 @@ export function ImportPage() {
       const text = e.target?.result as string
       setStage('validating')
 
-      setTimeout(() => {
+      setTimeout(async () => {
         try {
           const parsed = parseCsvText(text)
           if (parsed.length === 0) {
@@ -47,7 +47,7 @@ export function ImportPage() {
             return
           }
 
-          const res = bulkRegisterParticipants(parsed)
+          const res = await bulkRegisterParticipants(parsed)
           setStats({
             totalRows: parsed.length,
             added: res.added,

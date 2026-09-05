@@ -13,6 +13,7 @@ import { LuckyDrawsPage } from './pages/admin/LuckyDrawsPage'
 import { ParticipantsPage } from './pages/admin/ParticipantsPage'
 import { PrizesPage } from './pages/admin/PrizesPage'
 import { SettingsPage } from './pages/admin/SettingsPage'
+import { HomePage } from './pages/HomePage'
 import { PublicWinnersPage } from './pages/PublicWinnersPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { PublicUserLoginPage } from './pages/PublicUserLoginPage'
@@ -22,7 +23,8 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/register" replace />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<PublicUserLoginPage />} />
           <Route path="/check-ticket" element={<PublicUserLoginPage />} />

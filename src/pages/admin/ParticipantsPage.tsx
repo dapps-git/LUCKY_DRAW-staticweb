@@ -64,18 +64,18 @@ export function ParticipantsPage() {
     downloadCsvFile(content, `Valanchery-Participants-Export-${filtered.length}.csv`)
   }
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setAddError('')
     if (!newParticipant.name.trim()) {
-      setAddError('Name is required')
+      setAddError('Full name is required')
       return
     }
-    if (!isValidIndianPhone(newParticipant.phone)) {
+    if (!newParticipant.phone.trim() || !isValidIndianPhone(newParticipant.phone)) {
       setAddError('Please enter a valid 10-digit mobile number')
       return
     }
-    const res = registerParticipant({
+    const res = await registerParticipant({
       name: newParticipant.name.trim(),
       phone: newParticipant.phone.trim(),
       address: newParticipant.address.trim() || 'Valanchery',

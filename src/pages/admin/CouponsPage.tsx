@@ -28,7 +28,7 @@ export function CouponsPage() {
     try {
       // 1. Create the unique coupons in state
       const batchName = `Coupons Batch (${count} pcs)`
-      const { batch, coupons: newCoupons } = generateCouponBatch(count, batchName)
+      const { batch, coupons: newCoupons } = await generateCouponBatch(count, batchName)
 
       // Update live preview with first coupon of this new batch
       if (newCoupons[0]) {
