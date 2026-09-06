@@ -12,7 +12,7 @@ export function CouponsPage() {
 
   // Live Canvas Preview
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [previewId, setPreviewId] = useState<string>('7492018401')
+  const [previewId, setPreviewId] = useState<string>('A1D3S123F89K2')
 
   useEffect(() => {
     if (!previewCanvasRef.current) return
@@ -45,7 +45,7 @@ export function CouponsPage() {
       const url = URL.createObjectURL(pdfBlob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Valanchery_Festival_Coupons_${count}.pdf`
+      a.download = `festival 1-${count}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -76,7 +76,7 @@ export function CouponsPage() {
       const url = URL.createObjectURL(pdfBlob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${batchName.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`
+      a.download = `festival 1-${batchCoupons.length}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -179,7 +179,7 @@ export function CouponsPage() {
         </div>
 
         <p className="mt-2 text-center text-[11px] text-black/50">
-          ✓ Unique QR code placed in left box · Unique 10-digit ID & barcode below · Links to registration
+          ✓ Unique QR code placed in left box · Unique 13-character ID & barcode below · Links to registration
         </p>
       </div>
 

@@ -3,13 +3,34 @@ import QRCode from 'qrcode'
 import JsBarcode from 'jsbarcode'
 import type { Coupon, CouponBatch } from '../types'
 
-// Generate guaranteed unique 10-digit numeric coupon ID
+const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+const DIGITS = '0123456789'
+
+// Helper to generate 13-character ID with 5 letters and 8 numbers randomly mixed in between (e.g. A1D3S123F89K2)
+function generateMixed13Char(): string {
+  const chars: string[] = []
+  // 5 letters
+  for (let i = 0; i < 5; i++) {
+    chars.push(LETTERS[Math.floor(Math.random() * LETTERS.length)])
+  }
+  // 8 digits
+  for (let i = 0; i < 8; i++) {
+    chars.push(DIGITS[Math.floor(Math.random() * DIGITS.length)])
+  }
+  // Fisher-Yates shuffle so letters and numbers are randomly placed in between
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = chars[i]
+    chars[i] = chars[j]
+    chars[j] = temp
+  }
+  return chars.join('')
+}
+
+// Generate guaranteed unique 13-character coupon ID
 export function generateUniqueCouponId(existingIds: Set<string>): string {
   while (true) {
-    // 10 digits: start with 1-9 to avoid leading zero ambiguity
-    const firstDigit = Math.floor(1 + Math.random() * 9)
-    const rest = Math.floor(Math.random() * 1_000_000_000).toString().padStart(9, '0')
-    const id = `${firstDigit}${rest}`
+    const id = generateMixed13Char()
     if (!existingIds.has(id)) {
       existingIds.add(id)
       return id
@@ -147,15 +168,15 @@ export async function renderCouponToCanvas(
   const barcodeH = h * 0.075
   ctx.drawImage(barcodeImg, barcodeX, barcodeY, barcodeW, barcodeH)
 
-  // 3. Draw formatted 10-Digit Coupon ID Text below barcode
-  ctx.fillStyle = '#0f172a'
-  ctx.font = `bold ${Math.round(h * 0.038)}px monospace`
+  // 3. Draw formatted Coupon ID Text below barcode (spaced out like "K V V E S 7 4 9 2 0 1 8 4")
+  ctx.fillStyle = '#111827'
+  ctx.font = `bold ${Math.round(h * 0.026)}px "Courier New", monospace`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
 
-  // Format with space: e.g., "7492 018 472" for easy readability
-  const formattedId = `${couponId.slice(0, 4)} ${couponId.slice(4, 7)} ${couponId.slice(7)}`
-  ctx.fillText(formattedId, barcodeX + barcodeW / 2, barcodeY + barcodeH + 4)
+  // Spaced format: "K V V E S 7 4 9 2 0 1 8 4"
+  const formattedId = couponId.split('').join(' ')
+  ctx.fillText(formattedId, barcodeX + barcodeW / 2, barcodeY + barcodeH + 3)
 
   return canvas
 }

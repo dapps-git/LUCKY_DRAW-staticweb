@@ -5,26 +5,41 @@ import { Participant } from '../models/Participant.js'
 
 const router = Router()
 
-// Helper to generate guaranteed unique 10-digit numeric coupon ID
-function generateRandom10Digit(): string {
-  const firstDigit = Math.floor(1 + Math.random() * 9)
-  const rest = Math.floor(Math.random() * 1_000_000_000)
-    .toString()
-    .padStart(9, '0')
-  return `${firstDigit}${rest}`
+const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+const DIGITS = '0123456789'
+
+// Helper to generate guaranteed unique 13-character coupon ID (5 letters + 8 numbers randomly placed in between)
+function generateRandom13Char(): string {
+  const chars: string[] = []
+  // 5 letters
+  for (let i = 0; i < 5; i++) {
+    chars.push(LETTERS[Math.floor(Math.random() * LETTERS.length)])
+  }
+  // 8 digits
+  for (let i = 0; i < 8; i++) {
+    chars.push(DIGITS[Math.floor(Math.random() * DIGITS.length)])
+  }
+  // Fisher-Yates shuffle
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = chars[i]
+    chars[i] = chars[j]
+    chars[j] = temp
+  }
+  return chars.join('')
 }
 
 // 1. Validate a single coupon token (instant QR scan check)
 router.get('/validate/:id', async (req, res) => {
   try {
     const rawId = req.params.id || ''
-    const cleanId = rawId.replace(/\D/g, '').trim()
+    const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
 
-    if (!cleanId || cleanId.length !== 10) {
+    if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
       return res.json({
         valid: false,
         status: 'Invalid',
-        message: 'Token ID must be a 10-digit festival code.',
+        message: 'Invalid festival coupon code.',
       })
     }
 
@@ -56,7 +71,7 @@ router.get('/validate/:id', async (req, res) => {
       })
     }
 
-    // Accept valid 10-digit number as genuine festival coupon
+    // Accept valid coupon format as genuine festival coupon
     return res.json({
       valid: true,
       status: 'Unused',
@@ -81,9 +96,9 @@ router.post('/generate', async (req, res) => {
 
     const newCoupons = []
     for (let i = 0; i < count; i++) {
-      let id = generateRandom10Digit()
+      let id = generateRandom13Char()
       while (existingSet.has(id)) {
-        id = generateRandom10Digit()
+        id = generateRandom13Char()
       }
       existingSet.add(id)
       newCoupons.push({

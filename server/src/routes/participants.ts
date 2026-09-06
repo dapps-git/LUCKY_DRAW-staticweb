@@ -38,8 +38,8 @@ router.post('/register', async (req, res) => {
     // Check coupon if provided
     let cleanCoupon = ''
     if (rawCoupon) {
-      cleanCoupon = rawCoupon.replace(/\D/g, '').trim()
-      if (cleanCoupon.length === 10) {
+      cleanCoupon = rawCoupon.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+      if (cleanCoupon.length >= 8 && cleanCoupon.length <= 16) {
         // Check if coupon already used by someone else
         const usedBy = await Participant.findOne({ couponId: cleanCoupon })
         if (usedBy) {
@@ -125,7 +125,7 @@ router.post('/bulk', async (req, res) => {
         phone,
         address: (input.address || 'Valanchery').trim(),
         location: (input.location || 'Valanchery').trim(),
-        couponId: input.couponId ? input.couponId.replace(/\D/g, '').trim() : undefined,
+        couponId: input.couponId ? input.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : undefined,
         registeredAt: now,
         eligibility: 'Eligible' as const,
         status: 'Active' as const,
