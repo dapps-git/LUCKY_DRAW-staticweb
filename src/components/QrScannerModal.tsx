@@ -50,7 +50,7 @@ export function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrScannerModa
               onScanSuccess(extracted)
               onClose()
             } else {
-              setError(`Scanned QR (${decodedText.slice(0, 20)}...) does not contain a valid 10-digit coupon token.`)
+              setError(`Scanned QR (${decodedText.slice(0, 20)}...) does not contain a valid festival coupon code.`)
             }
           },
           () => {
@@ -107,7 +107,7 @@ export function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrScannerModa
         onScanSuccess(extracted)
         onClose()
       } else {
-        setError('No 10-digit festival coupon found in the uploaded image.')
+        setError('No valid festival coupon code found in the uploaded image.')
       }
     } catch {
       setError('Unable to detect QR code in this image. Please ensure the QR is clear and well-lit.')

@@ -63,15 +63,15 @@ export function RegisterPage() {
 
   // Live Token Validator function (Async server + local check)
   const checkToken = async (tokenInput: string) => {
-    const clean = extractCouponId(tokenInput) || tokenInput.replace(/\D/g, '').trim()
+    const clean = extractCouponId(tokenInput) || tokenInput.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
     if (!clean) {
       setTokenStatus({ status: 'Idle', message: '' })
       return
     }
-    if (clean.length !== 10) {
+    if (clean.length < 8 || clean.length > 16) {
       setTokenStatus({
         status: 'Invalid',
-        message: 'Coupon token must be exactly 10 digits.',
+        message: 'Please enter a valid 13-character coupon code.',
       })
       return
     }
@@ -104,7 +104,7 @@ export function RegisterPage() {
 
   const handleCouponChange = (val: string) => {
     const extracted = extractCouponId(val)
-    const cleaned = extracted || val.replace(/\D/g, '').slice(0, 10)
+    const cleaned = extracted || val.replace(/[^A-Za-z0-9]/g, '').slice(0, 16).toUpperCase()
     setForm((f) => ({ ...f, couponId: cleaned }))
     checkToken(cleaned)
   }
@@ -141,9 +141,9 @@ export function RegisterPage() {
 
     // Validate coupon if entered
     if (form.couponId.trim()) {
-      const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/\D/g, '').trim()
-      if (cleanToken.length !== 10) {
-        next.couponId = 'Token ID must be 10 digits.'
+      const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+      if (cleanToken.length < 8 || cleanToken.length > 16) {
+        next.couponId = 'Please enter a valid 13-character coupon code.'
       } else {
         const check = await validateCouponAsync(cleanToken)
         if (!check.valid) {
@@ -334,7 +334,7 @@ export function RegisterPage() {
                     type="text"
                     value={form.couponId}
                     onChange={(e) => handleCouponChange(e.target.value)}
-                    placeholder="10-digit coupon code"
+                    placeholder="13-character coupon code (e.g. A1D3S123F89K2)"
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
                   />
                   {isValidatingToken && (

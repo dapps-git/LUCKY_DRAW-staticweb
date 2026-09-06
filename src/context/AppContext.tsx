@@ -3,6 +3,7 @@ import { ADMIN_EMAIL, ADMIN_PASSWORD, seedData } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
 import { api } from '../lib/api'
+import { extractCouponId } from '../lib/tokenHelper'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
 const AUTH_KEY = 'vf2026_admin_auth'
@@ -115,9 +116,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .sort((a, b) => a.date.localeCompare(b.date))[0]
 
     const validateCoupon = (couponId: string): CouponValidationResult => {
-      const cleanId = couponId ? couponId.replace(/\D/g, '').trim() : ''
-      if (!cleanId || cleanId.length !== 10) {
-        return { valid: false, status: 'Invalid', message: 'Token ID must be a 10-digit festival code.' }
+      const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
+      if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
+        return { valid: false, status: 'Invalid', message: 'Token ID must be a valid 13-character festival code.' }
       }
 
       // Check if already used by any participant
@@ -158,8 +159,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const cleanId = couponId ? couponId.replace(/\D/g, '').trim() : ''
-        if (cleanId.length === 10) {
+        const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
+        if (cleanId.length >= 8 && cleanId.length <= 16) {
           const res = await api.validateCoupon(cleanId)
           if (res && (res.status === 'Used' || res.status === 'Invalid' || res.valid)) {
             return res
@@ -243,7 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         let cleanCouponId = ''
         if (input.couponId) {
-          cleanCouponId = input.couponId.replace(/\D/g, '').trim()
+          cleanCouponId = extractCouponId(input.couponId) || input.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
           const check = validateCoupon(cleanCouponId)
           if (!check.valid) {
             return { ok: false, error: check.message }
