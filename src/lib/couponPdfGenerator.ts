@@ -162,20 +162,29 @@ export async function renderCouponToCanvas(
     barcodeImg.src = barcodeDataUrl
   })
 
-  const barcodeX = w * 0.024
-  const barcodeY = h * 0.625
-  const barcodeW = w * 0.118
+  const barcodeW = w * 0.124
   const barcodeH = h * 0.075
+  const barcodeX = (qrX + qrSize / 2) - (barcodeW / 2)
+  const barcodeY = h * 0.625
   ctx.drawImage(barcodeImg, barcodeX, barcodeY, barcodeW, barcodeH)
 
-  // 3. Draw formatted Coupon ID Text below barcode (spaced out like "K V V E S 7 4 9 2 0 1 8 4")
+  // 3. Draw formatted Coupon ID Text below barcode (strictly within barcode width, no overflow)
   ctx.fillStyle = '#111827'
-  ctx.font = `bold ${Math.round(h * 0.026)}px "Courier New", monospace`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
 
-  // Spaced format: "K V V E S 7 4 9 2 0 1 8 4"
+  // Spaced format: "A 1 D 3 S 1 2 3 F 8 9 K 2"
   const formattedId = couponId.split('').join(' ')
+
+  // Dynamically calculate font size so it fits perfectly within barcode width
+  let fontSize = Math.round(h * 0.022)
+  ctx.font = `bold ${fontSize}px "Courier New", monospace`
+  const maxAllowedWidth = barcodeW * 0.96
+  while (ctx.measureText(formattedId).width > maxAllowedWidth && fontSize > 7) {
+    fontSize -= 0.5
+    ctx.font = `bold ${fontSize}px "Courier New", monospace`
+  }
+
   ctx.fillText(formattedId, barcodeX + barcodeW / 2, barcodeY + barcodeH + 3)
 
   return canvas
