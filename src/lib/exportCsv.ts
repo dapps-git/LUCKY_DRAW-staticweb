@@ -31,9 +31,8 @@ export function formatCouponsForExcelCsv(
   const rows = coupons.map((c) => {
     const regUrl = `${baseUrl}/register?coupon=${c.id}`
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(regUrl)}`
-    // Excel formula format =HYPERLINK("URL","URL") guarantees Excel & Google Sheets render an active clickable blue link
-    const excelHyperlink = `"=HYPERLINK("""${qrImageUrl}""","""${qrImageUrl}""")"`
-    return `${c.id},${excelHyperlink}`
+    // Single-argument =HYPERLINK("URL") has no commas so Excel never splits into multiple columns
+    return `${c.id},=HYPERLINK("${qrImageUrl}")`
   })
   return '\uFEFF' + header + rows.join('\r\n')
 }
