@@ -1,9 +1,45 @@
 import { Router } from 'express'
+import QRCode from 'qrcode'
 import { Coupon } from '../models/Coupon.js'
 import { CouponBatch } from '../models/CouponBatch.js'
 import { Participant } from '../models/Participant.js'
 
 const router = Router()
+
+// 0. Direct QR image endpoint (returns real PNG image directly in browser)
+router.get(['/qr/:id', '/qr/:id.png'], async (req, res) => {
+  try {
+    const rawId = req.params.id || ''
+    const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+
+    // Determine domain from origin, referer, or default
+    const origin = req.get('origin') || req.get('referer')
+    let baseUrl = 'https://www.valancheryfestival.com'
+    if (origin) {
+      try {
+        const u = new URL(origin)
+        baseUrl = u.origin
+      } catch {}
+    }
+
+    const regUrl = `${baseUrl}/register?coupon=${cleanId}`
+
+    const qrBuffer = await QRCode.toBuffer(regUrl, {
+      width: 600,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF',
+      },
+    })
+
+    res.setHeader('Content-Type', 'image/png')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    res.send(qrBuffer)
+  } catch (error: any) {
+    res.status(500).send('Error generating QR image')
+  }
+})
 
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const DIGITS = '0123456789'

@@ -40,23 +40,26 @@ export function exportCouponsToXlsx(
 
   const ws = XLSX.utils.aoa_to_sheet(data)
 
-  // Attach native Excel clickable hyperlinks to every cell in Column B
+  // Attach native Excel clickable hyperlinks and formulas to every cell in Column B
   coupons.forEach((c, idx) => {
     const rowNumber = idx + 2
     const cellRef = `B${rowNumber}`
     const regUrl = `${baseUrl}/register?coupon=${c.id}`
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(regUrl)}`
 
-    if (ws[cellRef]) {
-      ws[cellRef].l = {
+    ws[cellRef] = {
+      t: 's',
+      f: `HYPERLINK("${qrImageUrl}","${qrImageUrl}")`,
+      v: qrImageUrl,
+      l: {
         Target: qrImageUrl,
         Tooltip: 'Click to open QR scanner image in browser',
-      }
+      },
     }
   })
 
   // Set column widths
-  ws['!cols'] = [{ wch: 18 }, { wch: 75 }]
+  ws['!cols'] = [{ wch: 20 }, { wch: 80 }]
 
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Coupons')
