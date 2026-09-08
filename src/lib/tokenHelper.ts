@@ -1,10 +1,4 @@
-/**
- * Helper to safely extract and sanitize 13-character (5 letters + 8 digits)
- * or 10-digit coupon tokens from:
- * - Direct strings (e.g. "VFKLM74920184", "VFKLM-7492-0184", "7492018403")
- * - Full URLs (e.g. "http://localhost:5173/register?coupon=VFKLM74920184")
- * - Scanned QR code payloads
- */
+
 export function extractCouponId(input?: string | null): string | null {
   if (!input) return null
   const trimmed = input.trim()

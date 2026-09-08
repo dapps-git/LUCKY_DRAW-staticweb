@@ -23,6 +23,19 @@ export function formatParticipantsForExcelCsv(
   return '\uFEFF' + header + rows.join('\r\n')
 }
 
+export function formatCouponsForExcelCsv(
+  coupons: Array<{ id: string }>,
+  baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
+): string {
+  const header = 'id,imageUrl\r\n'
+  const rows = coupons.map((c) => {
+    const regUrl = `${baseUrl}/register?coupon=${c.id}`
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(regUrl)}`
+    return `${c.id},${qrImageUrl}`
+  })
+  return '\uFEFF' + header + rows.join('\r\n')
+}
+
 /**
  * Triggers a file download in the browser.
  */

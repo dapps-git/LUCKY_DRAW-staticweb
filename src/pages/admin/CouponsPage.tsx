@@ -1,91 +1,57 @@
-import { useEffect, useRef, useState } from 'react'
-import { Download, Loader2, QrCode, Trash2, CheckCircle2 } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, Trash2, CheckCircle2, FileSpreadsheet, ExternalLink } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { generateCouponsPdf, renderCouponToCanvas } from '../../lib/couponPdfGenerator'
+import { formatCouponsForExcelCsv, downloadCsvFile } from '../../lib/exportCsv'
 
 export function CouponsPage() {
   const { coupons, batches, generateCouponBatch, deleteCouponBatch } = useApp()
 
-  const [count, setCount] = useState<number>(10)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [count, setCount] = useState<number>(100)
+  const [customDomain, setCustomDomain] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin
+    }
+    return 'https://www.valancheryfestival.com'
+  })
+  const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
+  const [sampleCoupons, setSampleCoupons] = useState<Array<{ id: string; qrUrl: string }>>([])
 
-  // Live Canvas Preview
-  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
-  const [previewId, setPreviewId] = useState<string>('A1D3S123F89K2')
-
-  useEffect(() => {
-    if (!previewCanvasRef.current) return
-    renderCouponToCanvas(previewId, previewCanvasRef.current).catch(console.error)
-  }, [previewId])
-
-  // Direct Generate & Download in One Click
-  const handleGenerateAndDownload = async () => {
+  // Generate & Download Excel (CSV) with id & clickable imageUrl
+  const handleGenerateAndDownloadCsv = async () => {
     if (count <= 0) return
-    setIsGenerating(true)
-    setProgress(0)
+    setIsGeneratingCsv(true)
 
     try {
-      // 1. Create the unique coupons in state
       const batchName = `Coupons Batch (${count} pcs)`
-      const { batch, coupons: newCoupons } = await generateCouponBatch(count, batchName)
+      const { coupons: newCoupons } = await generateCouponBatch(count, batchName)
 
-      // Update live preview with first coupon of this new batch
-      if (newCoupons[0]) {
-        setPreviewId(newCoupons[0].id)
-      }
+      // Set sample coupons for live table preview
+      const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
+      setSampleCoupons(
+        newCoupons.slice(0, 3).map((c) => ({
+          id: c.id,
+          qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(`${activeBase}/register?coupon=${c.id}`)}`,
+        }))
+      )
 
-      // 2. Generate and download PDF
-      const pdfBlob = await generateCouponsPdf(newCoupons, {
-        onProgress: (processed, total) => {
-          setProgress(Math.round((processed / total) * 100))
-        },
-      })
-
-      const url = URL.createObjectURL(pdfBlob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `festival 1-${count}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const csvContent = formatCouponsForExcelCsv(newCoupons, activeBase)
+      downloadCsvFile(csvContent, `festival 1-${count}.csv`)
     } catch (err) {
-      console.error('Download error:', err)
-      alert('Error generating PDF. Please try again.')
+      console.error('CSV generation error:', err)
+      alert('Error generating Excel/CSV. Please try again.')
     } finally {
-      setIsGenerating(false)
+      setIsGeneratingCsv(false)
     }
   }
 
-  // Download existing batch
-  const handleDownloadBatch = async (batchId: string, batchName: string) => {
+  // Download existing batch CSV
+  const handleDownloadBatchCsv = (batchId: string, batchCount: number) => {
     const batchCoupons = coupons.filter((c) => c.batchId === batchId)
     if (batchCoupons.length === 0) return
 
-    setIsGenerating(true)
-    setProgress(0)
-
-    try {
-      const pdfBlob = await generateCouponsPdf(batchCoupons, {
-        onProgress: (processed, total) => {
-          setProgress(Math.round((processed / total) * 100))
-        },
-      })
-
-      const url = URL.createObjectURL(pdfBlob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `festival 1-${batchCoupons.length}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      console.error('Download error:', err)
-    } finally {
-      setIsGenerating(false)
-    }
+    const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
+    const csvContent = formatCouponsForExcelCsv(batchCoupons, activeBase)
+    downloadCsvFile(csvContent, `festival 1-${batchCoupons.length || batchCount}.csv`)
   }
 
   return (
@@ -93,10 +59,10 @@ export function CouponsPage() {
       {/* Title */}
       <div>
         <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
-          Coupon Generator
+          Coupon Excel Generator
         </h1>
         <p className="mt-1 text-xs text-black/60 sm:text-sm">
-          Select the number of coupons to generate and download a single print-ready PDF with unique QR codes & barcodes.
+          Generate unique, collision-free 13-character festival coupons and download directly as an <strong>Excel Sheet (CSV with id & clickable QR scanner image URL)</strong>.
         </p>
       </div>
 
@@ -116,7 +82,7 @@ export function CouponsPage() {
                 onClick={() => setCount(num)}
                 className={`py-2.5 text-xs font-medium transition ${
                   count === num
-                    ? 'border border-[#6b1020] bg-[#6b1020] text-white shadow-sm'
+                    ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm'
                     : 'border border-black/15 bg-[#fbf8f3] text-black/70 hover:border-black/30'
                 }`}
               >
@@ -133,54 +99,93 @@ export function CouponsPage() {
               max={10000}
               value={count}
               onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full border border-black/20 bg-[#fbf8f3] px-4 py-2.5 text-sm font-medium text-black outline-none focus:border-[#d4a017]"
+              className="w-full border border-black/20 bg-[#fbf8f3] px-4 py-2.5 text-sm font-medium text-black outline-none focus:border-emerald-600"
               placeholder="Or enter custom number..."
             />
             <span className="text-xs font-medium text-black/50">coupons</span>
           </div>
 
-          {/* Download Button */}
+          {/* Website Domain for QR Codes */}
+          <div>
+            <label className="block text-[11px] font-semibold text-black/70 mb-1">
+              QR Code Website Domain (Links point to this domain)
+            </label>
+            <input
+              type="text"
+              value={customDomain}
+              onChange={(e) => setCustomDomain(e.target.value)}
+              placeholder="e.g. https://www.valancheryfestival.com or http://localhost:5173"
+              className="w-full border border-black/20 bg-[#fbf8f3] px-3 py-2 text-xs font-mono text-black outline-none focus:border-emerald-600"
+            />
+            <p className="text-[10px] text-black/50 mt-0.5">
+              Current: QR scanner links will redirect to <code>{customDomain}/register?coupon=[ID]</code>
+            </p>
+          </div>
+
+          {/* Download Excel Button */}
           <button
-            onClick={handleGenerateAndDownload}
-            disabled={isGenerating || count <= 0}
-            className="flex w-full items-center justify-center gap-2 border border-[#6b1020] bg-[#6b1020] py-3.5 text-sm font-semibold tracking-wider text-white shadow-md transition hover:bg-[#851629] disabled:opacity-50"
+            onClick={handleGenerateAndDownloadCsv}
+            disabled={isGeneratingCsv || count <= 0}
+            className="flex w-full items-center justify-center gap-2 border border-emerald-700 bg-emerald-700 py-3.5 text-sm font-semibold tracking-wider text-white shadow-md transition hover:bg-emerald-800 disabled:opacity-50 cursor-pointer"
           >
-            {isGenerating ? (
+            {isGeneratingCsv ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                Generating PDF ({progress}%)...
+                Generating Excel Sheet...
               </>
             ) : (
               <>
-                <Download size={18} />
-                GENERATE & DOWNLOAD {count} COUPONS (PDF)
+                <FileSpreadsheet size={18} />
+                GENERATE & DOWNLOAD EXCEL SHEET ({count} COUPONS)
               </>
             )}
           </button>
-        </div>
-      </div>
 
-      {/* Live Preview Card */}
-      <div className="border border-black/10 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between border-b border-black/10 pb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-black/70">
-            Coupon Live Preview
-          </h2>
-          <span className="font-mono text-xs font-bold text-[#6b1020]">
-            Sample ID: {previewId}
-          </span>
+          {/* Excel Format Note */}
+          <div className="rounded border border-emerald-600/20 bg-emerald-50/60 p-3 text-[11px] text-emerald-900">
+            <p className="font-semibold flex items-center gap-1">
+              <CheckCircle2 size={14} className="text-emerald-700" /> Excel Sheet Structure (100% Unique & Clickable):
+            </p>
+            <div className="mt-2 overflow-x-auto rounded border border-emerald-200 bg-white">
+              <table className="w-full text-left text-[11px]">
+                <thead className="bg-emerald-100/60 font-mono font-bold text-emerald-900">
+                  <tr>
+                    <th className="p-2 border-r border-emerald-200">id</th>
+                    <th className="p-2">imageUrl (Clickable QR Scanner Link)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-emerald-100 font-mono text-[10px]">
+                  {sampleCoupons.length > 0 ? (
+                    sampleCoupons.map((s) => (
+                      <tr key={s.id} className="hover:bg-emerald-50/40">
+                        <td className="p-2 font-bold text-slate-900 border-r border-emerald-100">{s.id}</td>
+                        <td className="p-2 text-blue-600 underline truncate max-w-xs">
+                          <a href={s.qrUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-blue-800">
+                            {s.qrUrl.slice(0, 45)}... <ExternalLink size={10} />
+                          </a>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <>
+                      <tr>
+                        <td className="p-2 font-bold text-slate-900 border-r border-emerald-100">6JF8D9FD8849J</td>
+                        <td className="p-2 text-blue-600 underline">https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=...</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-slate-900 border-r border-emerald-100">4H5J65J4J3J4H5</td>
+                        <td className="p-2 text-blue-600 underline">https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=...</td>
+                      </tr>
+                    </>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-[10px] text-emerald-800/80">
+              💡 When clicked in Excel or Google Sheets, each link opens the high-resolution QR scanner image directly in your browser.
+            </p>
+          </div>
         </div>
-
-        <div className="mt-4 flex justify-center overflow-hidden rounded border border-black/10 bg-slate-900 p-2">
-          <canvas
-            ref={previewCanvasRef}
-            className="max-h-[220px] w-full object-contain"
-          />
-        </div>
-
-        <p className="mt-2 text-center text-[11px] text-black/50">
-          ✓ Unique QR code placed in left box · Unique 13-character ID & barcode below · Links to registration
-        </p>
       </div>
 
       {/* Generated Batches List (Clean & Simple) */}
@@ -205,11 +210,12 @@ export function CouponsPage() {
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleDownloadBatch(b.id, b.name)}
-                    disabled={isGenerating}
-                    className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-[#851629]"
+                    onClick={() => handleDownloadBatchCsv(b.id, b.count)}
+                    disabled={isGeneratingCsv}
+                    className="inline-flex items-center gap-1.5 border border-emerald-700 bg-emerald-700 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-emerald-800 cursor-pointer"
+                    title="Download Excel Sheet"
                   >
-                    <Download size={13} /> Download PDF
+                    <FileSpreadsheet size={13} /> Download Excel
                   </button>
 
                   <button
@@ -218,7 +224,7 @@ export function CouponsPage() {
                         deleteCouponBatch(b.id)
                       }
                     }}
-                    className="border border-black/15 p-1.5 text-black/50 hover:border-red-400 hover:text-red-600"
+                    className="border border-black/15 p-1.5 text-black/50 hover:border-red-400 hover:text-red-600 cursor-pointer"
                     title="Delete"
                   >
                     <Trash2 size={13} />
