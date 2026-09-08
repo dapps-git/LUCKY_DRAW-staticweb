@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx'
 import type { Participant } from '../types'
 
 /**
@@ -23,6 +24,47 @@ export function formatParticipantsForExcelCsv(
   return '\uFEFF' + header + rows.join('\r\n')
 }
 
+export function exportCouponsToXlsx(
+  coupons: Array<{ id: string }>,
+  filename: string,
+  baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
+): void {
+  const data = [
+    ['id', 'imageUrl'],
+    ...coupons.map((c) => {
+      const regUrl = `${baseUrl}/register?coupon=${c.id}`
+      const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(regUrl)}`
+      return [c.id, qrImageUrl]
+    }),
+  ]
+
+  const ws = XLSX.utils.aoa_to_sheet(data)
+
+  // Attach native Excel clickable hyperlinks to every cell in Column B
+  coupons.forEach((c, idx) => {
+    const rowNumber = idx + 2
+    const cellRef = `B${rowNumber}`
+    const regUrl = `${baseUrl}/register?coupon=${c.id}`
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(regUrl)}`
+
+    if (ws[cellRef]) {
+      ws[cellRef].l = {
+        Target: qrImageUrl,
+        Tooltip: 'Click to open QR scanner image in browser',
+      }
+    }
+  })
+
+  // Set column widths
+  ws['!cols'] = [{ wch: 18 }, { wch: 75 }]
+
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Coupons')
+
+  const finalName = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`
+  XLSX.writeFile(wb, finalName)
+}
+
 export function formatCouponsForExcelCsv(
   coupons: Array<{ id: string }>,
   baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
@@ -31,8 +73,7 @@ export function formatCouponsForExcelCsv(
   const rows = coupons.map((c) => {
     const regUrl = `${baseUrl}/register?coupon=${c.id}`
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(regUrl)}`
-    // Single-argument =HYPERLINK("URL") has no commas so Excel never splits into multiple columns
-    return `${c.id},=HYPERLINK("${qrImageUrl}")`
+    return `${c.id},${qrImageUrl}`
   })
   return '\uFEFF' + header + rows.join('\r\n')
 }

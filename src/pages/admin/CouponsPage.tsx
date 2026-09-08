@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Loader2, FileSpreadsheet } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { formatCouponsForExcelCsv, downloadCsvFile } from '../../lib/exportCsv'
+import { exportCouponsToXlsx } from '../../lib/exportCsv'
 
 export function CouponsPage() {
   const { generateCouponBatch } = useApp()
@@ -15,7 +15,7 @@ export function CouponsPage() {
   })
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
 
-  // Generate & Download Excel (CSV) with id & clickable imageUrl
+  // Generate & Download real Excel (.xlsx) with native clickable hyperlinks
   const handleGenerateAndDownloadCsv = async () => {
     if (count <= 0) return
     setIsGeneratingCsv(true)
@@ -25,11 +25,10 @@ export function CouponsPage() {
       const { coupons: newCoupons } = await generateCouponBatch(count, batchName)
 
       const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
-      const csvContent = formatCouponsForExcelCsv(newCoupons, activeBase)
-      downloadCsvFile(csvContent, `festival 1-${count}.csv`)
+      exportCouponsToXlsx(newCoupons, `festival 1-${count}.xlsx`, activeBase)
     } catch (err) {
-      console.error('CSV generation error:', err)
-      alert('Error generating Excel/CSV. Please try again.')
+      console.error('Excel generation error:', err)
+      alert('Error generating Excel file. Please try again.')
     } finally {
       setIsGeneratingCsv(false)
     }

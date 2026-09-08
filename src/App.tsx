@@ -17,6 +17,7 @@ import { HomePage } from './pages/HomePage'
 import { PublicWinnersPage } from './pages/PublicWinnersPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { PublicUserLoginPage } from './pages/PublicUserLoginPage'
+import { QrViewerPage } from './pages/QrViewerPage'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/qr/:couponId" element={<QrViewerPage />} />
           <Route path="/login" element={<PublicUserLoginPage />} />
           <Route path="/check-ticket" element={<PublicUserLoginPage />} />
           <Route path="/winners" element={<PublicWinnersPage />} />
