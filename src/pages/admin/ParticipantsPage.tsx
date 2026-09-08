@@ -42,18 +42,32 @@ export function ParticipantsPage() {
   }, [data.winners, getDraw, getPrize])
 
   const filtered = useMemo(() => {
-    return [...data.participants].reverse().filter((p) => {
-      const isWinner = winnerMap.has(p.id)
-      const hit = `${p.id} ${p.name} ${p.phone} ${p.location}`.toLowerCase().includes(q.toLowerCase())
-      const locationMatch = !location || p.location === location
-      const statusMatch = !status || p.status === status
-      const winnerMatch =
-        !winnerFilter ||
-        (winnerFilter === 'winner' && isWinner) ||
-        (winnerFilter === 'eligible' && !isWinner && p.status === 'Active')
+    return [...data.participants]
+      .sort((a, b) => {
+        // Extract numeric suffix from ID (e.g. VF2026-00115 -> 115, higher number is newer)
+        const matchA = a.id.match(/\d+$/)
+        const matchB = b.id.match(/\d+$/)
+        const numA = matchA ? parseInt(matchA[0], 10) : 0
+        const numB = matchB ? parseInt(matchB[0], 10) : 0
+        if (numB !== numA) return numB - numA
 
-      return hit && locationMatch && statusMatch && winnerMatch
-    })
+        if (b.registeredAt && a.registeredAt && b.registeredAt !== a.registeredAt) {
+          return new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
+        }
+        return b.id.localeCompare(a.id, undefined, { numeric: true })
+      })
+      .filter((p) => {
+        const isWinner = winnerMap.has(p.id)
+        const hit = `${p.id} ${p.name} ${p.phone} ${p.location} ${p.couponId || ''}`.toLowerCase().includes(q.toLowerCase())
+        const locationMatch = !location || p.location === location
+        const statusMatch = !status || p.status === status
+        const winnerMatch =
+          !winnerFilter ||
+          (winnerFilter === 'winner' && isWinner) ||
+          (winnerFilter === 'eligible' && !isWinner && p.status === 'Active')
+
+        return hit && locationMatch && statusMatch && winnerMatch
+      })
   }, [data.participants, q, location, status, winnerFilter, winnerMap])
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE))
