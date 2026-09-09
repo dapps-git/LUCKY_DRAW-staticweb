@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Loader2, FileSpreadsheet } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Loader2, FileSpreadsheet, ListFilter } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
 
@@ -36,14 +37,24 @@ export function CouponsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      {/* Title */}
-      <div>
-        <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
-          Coupon Excel Generator
-        </h1>
-        <p className="mt-1 text-xs text-black/60 sm:text-sm">
-          Select the quantity to generate unique 13-character coupons and download directly as an Excel Sheet with clickable QR scanner image URLs.
-        </p>
+      {/* Title & Link to Directory */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+            Coupon Excel Generator
+          </h1>
+          <p className="mt-1 text-xs text-black/60 sm:text-sm">
+            Select the quantity to generate unique 13-character coupons and download directly as an Excel Sheet.
+          </p>
+        </div>
+
+        <Link
+          to="/admin/coupons-directory"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#7a1426] bg-[#7a1426] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#961a30] transition shadow-sm shrink-0"
+        >
+          <ListFilter size={14} />
+          <span>All Coupons Directory</span>
+        </Link>
       </div>
 
       {/* Main Generator Card */}

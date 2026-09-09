@@ -14,13 +14,15 @@ import {
   X,
   ExternalLink,
   QrCode,
+  Ticket,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 
 const links = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/admin/coupons', label: 'Coupons & Tokens', icon: QrCode },
+  { to: '/admin/coupons', label: 'Generate Coupons', icon: QrCode },
+  { to: '/admin/coupons-directory', label: 'Coupons Directory', icon: Ticket },
   { to: '/admin/lucky-draw', label: 'Live Draw Stage', icon: Sparkles },
   { to: '/admin/participants', label: 'Participants', icon: Users },
   { to: '/admin/import', label: 'Import Excel', icon: Upload },
