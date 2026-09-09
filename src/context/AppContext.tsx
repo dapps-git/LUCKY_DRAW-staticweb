@@ -122,7 +122,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(loadLocalData)
   const [isOnline, setIsOnline] = useState(false)
 
-  // Fetch initial data from MongoDB Atlas
+  // Fetch data from MongoDB Atlas and auto-sync in real-time
   const refreshData = async () => {
     try {
       const serverData = await api.getAllData()
@@ -132,10 +132,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const cleanWinners = (serverData.winners || []).filter(
         (w) => !DUMMY_IDS.has(w.participantId) && w.id !== 'win-01' && w.id !== 'win-02'
       )
-      setData({
-        ...serverData,
-        participants: cleanParticipants,
-        winners: cleanWinners,
+      setData((prev) => {
+        // Only update state if participant count or data actually changed to prevent jitter
+        if (
+          prev.participants?.length === cleanParticipants.length &&
+          (prev.winners?.length || 0) === cleanWinners.length &&
+          (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
+          (prev.draws?.length || 0) === (serverData.draws?.length || 0)
+        ) {
+          return prev
+        }
+        return {
+          ...serverData,
+          participants: cleanParticipants,
+          winners: cleanWinners,
+        }
       })
       setIsOnline(true)
     } catch (err) {
@@ -146,6 +157,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshData()
+    // Real-time polling every 3 seconds to auto-load new participants registered from anywhere
+    const timer = setInterval(refreshData, 3000)
+    const onFocus = () => refreshData()
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
   }, [])
 
   // Keep local backup

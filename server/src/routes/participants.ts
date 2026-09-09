@@ -48,20 +48,33 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    const id = await getNextParticipantId()
     const now = new Date().toISOString().slice(0, 10)
-
-    const newParticipant = await Participant.create({
-      id,
-      name: name.trim(),
-      phone,
-      address: address?.trim() || 'Valanchery',
-      location: location?.trim() || 'Valanchery',
-      couponId: cleanCoupon || undefined,
-      registeredAt: now,
-      eligibility: 'Eligible',
-      status: 'Active',
-    })
+    let newParticipant: any = null
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const id = await getNextParticipantId()
+        newParticipant = await Participant.create({
+          id,
+          name: name.trim(),
+          phone,
+          address: address?.trim() || 'Valanchery',
+          location: location?.trim() || 'Valanchery',
+          couponId: cleanCoupon || undefined,
+          registeredAt: now,
+          eligibility: 'Eligible',
+          status: 'Active',
+        })
+        break
+      } catch (err: any) {
+        if (err?.code === 11000 && attempt < 4) {
+          // Retry on concurrent sequential ID collision
+          await new Promise((r) => setTimeout(r, 40 * (attempt + 1)))
+          continue
+        }
+        throw err
+      }
+    }
+    const id = newParticipant.id
 
     // Update coupon state in DB
     if (cleanCoupon) {

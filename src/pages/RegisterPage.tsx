@@ -121,8 +121,11 @@ export function RegisterPage() {
     setSearchParams({}, { replace: true })
   }
 
+  const [formError, setFormError] = useState('')
+
   const set = (key: string, value: string) => {
     setForm((f) => ({ ...f, [key]: value }))
+    setFormError('')
     if (errors[key]) {
       setErrors((prev) => ({ ...prev, [key]: '' }))
     }
@@ -131,6 +134,7 @@ export function RegisterPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return
+    setFormError('')
 
     const next: Record<string, string> = {}
     if (!form.name.trim()) next.name = 'Full name is required'
@@ -170,7 +174,14 @@ export function RegisterPage() {
       })
 
       if (!result.ok) {
-        setErrors({ phone: result.error })
+        if (result.error.toLowerCase().includes('coupon')) {
+          setErrors({ couponId: result.error })
+          setTokenStatus({ status: 'Used', message: result.error })
+        } else if (result.error.toLowerCase().includes('phone') || result.error.toLowerCase().includes('mobile')) {
+          setErrors({ phone: result.error })
+        } else {
+          setFormError(result.error)
+        }
         return
       }
 
@@ -414,6 +425,12 @@ export function RegisterPage() {
                 {errors.address && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.address}</p>}
               </div>
             </div>
+
+            {formError && (
+              <div className="rounded-lg border border-red-500/40 bg-red-50 p-2 text-center">
+                <p className="text-xs font-semibold text-red-700">{formError}</p>
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="pt-1.5">
