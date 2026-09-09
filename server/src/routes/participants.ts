@@ -162,9 +162,10 @@ router.get('/lookup/:query', async (req, res) => {
     const participant = await Participant.findOne({
       $or: [
         { id: { $regex: new RegExp(`^${clean}$`, 'i') } },
+        { couponId: { $regex: new RegExp(`^${clean}$`, 'i') } },
         ...(digitsOnly.length >= 10 ? [{ phone: digitsOnly.slice(-10) }] : []),
       ],
-    }).lean()
+    }).sort({ createdAt: -1 }).lean()
 
     if (!participant) {
       return res.status(404).json({ ok: false, error: 'No registration found for this phone number or ID.' })

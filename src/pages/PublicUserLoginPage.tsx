@@ -48,8 +48,9 @@ export function PublicUserLoginPage() {
     const digitsOnly = clean.replace(/\D/g, '')
     const found = data.participants.find((p) => {
       const matchId = p.id.toLowerCase() === clean
+      const matchCoupon = p.couponId && p.couponId.toLowerCase() === clean
       const matchPhone = digitsOnly && p.phone.replace(/\D/g, '').endsWith(digitsOnly.slice(-10))
-      return matchId || matchPhone
+      return matchId || matchCoupon || matchPhone
     })
 
     if (found) {

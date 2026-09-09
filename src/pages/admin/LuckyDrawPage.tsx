@@ -318,11 +318,17 @@ export function LuckyDrawPage() {
                 <p className="font-display text-2xl font-light uppercase tracking-wide text-white sm:text-3xl md:text-4xl">
                   {display.name}
                 </p>
-                <p className="mt-2 font-mono text-sm tracking-wider text-white/70 sm:text-base">
-                  {maskPhone(display.phone)}
-                </p>
+                {display.couponId ? (
+                  <p className="mt-2 font-mono text-sm font-semibold tracking-wider text-[#f3d48a] sm:text-base">
+                    🎫 COUPON: {display.couponId}
+                  </p>
+                ) : (
+                  <p className="mt-2 font-mono text-sm tracking-wider text-white/70 sm:text-base">
+                    {maskPhone(display.phone)}
+                  </p>
+                )}
                 <p className="mt-1 text-xs font-light tracking-wider text-[#f3d48a] uppercase">
-                  {display.location}
+                  {display.location} · {display.id}
                 </p>
               </div>
 
@@ -333,7 +339,7 @@ export function LuckyDrawPage() {
 
               <div className="mt-6 flex items-center justify-center gap-2 text-xs font-light text-white/40">
                 <Sparkles size={13} className="text-[#f3d48a] animate-spin" />
-                Randomizing across {pool.length} participants…
+                Randomizing across {pool.length} registered coupon entries…
               </div>
             </div>
           )}
@@ -346,11 +352,16 @@ export function LuckyDrawPage() {
               <h2 className="font-display mt-4 text-2xl font-light uppercase tracking-wide text-white sm:text-3xl md:text-4xl">
                 {winner.name}
               </h2>
+              {winner.couponId && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded border border-[#d4a017] bg-[#d4a017]/20 px-4 py-1.5 font-mono text-sm font-bold tracking-wider text-[#f3d48a] shadow-lg shadow-[#d4a017]/20">
+                  🎫 WINNING COUPON: {winner.couponId}
+                </div>
+              )}
               <p className="mt-2 font-mono text-sm font-light tracking-widest text-white/80 sm:text-base">
                 {maskPhone(winner.phone)}
               </p>
               <p className="mt-1 text-xs font-light tracking-wider text-[#f3d48a] uppercase">
-                {winner.location} · ID: {winner.id}
+                {winner.location} · Participant ID: {winner.id}
               </p>
 
               <div className="mx-auto mt-6 max-w-xs border border-white/20">
@@ -380,7 +391,12 @@ export function LuckyDrawPage() {
               <p className="font-display text-xl font-normal text-[#140d10]">{winner.name}</p>
               <p className="text-xs font-light text-black/70">Phone: {maskPhone(winner.phone)}</p>
               <p className="text-xs font-light text-black/70">Location: {winner.location}</p>
-              <p className="text-xs font-mono text-[#6b1020]">ID: {winner.id}</p>
+              <p className="text-xs font-mono text-[#6b1020]">Participant ID: {winner.id}</p>
+              {winner.couponId && (
+                <p className="mt-1 font-mono text-xs font-semibold text-[#8c6710]">
+                  🎫 Coupon Code: {winner.couponId}
+                </p>
+              )}
 
               <div className="mt-3 border-t border-black/10 pt-2">
                 <p className="text-[10px] font-medium tracking-wider text-black/50 uppercase">Awarded Prize</p>
