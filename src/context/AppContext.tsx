@@ -9,32 +9,6 @@ import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } f
 const AUTH_KEY = 'vf2026_admin_auth'
 const DATA_KEY = 'vf2026_app_data_v5'
 
-const DUMMY_IDS = new Set([
-  'VF2026-00101',
-  'VF2026-00102',
-  'VF2026-00103',
-  'VF2026-00104',
-  'VF2026-00105',
-  'VF2026-00106',
-  'VF2026-00107',
-  'VF2026-00108',
-  'VF2026-00109',
-  'VF2026-00110',
-])
-
-const DUMMY_PHONES = new Set([
-  '9876543210',
-  '9745123489',
-  '9895012345',
-  '9847123456',
-  '9995432109',
-  '8089123456',
-  '9567123401',
-  '9447123890',
-  '8129345670',
-  '9746011122',
-])
-
 interface CouponValidationResult {
   valid: boolean
   status: 'Unused' | 'Used' | 'Invalid'
@@ -82,7 +56,7 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 function loadLocalData(): AppData {
   try {
-    // Clear out old legacy cache keys that held dummy users
+    // Clear out old legacy cache keys
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('vf2026_app_data_v1')
       localStorage.removeItem('vf2026_app_data_v2')
@@ -94,23 +68,18 @@ function loadLocalData(): AppData {
     if (!raw) return seedData
     const parsed = JSON.parse(raw) as AppData
 
-    // Strictly filter out any dummy users or seed winners from stored state
-    const cleanParticipants = (parsed.participants || []).filter(
-      (p) => !DUMMY_IDS.has(p.id) && !DUMMY_PHONES.has((p.phone || '').replace(/\D/g, '').slice(-10))
-    )
-    const cleanWinners = (parsed.winners || []).filter(
-      (w) => !DUMMY_IDS.has(w.participantId) && w.id !== 'win-01' && w.id !== 'win-02'
-    )
-    const cleanCoupons = (parsed.coupons || []).filter((c) => c.batchId !== 'BATCH-SEED-01')
-    const cleanBatches = (parsed.batches || []).filter((b) => b.id !== 'BATCH-SEED-01')
+    const participants = parsed.participants || []
+    const winners = parsed.winners || []
+    const coupons = (parsed.coupons || []).filter((c) => c.batchId !== 'BATCH-SEED-01')
+    const batches = (parsed.batches || []).filter((b) => b.id !== 'BATCH-SEED-01')
 
     return {
       ...seedData,
       ...parsed,
-      participants: cleanParticipants,
-      winners: cleanWinners,
-      coupons: cleanCoupons,
-      batches: cleanBatches,
+      participants,
+      winners,
+      coupons,
+      batches,
     }
   } catch {
     return seedData
@@ -126,17 +95,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshData = async () => {
     try {
       const serverData = await api.getAllData()
-      const cleanParticipants = (serverData.participants || []).filter(
-        (p) => !DUMMY_IDS.has(p.id) && !DUMMY_PHONES.has((p.phone || '').replace(/\D/g, '').slice(-10))
-      )
-      const cleanWinners = (serverData.winners || []).filter(
-        (w) => !DUMMY_IDS.has(w.participantId) && w.id !== 'win-01' && w.id !== 'win-02'
-      )
+      const participants = serverData.participants || []
+      const winners = serverData.winners || []
       setData((prev) => {
         // Only update state if participant count or data actually changed to prevent jitter
         if (
-          prev.participants?.length === cleanParticipants.length &&
-          (prev.winners?.length || 0) === cleanWinners.length &&
+          prev.participants?.length === participants.length &&
+          (prev.winners?.length || 0) === winners.length &&
           (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
           (prev.draws?.length || 0) === (serverData.draws?.length || 0)
         ) {
@@ -144,8 +109,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         return {
           ...serverData,
-          participants: cleanParticipants,
-          winners: cleanWinners,
+          participants,
+          winners,
         }
       })
       setIsOnline(true)
