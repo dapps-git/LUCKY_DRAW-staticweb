@@ -32,6 +32,22 @@ body {
   font-family: 'Montserrat', sans-serif;
 }
 
+.font-serif-luxury {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-handwritten {
+  font-family: 'Caveat', cursive;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.font-sans-modern {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
 /* Mobile responsive font sizing helpers */
 @media (max-width: 640px) {
   h1 {
