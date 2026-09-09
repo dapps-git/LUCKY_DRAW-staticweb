@@ -7,7 +7,33 @@ import { extractCouponId } from '../lib/tokenHelper'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
 const AUTH_KEY = 'vf2026_admin_auth'
-const DATA_KEY = 'vf2026_app_data_v3'
+const DATA_KEY = 'vf2026_app_data_v5'
+
+const DUMMY_IDS = new Set([
+  'VF2026-00101',
+  'VF2026-00102',
+  'VF2026-00103',
+  'VF2026-00104',
+  'VF2026-00105',
+  'VF2026-00106',
+  'VF2026-00107',
+  'VF2026-00108',
+  'VF2026-00109',
+  'VF2026-00110',
+])
+
+const DUMMY_PHONES = new Set([
+  '9876543210',
+  '9745123489',
+  '9895012345',
+  '9847123456',
+  '9995432109',
+  '8089123456',
+  '9567123401',
+  '9447123890',
+  '8129345670',
+  '9746011122',
+])
 
 interface CouponValidationResult {
   valid: boolean
@@ -56,14 +82,35 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 function loadLocalData(): AppData {
   try {
-    const raw = localStorage.getItem(DATA_KEY)
+    // Clear out old legacy cache keys that held dummy users
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('vf2026_app_data_v1')
+      localStorage.removeItem('vf2026_app_data_v2')
+      localStorage.removeItem('vf2026_app_data_v3')
+      localStorage.removeItem('vf2026_app_data_v4')
+    }
+
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DATA_KEY) : null
     if (!raw) return seedData
     const parsed = JSON.parse(raw) as AppData
+
+    // Strictly filter out any dummy users or seed winners from stored state
+    const cleanParticipants = (parsed.participants || []).filter(
+      (p) => !DUMMY_IDS.has(p.id) && !DUMMY_PHONES.has((p.phone || '').replace(/\D/g, '').slice(-10))
+    )
+    const cleanWinners = (parsed.winners || []).filter(
+      (w) => !DUMMY_IDS.has(w.participantId) && w.id !== 'win-01' && w.id !== 'win-02'
+    )
+    const cleanCoupons = (parsed.coupons || []).filter((c) => c.batchId !== 'BATCH-SEED-01')
+    const cleanBatches = (parsed.batches || []).filter((b) => b.id !== 'BATCH-SEED-01')
+
     return {
       ...seedData,
       ...parsed,
-      coupons: parsed.coupons?.length ? parsed.coupons : (seedData.coupons || []),
-      batches: parsed.batches?.length ? parsed.batches : (seedData.batches || []),
+      participants: cleanParticipants,
+      winners: cleanWinners,
+      coupons: cleanCoupons,
+      batches: cleanBatches,
     }
   } catch {
     return seedData
@@ -71,7 +118,7 @@ function loadLocalData(): AppData {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem(AUTH_KEY) === '1')
+  const [isAdmin, setIsAdmin] = useState(() => (typeof localStorage !== 'undefined' ? localStorage.getItem(AUTH_KEY) === '1' : false))
   const [data, setData] = useState<AppData>(loadLocalData)
   const [isOnline, setIsOnline] = useState(false)
 
@@ -79,10 +126,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const refreshData = async () => {
     try {
       const serverData = await api.getAllData()
-      if (serverData.prizes.length || serverData.draws.length || serverData.participants.length) {
-        setData(serverData)
-        setIsOnline(true)
-      }
+      const cleanParticipants = (serverData.participants || []).filter(
+        (p) => !DUMMY_IDS.has(p.id) && !DUMMY_PHONES.has((p.phone || '').replace(/\D/g, '').slice(-10))
+      )
+      const cleanWinners = (serverData.winners || []).filter(
+        (w) => !DUMMY_IDS.has(w.participantId) && w.id !== 'win-01' && w.id !== 'win-02'
+      )
+      setData({
+        ...serverData,
+        participants: cleanParticipants,
+        winners: cleanWinners,
+      })
+      setIsOnline(true)
     } catch (err) {
       console.warn('Backend offline, using local state:', err)
       setIsOnline(false)
