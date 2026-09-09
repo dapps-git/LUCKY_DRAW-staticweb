@@ -61,8 +61,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // Return all participants sorted by registeredAt desc, then id desc
-    const allParticipants = await participantsCol.find({}).sort({ registeredAt: -1, id: -1 }).toArray()
+    // Return all participants sorted by registeredAt desc, createdAt desc, _id desc
+    const allParticipants = await participantsCol.find({}).sort({ registeredAt: -1, createdAt: -1, _id: -1 }).toArray()
     res.status(200).json({ ok: true, participants: allParticipants, count: allParticipants.length })
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message })

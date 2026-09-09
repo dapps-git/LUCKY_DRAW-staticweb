@@ -14,6 +14,7 @@ export interface Participant {
   eligibility: Eligibility
   status: ParticipantStatus
   couponId?: string
+  createdAt?: string
 }
 
 export interface Coupon {

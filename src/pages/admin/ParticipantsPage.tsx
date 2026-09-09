@@ -44,16 +44,22 @@ export function ParticipantsPage() {
   const filtered = useMemo(() => {
     return [...data.participants]
       .sort((a, b) => {
-        // Extract numeric suffix from ID (e.g. VF2026-00115 -> 115, higher number is newer)
+        // 1. Sort latest registered date/time first
+        const timeA = new Date(a.createdAt || a.registeredAt || 0).getTime()
+        const timeB = new Date(b.createdAt || b.registeredAt || 0).getTime()
+        if (timeB !== timeA) return timeB - timeA
+
+        const dateA = a.registeredAt || ''
+        const dateB = b.registeredAt || ''
+        if (dateB !== dateA) return dateB.localeCompare(dateA)
+
+        // 2. Tiebreaker: higher numeric ID suffix
         const matchA = a.id.match(/\d+$/)
         const matchB = b.id.match(/\d+$/)
         const numA = matchA ? parseInt(matchA[0], 10) : 0
         const numB = matchB ? parseInt(matchB[0], 10) : 0
         if (numB !== numA) return numB - numA
 
-        if (b.registeredAt && a.registeredAt && b.registeredAt !== a.registeredAt) {
-          return new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
-        }
         return b.id.localeCompare(a.id, undefined, { numeric: true })
       })
       .filter((p) => {
