@@ -16,7 +16,7 @@ const ParticipantSchema = new Schema<IParticipant>(
   {
     id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
-    phone: { type: String, required: true, index: true },
+    phone: { type: String, required: true },
     address: { type: String, required: true },
     location: { type: String, required: true },
     couponId: { type: String, index: true },
@@ -26,6 +26,7 @@ const ParticipantSchema = new Schema<IParticipant>(
   },
   {
     timestamps: true,
+    autoIndex: false,
   }
 )
 

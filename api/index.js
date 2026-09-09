@@ -4620,7 +4620,7 @@ var ParticipantSchema = new Schema3(
   {
     id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
-    phone: { type: String, required: true, index: true },
+    phone: { type: String, required: true },
     address: { type: String, required: true },
     location: { type: String, required: true },
     couponId: { type: String, index: true },
@@ -4629,7 +4629,8 @@ var ParticipantSchema = new Schema3(
     status: { type: String, enum: ["Active", "Suspended"], default: "Active", index: true }
   },
   {
-    timestamps: true
+    timestamps: true,
+    autoIndex: false
   }
 );
 var Participant = mongoose3.model("Participant", ParticipantSchema);
