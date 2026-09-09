@@ -5171,19 +5171,19 @@ app.use(async (_req, _res, next) => {
   }
   next();
 });
-app.use("/api/coupons", coupons_default);
+app.use((req, _res, next) => {
+  if (req.url.startsWith("/api")) {
+    req.url = req.url.replace(/^\/api(\/index(\.js)?)?/, "") || "/";
+  }
+  next();
+});
 app.use("/coupons", coupons_default);
-app.use("/api/participants", participants_default);
 app.use("/participants", participants_default);
-app.use("/api/prizes", prizes_default);
 app.use("/prizes", prizes_default);
-app.use("/api/draws", draws_default);
 app.use("/draws", draws_default);
-app.use("/api/winners", winners_default);
 app.use("/winners", winners_default);
-app.use("/api/auth", auth_default);
 app.use("/auth", auth_default);
-app.get(["/api/health", "/health"], (_req, res) => {
+app.get(["/health", "/"], (_req, res) => {
   res.json({
     status: "online",
     database: mongoose7.connection.readyState === 1 ? "connected" : "disconnected",
