@@ -5190,7 +5190,6 @@ app.get(["/health", "/"], (_req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-var index_default = app;
-export {
-  index_default as default
-};
+export default function handler(req, res) {
+  return app(req, res);
+}
