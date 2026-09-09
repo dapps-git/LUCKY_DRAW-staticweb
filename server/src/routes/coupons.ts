@@ -121,7 +121,7 @@ router.get('/validate/:id', async (req, res) => {
 // 2. Generate a new batch of unique coupons
 router.post('/generate', async (req, res) => {
   try {
-    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 1000)
+    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 10000)
     const name = req.body.name || `Batch ${new Date().toLocaleDateString('en-GB')} (${count} coupons)`
     const batchId = `BATCH-${Date.now()}`
     const now = new Date().toISOString()

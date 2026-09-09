@@ -4729,7 +4729,7 @@ router.get("/validate/:id", async (req, res) => {
 });
 router.post("/generate", async (req, res) => {
   try {
-    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 1e3);
+    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 1e4);
     const name = req.body.name || `Batch ${(/* @__PURE__ */ new Date()).toLocaleDateString("en-GB")} (${count} coupons)`;
     const batchId = `BATCH-${Date.now()}`;
     const now = (/* @__PURE__ */ new Date()).toISOString();
