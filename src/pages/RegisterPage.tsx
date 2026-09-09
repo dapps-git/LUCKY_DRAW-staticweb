@@ -17,6 +17,9 @@ import { isValidIndianPhone } from '../lib/format'
 import { Confetti } from '../components/Confetti'
 import { QrScannerModal } from '../components/QrScannerModal'
 import { extractCouponId, formatCouponDisplay } from '../lib/tokenHelper'
+import { PublicNavbar } from '../components/PublicNavbar'
+import bgWebp from '../assets/bg.webp'
+import mobileWebp from '../assets/mobile.webp'
 
 export function RegisterPage() {
   const { registerParticipant, validateCouponAsync } = useApp()
@@ -195,7 +198,24 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f6f0] text-slate-900 flex flex-col justify-between overflow-x-hidden select-none">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-[#140603] text-slate-900 flex flex-col justify-between overflow-x-hidden select-none relative">
+      {/* Background Image: Mobile Portrait (<640px) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center sm:hidden z-0"
+        style={{
+          backgroundImage: `url(${mobileWebp})`,
+        }}
+      />
+      {/* Background Image: Desktop / Tablet (>=640px) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center lg:bg-[length:100%_100%] hidden sm:block z-0"
+        style={{
+          backgroundImage: `url(${bgWebp})`,
+        }}
+      />
+      {/* Translucent Dark Backdrop Overlay for High Contrast */}
+      <div className="absolute inset-0 bg-[#200d08]/60 sm:bg-black/50 backdrop-blur-[2px] z-0 pointer-events-none" />
+
       <Confetti active={confetti} />
 
       {/* QR Scanner Modal */}
@@ -205,38 +225,26 @@ export function RegisterPage() {
         onScanSuccess={handleScanSuccess}
       />
 
-      {/* Clean Mobile-Friendly Top Navbar */}
-      <header className="shrink-0 w-full border-b border-black/10 bg-white/90 backdrop-blur-md px-4 py-2.5 sm:px-6">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <Link to="/home" className="flex items-center gap-1.5 font-display text-sm font-semibold tracking-wide text-[#7a1426]">
-            Valanchery <span className="text-[#c28e18] font-bold">Festival</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-[11px] font-medium tracking-wide">
-            <Link to="/home" className="text-slate-600 hover:text-black transition">
-              Home
-            </Link>
-            <Link to="/login" className="text-[#7a1426] font-semibold hover:underline transition">
-              Check Pass
-            </Link>
-            <Link
-              to="/admin/login"
-              className="rounded border border-black/20 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600 hover:border-black hover:text-black transition"
-            >
-              Admin
-            </Link>
-          </nav>
-        </div>
-      </header>
+      {/* 1. Fixed Brown Festival Navbar */}
+      <PublicNavbar active="register" />
 
       {/* Single-Screen Light-Theme Registration Form Container */}
-      <main className="flex-1 flex flex-col justify-center items-center px-3 py-3 sm:px-4 max-w-lg mx-auto w-full">
+      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-3 py-16 sm:py-20 sm:px-4 max-w-lg mx-auto w-full">
         {/* Card Wrapper */}
-        <div className="w-full rounded-2xl border border-black/10 bg-white p-4 sm:p-5 shadow-lg">
+        <div className="w-full border border-[#c28e18]/40 bg-white/95 sm:bg-white/98 backdrop-blur-md p-4 sm:p-6 shadow-2xl">
           {/* Card Header */}
-          <div className="text-center mb-3">
-            <h1 className="font-display text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+          <div className="text-center mb-3.5 space-y-1">
+            <div className="inline-flex items-center gap-1.5 font-cinzel text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[#8e6b1b] uppercase">
+              <span className="h-px w-4 bg-[#8e6b1b]" />
+              OFFICIAL FESTIVAL PARTICIPATION
+              <span className="h-px w-4 bg-[#8e6b1b]" />
+            </div>
+            <h1 className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-tight text-[#140d10]">
               Lucky Draw Registration
             </h1>
+            <p className="text-[11px] sm:text-xs text-slate-600 max-w-sm mx-auto">
+              Enter your coupon token code and phone number to participate in 10 scheduled mega lucky draws.
+            </p>
           </div>
 
           {/* Form */}
@@ -485,25 +493,35 @@ export function RegisterPage() {
 
             <div className="flex gap-2">
               <button
-                onClick={() => navigate('/home')}
-                className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-[#7a1426] bg-[#7a1426] py-2 text-xs font-bold text-white transition hover:bg-[#961a30]"
+                onClick={() => navigate('/')}
+                className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-[#720e1e] bg-[#720e1e] py-2 text-xs font-bold text-white transition hover:bg-[#891326]"
               >
                 <Home size={13} /> GO TO HOME
               </button>
-              <Link
-                to="/login"
-                className="flex-1 flex items-center justify-center rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              <button
+                onClick={() => {
+                  setSuccessId(null)
+                  setForm({
+                    name: '',
+                    phone: '',
+                    address: '',
+                    location: 'Valanchery',
+                    couponId: '',
+                  })
+                  setTokenStatus({ status: 'Idle', message: '' })
+                }}
+                className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                VIEW PASS
-              </Link>
+                + REGISTER ANOTHER
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Minimal Bottom Footer */}
-      <footer className="shrink-0 py-2 text-center text-[10px] font-medium text-slate-400">
-        Valanchery Festival 2026
+      {/* Elegant Bottom Footer */}
+      <footer className="relative z-10 shrink-0 py-3 sm:py-4 text-center text-[10px] sm:text-xs font-medium text-white/75">
+        © 2026 Valanchery Festival. All rights reserved. Official Lucky Draw Portal · Valanchery
       </footer>
     </div>
   )

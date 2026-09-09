@@ -29,9 +29,9 @@ export default function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/qr/:couponId" element={<QrViewerPage />} />
-          <Route path="/login" element={<PublicUserLoginPage />} />
-          <Route path="/check-ticket" element={<PublicUserLoginPage />} />
-          <Route path="/winners" element={<PublicWinnersPage />} />
+          <Route path="/login" element={<Navigate to="/register" replace />} />
+          <Route path="/check-ticket" element={<Navigate to="/register" replace />} />
+          <Route path="/winners" element={<Navigate to="/" replace />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route
             path="/admin/lucky-draw"
