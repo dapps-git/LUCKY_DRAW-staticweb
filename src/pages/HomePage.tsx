@@ -137,10 +137,10 @@ export function HomePage() {
         {/* 1. Fixed Brown Festival Navbar */}
         <PublicNavbar active="home" />
 
-        {/* 2. Hero Body: Title & Action (Left) + Glowing Banner Display (Center/Bottom) */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-2 sm:gap-3">
+        {/* 2. Hero Body: Title & Action + Coupon Banner + Feature Bar (Snug Flow) */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-1.5 sm:gap-2.5">
           {/* Title & CTA: Positioned cleanly below top tree leaves on mobile */}
-          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-[115px] xs:pt-[135px] sm:pt-4 lg:pt-6">
+          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-[145px] xs:pt-[165px] sm:pt-4 lg:pt-6">
             {/* Grand Shopping Festival Tag */}
             <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold tracking-[0.25em] text-[#3e342f] uppercase">
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
@@ -172,8 +172,8 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Center/Lower Coupon Banner with Rainbow Glow Border - Vertically Stretched */}
-          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto my-1 sm:my-2">
+          {/* Center/Lower Coupon Banner with Rainbow Glow Border */}
+          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto mt-1 sm:mt-2">
             <div className="p-[2.5px] sm:p-[3px] rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#00d2ff] via-[#ea00d9] via-[#fa709a] via-[#fee140] to-[#38ef7d] shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
               <div className="rounded-[9.5px] sm:rounded-[13px] overflow-hidden leading-none bg-white">
                 <img
@@ -185,50 +185,50 @@ export function HomePage() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 3. Bottom 4-Feature Bar (Resting on Pedestal Steps) - Sleek & Compact */}
-        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 pb-2 sm:pb-4">
-          <div className="bg-[#f8f5ee]/95 backdrop-blur-md border border-[#e2d5bf] rounded-lg shadow-sm px-3 sm:px-5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-3">
-            {/* Feature 1 */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
-              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
-              <div className="text-left leading-none space-y-0.5">
-                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Exclusive</div>
-                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Offers</div>
+          {/* 3. Bottom 4-Feature Bar - Placed Directly Below Coupon Banner */}
+          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto pb-3 sm:pb-5">
+            <div className="bg-[#f8f5ee]/95 backdrop-blur-md border border-[#e2d5bf] rounded-lg shadow-sm px-3 sm:px-5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-3">
+              {/* Feature 1 */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+                <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+                <div className="text-left leading-none space-y-0.5">
+                  <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Exclusive</div>
+                  <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Offers</div>
+                </div>
               </div>
-            </div>
 
-            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+              <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
-            {/* Feature 2 */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
-              <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
-              <div className="text-left leading-none space-y-0.5">
-                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Support</div>
-                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Local Business</div>
+              {/* Feature 2 */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+                <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+                <div className="text-left leading-none space-y-0.5">
+                  <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Support</div>
+                  <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Local Business</div>
+                </div>
               </div>
-            </div>
 
-            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+              <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
-            {/* Feature 3 */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
-              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
-              <div className="text-left leading-none space-y-0.5">
-                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Win</div>
-                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Exciting Prizes</div>
+              {/* Feature 3 */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+                <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+                <div className="text-left leading-none space-y-0.5">
+                  <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Win</div>
+                  <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Exciting Prizes</div>
+                </div>
               </div>
-            </div>
 
-            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+              <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
-            {/* Feature 4 */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
-              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
-              <div className="text-left leading-none space-y-0.5">
-                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">A Stronger</div>
-                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Valanchery</div>
+              {/* Feature 4 */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+                <div className="text-left leading-none space-y-0.5">
+                  <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">A Stronger</div>
+                  <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Valanchery</div>
+                </div>
               </div>
             </div>
           </div>
