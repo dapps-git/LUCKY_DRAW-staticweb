@@ -138,21 +138,21 @@ export function HomePage() {
         <PublicNavbar active="home" />
 
         {/* 2. Hero Body: Title & Action (Left) + Glowing Banner Display (Center/Bottom) */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-16 sm:pt-24 lg:pt-24 flex-1 flex flex-col justify-between">
-          {/* Title & CTA: Placed lower on mobile view under leaves, normal on laptop/desktop */}
-          <div className="max-w-xl space-y-2 sm:space-y-3 pt-24 xs:pt-28 sm:pt-2 lg:pt-4">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-2 sm:gap-3">
+          {/* Title & CTA: Clean top placement */}
+          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-6 xs:pt-10 sm:pt-1 lg:pt-2">
             {/* Grand Shopping Festival Tag */}
             <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold tracking-[0.25em] text-[#3e342f] uppercase">
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
-              GRAND SHOPPING FESTIVAL
+              VALANCHERY FESTIVAL 2026
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
             </div>
 
             {/* Two-Tone Serif Headline */}
-            <h1 className="font-serif text-4xl sm:text-6xl lg:text-[72px] font-bold tracking-tight leading-[0.98]">
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-[66px] font-bold tracking-tight leading-[0.98]">
               <span className="text-[#0d3830]">Valanchery</span>
               <br />
-              <span className="text-[#720e1e]">Festival</span>
+              <span className="text-[#720e1e]">Festival 2026</span>
             </h1>
 
             {/* Tagline */}
@@ -161,7 +161,7 @@ export function HomePage() {
             </p>
 
             {/* Register Now Button */}
-            <div className="pt-2">
+            <div className="pt-1 sm:pt-2">
               <a
                 href="#register"
                 className="group inline-flex items-center gap-2.5 bg-[#720e1e] hover:bg-[#881326] px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-[13px] font-bold uppercase tracking-wider text-white rounded-lg transition active:scale-95 cursor-pointer shadow-lg shadow-[#720e1e]/25"
@@ -173,13 +173,13 @@ export function HomePage() {
           </div>
 
           {/* Center/Lower Coupon Banner with Rainbow Glow Border - Vertically Stretched */}
-          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto my-2 sm:my-3">
+          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto my-1 sm:my-2">
             <div className="p-[2.5px] sm:p-[3px] rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#00d2ff] via-[#ea00d9] via-[#fa709a] via-[#fee140] to-[#38ef7d] shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
               <div className="rounded-[9.5px] sm:rounded-[13px] overflow-hidden leading-none bg-white">
                 <img
                   src={couponBannerImg}
                   alt="Kerala Vyapari Vyavasayi Ekopana Samithi - Valanchery Shopping Festival Season 2 Official Coupon"
-                  className="w-full h-[185px] xs:h-[210px] sm:h-[265px] md:h-[300px] lg:h-[320px] object-fill block"
+                  className="w-full h-[180px] xs:h-[205px] sm:h-[260px] md:h-[295px] lg:h-[315px] object-fill block"
                   loading="eager"
                 />
               </div>
@@ -188,7 +188,7 @@ export function HomePage() {
         </div>
 
         {/* 3. Bottom 4-Feature Bar (Resting on Pedestal Steps) - Sleek & Compact */}
-        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 pb-3 sm:pb-5">
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 pb-2 sm:pb-4">
           <div className="bg-[#f8f5ee]/95 backdrop-blur-md border border-[#e2d5bf] rounded-lg shadow-sm px-3 sm:px-5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-3">
             {/* Feature 1 */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
