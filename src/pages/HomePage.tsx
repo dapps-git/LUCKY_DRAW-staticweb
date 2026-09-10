@@ -139,8 +139,8 @@ export function HomePage() {
 
         {/* 2. Hero Body: Title & Action (Left) + Glowing Banner Display (Center/Bottom) */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-2 sm:gap-3">
-          {/* Title & CTA: Clean top placement */}
-          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-6 xs:pt-10 sm:pt-1 lg:pt-2">
+          {/* Title & CTA: Positioned cleanly below top tree leaves on mobile */}
+          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-14 xs:pt-18 sm:pt-2 lg:pt-3">
             {/* Grand Shopping Festival Tag */}
             <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold tracking-[0.25em] text-[#3e342f] uppercase">
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
