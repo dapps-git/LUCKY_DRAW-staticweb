@@ -31,7 +31,6 @@ const links = [
   { to: '/admin/lucky-draws', label: 'Draw List', icon: Dices },
   { to: '/admin/winners', label: 'Winner History', icon: Trophy },
   { to: '/admin/prizes', label: 'Prizes Vault', icon: Gift },
-  { to: '/admin/draw-schedule', label: 'Schedule', icon: CalendarClock },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 

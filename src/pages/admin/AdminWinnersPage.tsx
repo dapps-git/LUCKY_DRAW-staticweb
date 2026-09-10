@@ -11,11 +11,10 @@ export function AdminWinnersPage() {
 
   const rows = useMemo(() => {
     return [...data.winners].reverse().filter((w) => {
-      const p = getParticipant(w.participantId)
-      const pr = getPrize(w.prizeId)
+      const p = getParticipant(w.participantId) || { phone: 'Verified', name: 'Participant' }
+      const pr = getPrize(w.prizeId) || { id: w.prizeId, name: 'Festival Prize' }
       const d = getDraw(w.drawId)
-      if (!p || !pr) return false
-      const hit = `${d ? '#' + d.number : ''} ${p.phone} ${pr.name} ${w.status}`.toLowerCase().includes(q.toLowerCase())
+      const hit = `${d ? '#' + d.number : w.drawId} ${p.phone} ${pr.name} ${w.status}`.toLowerCase().includes(q.toLowerCase())
       return hit && (!prize || pr.id === prize) && (!date || w.date === date)
     })
   }, [data.winners, q, prize, date, getParticipant, getPrize, getDraw])
@@ -123,7 +122,7 @@ export function AdminWinnersPage() {
         )}
       </div>
 
-      {/* Winners Table - Removed Winner Name & Location */}
+      {/* Winners Table */}
       <div className="overflow-hidden border border-[#e8decb] bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-left text-xs">
@@ -142,7 +141,13 @@ export function AdminWinnersPage() {
                 const p = getParticipant(w.participantId)
                 const pr = getPrize(w.prizeId)
                 const d = getDraw(w.drawId)
-                if (!p || !pr || !d) return null
+                const drawTag = d
+                  ? `#${String(d.number).padStart(2, '0')}`
+                  : w.drawId.startsWith('draw-')
+                  ? `#${w.drawId.replace('draw-', '').padStart(2, '0')}`
+                  : `#${idx + 1}`
+                const prizeName = pr?.name || 'Festival Prize'
+                const phoneDisplay = p?.phone ? maskPhone(p.phone) : 'Verified Participant'
                 return (
                   <tr key={w.id} className="hover:bg-[#fcfaf5] transition-colors">
                     {/* SL Number */}
@@ -152,7 +157,7 @@ export function AdminWinnersPage() {
 
                     {/* Draw Number */}
                     <td className="px-4 py-3.5 font-mono text-xs font-bold text-[#5e0917]">
-                      #{String(d.number).padStart(2, '0')}
+                      {drawTag}
                     </td>
 
                     {/* Draw Date */}
@@ -162,13 +167,13 @@ export function AdminWinnersPage() {
 
                     {/* Masked Phone Number */}
                     <td className="px-4 py-3.5 font-mono text-xs font-semibold text-slate-800">
-                      {maskPhone(p.phone)}
+                      {phoneDisplay}
                     </td>
 
                     {/* Prize Awarded */}
                     <td className="px-4 py-3.5">
                       <span className="inline-flex items-center gap-1.5 font-semibold text-[#5e0917]">
-                        <Award size={14} className="text-[#a46e09]" /> {pr.name}
+                        <Award size={14} className="text-[#a46e09]" /> {prizeName}
                       </span>
                     </td>
 

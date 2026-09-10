@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { GIFT_PRESETS, PRIZE_IMAGES } from '../../data/mockData'
 import type { Prize, PrizeStatus } from '../../types'
-import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2 } from 'lucide-react'
+import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2, Upload } from 'lucide-react'
 
 export function PrizesPage() {
   const { data, addPrize, updatePrize, deletePrize, getDraw } = useApp()
@@ -197,40 +197,109 @@ export function PrizesPage() {
                 />
               </div>
 
-              {/* Gift Preset Selector */}
+              {/* Prize Photo Uploader & Selector */}
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">
-                  Pick an Image Preset or Enter Custom Link
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1.5">
+                  Prize Photo / Image *
                 </label>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto rounded-none border border-[#e8decb] p-2 bg-[#faf7f0]">
-                  {GIFT_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setEdit({
-                          ...edit,
-                          image: preset.image,
-                          name: edit.name || preset.name,
-                          value: edit.value || preset.value,
-                          description: edit.description || preset.description,
-                        })
-                      }}
-                      className={`relative border p-1 text-left transition rounded-none cursor-pointer ${
-                        edit.image === preset.image
-                          ? 'border-[#5e0917] bg-white ring-2 ring-[#5e0917]'
-                          : 'border-[#e8decb] bg-white'
-                      }`}
+
+                {/* File Upload Box */}
+                <div className="border-2 border-dashed border-[#d8c59f] bg-[#faf7f0] p-4 text-center transition hover:bg-[#f5eedf]">
+                  <input
+                    type="file"
+                    id="prize-image-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = (evt) => {
+                        const res = evt.target?.result as string
+                        if (res) {
+                          setEdit((prev) => (prev ? { ...prev, image: res } : null))
+                        }
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+
+                  {edit.image ? (
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <div className="h-20 w-28 shrink-0 overflow-hidden border border-[#d8c59f] bg-white shadow-xs">
+                        <img src={edit.image} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-xs font-bold text-slate-800">Current Prize Photo</p>
+                        <p className="text-[11px] text-slate-500">Image loaded & ready to save in database</p>
+                        <div className="mt-2 flex gap-2">
+                          <label
+                            htmlFor="prize-image-upload"
+                            className="inline-flex items-center gap-1 bg-[#5e0917] hover:bg-[#720e1e] text-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider cursor-pointer shadow-xs transition active:scale-95"
+                          >
+                            <Upload size={12} /> Change Photo
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setEdit((prev) => (prev ? { ...prev, image: '' } : null))}
+                            className="inline-flex items-center gap-1 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1 text-[11px] font-semibold cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="prize-image-upload"
+                      className="flex flex-col items-center justify-center cursor-pointer py-2"
                     >
-                      <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover rounded-none" />
-                      <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
-                    </button>
-                  ))}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0e6d6] text-[#720e1e]">
+                        <Upload size={18} />
+                      </div>
+                      <p className="mt-2 text-xs font-bold text-slate-800">Click to Upload Photo from Device</p>
+                      <p className="text-[11px] text-slate-500">PNG, JPG, WEBP supported (Direct from phone/laptop)</p>
+                    </label>
+                  )}
                 </div>
+
+                {/* Preset Gallery Accordion */}
+                <div className="mt-3">
+                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Or Select from Festival Presets
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-32 overflow-y-auto border border-[#e8decb] p-2 bg-white">
+                    {GIFT_PRESETS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setEdit({
+                            ...edit,
+                            image: preset.image,
+                            name: edit.name || preset.name,
+                            value: edit.value || preset.value,
+                            description: edit.description || preset.description,
+                          })
+                        }}
+                        className={`relative border p-1 text-left transition cursor-pointer ${
+                          edit.image === preset.image
+                            ? 'border-[#5e0917] bg-[#fffbf2] ring-2 ring-[#5e0917]'
+                            : 'border-[#e8decb] bg-white hover:border-slate-400'
+                        }`}
+                      >
+                        <img src={preset.image} alt={preset.name} className="h-9 w-full object-cover" />
+                        <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Direct Image URL input */}
                 <div className="mt-2">
                   <input
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                    placeholder="Or enter image URL"
+                    className="w-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
+                    placeholder="Or enter direct image URL (https://...)"
                     value={edit.image ?? ''}
                     onChange={(e) => setEdit({ ...edit, image: e.target.value })}
                   />
@@ -241,13 +310,13 @@ export function PrizesPage() {
             <div className="mt-6 flex gap-2 pt-2 border-t border-[#e8decb]">
               <button
                 onClick={() => setEdit(null)}
-                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="flex-1 border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={save}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
+                className="flex-1 bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
               >
                 Save Prize
               </button>

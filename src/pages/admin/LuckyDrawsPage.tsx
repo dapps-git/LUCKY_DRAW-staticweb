@@ -10,7 +10,7 @@ export function LuckyDrawsPage() {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
     number: data.draws.length + 1,
-    date: '2026-12-30',
+    date: new Date().toISOString().slice(0, 10),
     prizeId: data.prizes[0]?.id ?? '',
   })
 
@@ -122,8 +122,8 @@ export function LuckyDrawsPage() {
 
       {/* Create New Draw Modal */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="w-full max-w-md my-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[#e8decb] pb-3.5">
               <div>
                 <h3 className="text-lg font-bold text-[#140d10]">Create New Draw</h3>
@@ -147,18 +147,6 @@ export function LuckyDrawsPage() {
                   className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   value={form.number}
                   onChange={(e) => setForm({ ...form, number: Number(e.target.value) })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
-                  Scheduled Date
-                </label>
-                <input
-                  type="date"
-                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
                 />
               </div>
 

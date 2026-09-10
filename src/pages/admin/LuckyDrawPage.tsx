@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   X,
   Sparkle,
+  Upload,
 } from 'lucide-react'
 
 type Phase = 'ready' | 'spinning' | 'reveal' | 'done'
@@ -607,42 +608,106 @@ export function LuckyDrawPage() {
                 />
               </div>
 
-              {/* Quick Image Preset Selector */}
+              {/* Prize Photo Uploader & Selector */}
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">
-                  Choose Gift Image Preset or Custom URL
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1.5">
+                  Gift Photo / Image *
                 </label>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto rounded-none border border-[#e8decb] p-2 bg-[#faf7f0]">
-                  {GIFT_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setNewGift({
-                          ...newGift,
-                          image: preset.image,
-                          name: newGift.name || preset.name,
-                          value: newGift.value || preset.value,
-                          description: newGift.description || preset.description,
-                        })
-                      }}
-                      className={`relative border p-1 text-left transition rounded-none cursor-pointer ${
-                        newGift.image === preset.image ? 'border-[#5e0917] bg-white ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
-                      }`}
+
+                {/* File Upload Box */}
+                <div className="border-2 border-dashed border-[#d8c59f] bg-[#faf7f0] p-3 text-center transition hover:bg-[#f5eedf]">
+                  <input
+                    type="file"
+                    id="live-gift-image-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = (evt) => {
+                        const res = evt.target?.result as string
+                        if (res) {
+                          setNewGift((prev) => ({ ...prev, image: res }))
+                        }
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+
+                  {newGift.image ? (
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                      <div className="h-16 w-24 shrink-0 overflow-hidden border border-[#d8c59f] bg-white shadow-xs">
+                        <img src={newGift.image} alt="Preview" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-xs font-bold text-slate-800">Photo Attached</p>
+                        <div className="mt-1 flex gap-2">
+                          <label
+                            htmlFor="live-gift-image-upload"
+                            className="inline-flex items-center gap-1 bg-[#5e0917] hover:bg-[#720e1e] text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider cursor-pointer shadow-xs transition active:scale-95"
+                          >
+                            <Upload size={11} /> Change
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setNewGift((prev) => ({ ...prev, image: '' }))}
+                            className="inline-flex items-center gap-1 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-semibold cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="live-gift-image-upload"
+                      className="flex flex-col items-center justify-center cursor-pointer py-1.5"
                     >
-                      <img src={preset.image} alt={preset.name} className="h-12 w-full object-cover rounded-none" />
-                      <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
-                    </button>
-                  ))}
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e6d6] text-[#720e1e]">
+                        <Upload size={15} />
+                      </div>
+                      <p className="mt-1 text-xs font-bold text-slate-800">Click to Upload Photo from Device</p>
+                    </label>
+                  )}
+                </div>
+
+                <div className="mt-2.5">
+                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Or Select Preset Image
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-28 overflow-y-auto border border-[#e8decb] p-2 bg-white">
+                    {GIFT_PRESETS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setNewGift({
+                            ...newGift,
+                            image: preset.image,
+                            name: newGift.name || preset.name,
+                            value: newGift.value || preset.value,
+                            description: newGift.description || preset.description,
+                          })
+                        }}
+                        className={`relative border p-1 text-left transition cursor-pointer ${
+                          newGift.image === preset.image ? 'border-[#5e0917] bg-[#fffbf2] ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
+                        }`}
+                      >
+                        <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover" />
+                        <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="mt-2">
                   <input
                     type="url"
-                    placeholder="Or paste custom image URL here"
+                    placeholder="Or paste custom image URL"
                     value={newGift.image}
                     onChange={(e) => setNewGift({ ...newGift, image: e.target.value })}
-                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2 text-[11px] text-slate-900 outline-none focus:border-[#5e0917]"
+                    className="w-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   />
                 </div>
               </div>

@@ -7,7 +7,6 @@ import { AdminWinnersPage } from './pages/admin/AdminWinnersPage'
 import { DashboardPage } from './pages/admin/DashboardPage'
 import { CouponsPage } from './pages/admin/CouponsPage'
 import { CouponsDirectoryPage } from './pages/admin/CouponsDirectoryPage'
-import { DrawSchedulePage } from './pages/admin/DrawSchedulePage'
 import { ImportPage } from './pages/admin/ImportPage'
 import { LuckyDrawPage } from './pages/admin/LuckyDrawPage'
 import { LuckyDrawsPage } from './pages/admin/LuckyDrawsPage'
@@ -57,7 +56,6 @@ export default function App() {
             <Route path="lucky-draws" element={<LuckyDrawsPage />} />
             <Route path="winners" element={<AdminWinnersPage />} />
             <Route path="prizes" element={<PrizesPage />} />
-            <Route path="draw-schedule" element={<DrawSchedulePage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/register" replace />} />
