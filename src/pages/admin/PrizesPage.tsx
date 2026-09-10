@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { GIFT_PRESETS, PRIZE_IMAGES } from '../../data/mockData'
 import type { Prize, PrizeStatus } from '../../types'
-import { Plus, X, Sparkles, Check } from 'lucide-react'
+import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2 } from 'lucide-react'
 
 export function PrizesPage() {
   const { data, addPrize, updatePrize, deletePrize, getDraw } = useApp()
@@ -25,16 +25,19 @@ export function PrizesPage() {
     setEdit(null)
   }
 
+  const awardedCount = data.prizes.filter((p) => p.status === 'Awarded').length
+  const availableCount = data.prizes.filter((p) => p.status !== 'Awarded').length
+
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e8decb]/60 pb-5">
         <div>
-          <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
             Festival Prizes Vault
           </h1>
-          <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
-            Total {data.prizes.length} prizes configured ({data.prizes.filter((p) => p.status === 'Awarded').length} awarded,{' '}
-            {data.prizes.filter((p) => p.status !== 'Awarded').length} available)
+          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
+            Total {data.prizes.length} prizes configured · <strong className="text-emerald-700 font-semibold">{awardedCount} Awarded</strong> · <strong className="text-amber-700 font-semibold">{availableCount} Available</strong>
           </p>
         </div>
         <button
@@ -47,53 +50,88 @@ export function PrizesPage() {
               status: 'Available',
             })
           }
-          className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
+          className="inline-flex items-center gap-1.5 rounded-none bg-[#5e0917] hover:bg-[#720e1e] px-4 py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer self-start sm:self-auto"
         >
-          <Plus size={15} /> ADD NEW PRIZE
+          <Plus size={15} />
+          <span>Add New Prize</span>
         </button>
       </div>
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grid of Prizes */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {data.prizes.map((p) => {
           const draw = p.assignedDrawId ? getDraw(p.assignedDrawId) : undefined
           return (
-            <article key={p.id} className="border border-black/10 bg-white shadow-sm hover:shadow-md transition">
-              <div className="relative h-44 w-full bg-black/60 overflow-hidden">
-                <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <article
+              key={p.id}
+              className="group rounded-none border border-[#e8decb] bg-white shadow-xs hover:shadow-md transition duration-200 flex flex-col overflow-hidden"
+            >
+              {/* Prize Image */}
+              <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                {/* Status Badge */}
                 <div className="absolute bottom-3 left-3">
                   <span
-                    className={`border px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase ${
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-none text-[10px] font-bold tracking-wider uppercase shadow-xs backdrop-blur-xs ${
                       p.status === 'Awarded'
-                        ? 'border-emerald-500 bg-emerald-950/80 text-emerald-300'
-                        : 'border-[#d4a017] bg-black/80 text-[#f3d48a]'
+                        ? 'bg-emerald-600/90 text-white'
+                        : p.status === 'Assigned'
+                        ? 'bg-blue-600/90 text-white'
+                        : 'bg-amber-500/90 text-white'
                     }`}
                   >
                     {p.status}
                   </span>
                 </div>
+
+                {/* Value Pill Top Right */}
+                <div className="absolute top-3 right-3 rounded-none bg-white/90 backdrop-blur-xs border border-[#e8decb] px-3 py-1 text-xs font-bold font-mono text-[#5e0917] shadow-xs">
+                  {p.value}
+                </div>
               </div>
 
-              <div className="p-5">
-                <h2 className="font-display text-xl font-light text-[#140d10]">{p.name}</h2>
-                <p className="mt-1 text-xs font-light text-black/60 line-clamp-2">{p.description}</p>
-                <p className="mt-3 font-mono text-sm font-medium text-[#6b1020]">{p.value}</p>
-                <p className="mt-1 text-xs font-light text-black/50">
-                  Assigned: {draw ? `Draw #${String(draw.number).padStart(2, '0')}` : 'Unassigned'}
-                </p>
+              {/* Card Details */}
+              <div className="p-5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-[#140d10] leading-snug truncate">
+                    {p.name}
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    {p.description || 'Valanchery Festival official grand prize reward'}
+                  </p>
 
-                <div className="mt-4 flex gap-3 border-t border-black/10 pt-3 text-xs font-light">
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-600">
+                    <Dices size={13} className="text-[#ad823e]" />
+                    <span>
+                      Assigned:{' '}
+                      <strong className="font-semibold text-slate-800">
+                        {draw ? `Draw #${String(draw.number).padStart(2, '0')}` : 'Unassigned'}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Actions Footer */}
+                <div className="mt-5 flex items-center justify-end gap-2 border-t border-[#f0e6d6] pt-3.5">
                   <button
                     onClick={() => setEdit(p)}
-                    className="text-black/80 underline underline-offset-4 hover:text-black"
+                    className="inline-flex items-center gap-1 rounded-none border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer"
                   >
-                    Edit
+                    <Edit3 size={12} />
+                    <span>Edit</span>
                   </button>
                   <button
-                    className="text-red-700 underline underline-offset-4 hover:text-red-900"
                     onClick={() => deletePrize(p.id)}
+                    className="inline-flex items-center gap-1 rounded-none border border-rose-200 bg-rose-50/50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
                   >
-                    Delete
+                    <Trash2 size={12} />
+                    <span>Delete</span>
                   </button>
                 </div>
               </div>
@@ -102,38 +140,57 @@ export function PrizesPage() {
         })}
       </div>
 
+      {/* Edit / Add Modal */}
       {edit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto border-2 border-black/20 bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/10 pb-3">
-              <h3 className="font-display text-lg font-light">{edit.id ? 'Edit Prize' : 'Add Prize (Frontend)'}</h3>
-              <button onClick={() => setEdit(null)} className="text-black/50 hover:text-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3.5">
+              <div>
+                <h3 className="text-lg font-bold text-[#140d10]">
+                  {edit.id ? 'Edit Prize' : 'Add New Prize'}
+                </h3>
+                <p className="text-xs text-slate-500">Configure prize details in the festival vault</p>
+              </div>
+              <button
+                onClick={() => setEdit(null)}
+                className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer transition"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="mt-4 space-y-3 text-xs">
+
+            <div className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block text-black/60 uppercase">Prize Name *</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Prize Name *
+                </label>
                 <input
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none focus:border-[#d4a017]"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   placeholder="e.g. Smart 4K TV"
                   value={edit.name ?? ''}
                   onChange={(e) => setEdit({ ...edit, name: e.target.value })}
                 />
               </div>
+
               <div>
-                <label className="block text-black/60 uppercase">Description</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Description
+                </label>
                 <textarea
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none focus:border-[#d4a017]"
+                  rows={2}
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   placeholder="Details about prize"
                   value={edit.description ?? ''}
                   onChange={(e) => setEdit({ ...edit, description: e.target.value })}
                 />
               </div>
+
               <div>
-                <label className="block text-black/60 uppercase">Approximate Value *</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Approximate Value *
+                </label>
                 <input
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none focus:border-[#d4a017]"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   placeholder="e.g. ₹45,000"
                   value={edit.value ?? ''}
                   onChange={(e) => setEdit({ ...edit, value: e.target.value })}
@@ -142,8 +199,10 @@ export function PrizesPage() {
 
               {/* Gift Preset Selector */}
               <div>
-                <label className="block text-black/60 uppercase mb-1">Pick an Image Preset or Enter Custom Link</label>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto border border-black/10 p-2 bg-[#f7f0e6]">
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">
+                  Pick an Image Preset or Enter Custom Link
+                </label>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto rounded-none border border-[#e8decb] p-2 bg-[#faf7f0]">
                   {GIFT_PRESETS.map((preset, idx) => (
                     <button
                       key={idx}
@@ -157,18 +216,20 @@ export function PrizesPage() {
                           description: edit.description || preset.description,
                         })
                       }}
-                      className={`relative border p-1 text-left transition ${
-                        edit.image === preset.image ? 'border-[#6b1020] bg-white ring-2 ring-[#d4a017]' : 'border-black/10 bg-white'
+                      className={`relative border p-1 text-left transition rounded-none cursor-pointer ${
+                        edit.image === preset.image
+                          ? 'border-[#5e0917] bg-white ring-2 ring-[#5e0917]'
+                          : 'border-[#e8decb] bg-white'
                       }`}
                     >
-                      <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover" />
-                      <p className="mt-1 text-[9px] truncate font-medium text-black/80">{preset.name}</p>
+                      <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover rounded-none" />
+                      <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
                     </button>
                   ))}
                 </div>
                 <div className="mt-2">
                   <input
-                    className="w-full border border-black/20 bg-white px-3 py-1.5 text-xs outline-none"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                     placeholder="Or enter image URL"
                     value={edit.image ?? ''}
                     onChange={(e) => setEdit({ ...edit, image: e.target.value })}
@@ -176,16 +237,17 @@ export function PrizesPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex gap-2">
+
+            <div className="mt-6 flex gap-2 pt-2 border-t border-[#e8decb]">
               <button
                 onClick={() => setEdit(null)}
-                className="flex-1 border border-black/20 py-2 text-xs font-light text-black hover:bg-black/5"
+                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={save}
-                className="flex-1 border border-[#6b1020] bg-[#6b1020] py-2 text-xs font-medium text-white hover:bg-[#851629]"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
               >
                 Save Prize
               </button>

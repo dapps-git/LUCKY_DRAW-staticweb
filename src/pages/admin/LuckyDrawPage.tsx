@@ -211,196 +211,235 @@ export function LuckyDrawPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-100px)] overflow-hidden border border-white/10 bg-[#090507] p-4 text-white sm:p-6 md:p-10">
+    <div className="relative min-h-[calc(100vh-120px)] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 font-sans">
       <Confetti active={phase === 'reveal' || phase === 'done'} />
       {flash && <div className="pointer-events-none absolute inset-0 z-20 bg-white animate-[flash_0.7s_ease]" />}
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
 
-      {/* Top Header */}
-      <div className="relative mx-auto max-w-4xl text-center">
-        <Link
-          to="/admin/dashboard"
-          className="mb-3 inline-flex items-center gap-1.5 text-xs font-light text-white/50 transition hover:text-[#f3d48a] sm:absolute sm:left-0 sm:top-0"
+      {/* Decorative festive vector elements matching reference design */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
+        {/* Left tilted gift box line art */}
+        <svg
+          className="absolute left-6 lg:left-14 top-1/2 -translate-y-1/2 -rotate-12 w-28 h-28 sm:w-36 sm:h-36 text-[#ebd8c2] opacity-50 hidden md:block"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <ArrowLeft size={14} /> Back to Dashboard
-        </Link>
-        <p className="text-[10px] tracking-[0.4em] text-[#f3d48a] uppercase">LIVE STAGE SELECTION</p>
-        <h1 className="font-display mt-2 text-2xl font-light tracking-wider sm:text-3xl md:text-5xl">
-          LUCKY DRAW #{String(nextDraw.number).padStart(2, '0')}
-        </h1>
+          <rect x="3" y="8" width="18" height="13" rx="2" />
+          <path d="M12 8v13" />
+          <path d="M19 12H5" />
+          <path d="M12 8a3 3 0 1 0-3-3c0 2 3 3 3 3z" />
+          <path d="M12 8a3 3 0 1 1 3-3c0 2-3 3-3 3z" />
+        </svg>
 
-        {/* Gift Switcher Bar */}
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="text-white/60">Active Grand Prize:</span>
-          <span className="font-medium text-[#f3d48a]">🎁 {activePrize.name} ({activePrize.value})</span>
-          
-          {phase === 'ready' && (
-            <div className="inline-flex items-center gap-1.5 ml-2">
-              <button
-                onClick={() => setShowPrizeSelector(true)}
-                className="inline-flex items-center gap-1 border border-[#d4a017]/60 bg-[#d4a017]/10 px-2.5 py-1 text-[11px] font-light text-[#f3d48a] transition hover:bg-[#d4a017]/25"
-              >
-                <Gift size={12} /> Choose Gift <ChevronDown size={11} />
-              </button>
-              <button
-                onClick={() => setShowAddPrizeModal(true)}
-                className="inline-flex items-center gap-1 border border-white/20 bg-white/5 px-2.5 py-1 text-[11px] font-light text-white transition hover:border-[#f3d48a] hover:text-[#f3d48a]"
-              >
-                <Plus size={12} /> Add New Gift
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Right tilted gift box line art */}
+        <svg
+          className="absolute right-6 lg:right-14 top-1/2 -translate-y-1/2 rotate-12 w-28 h-28 sm:w-36 sm:h-36 text-[#ebd8c2] opacity-50 hidden md:block"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="8" width="18" height="13" rx="2" />
+          <path d="M12 8v13" />
+          <path d="M19 12H5" />
+          <path d="M12 8a3 3 0 1 0-3-3c0 2 3 3 3 3z" />
+          <path d="M12 8a3 3 0 1 1 3-3c0 2-3 3-3 3z" />
+        </svg>
 
-        {/* Live Pool Count and Winner Validation Info */}
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs font-light text-white/60">
-          <span className="inline-flex items-center gap-1 text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <strong className="font-medium text-white">{pool.length}</strong> eligible participants in live pool
-          </span>
-          {winnerParticipantIds.size > 0 && (
-            <span className="border-l border-white/15 pl-3 text-white/40">
-              ({winnerParticipantIds.size} past winners excluded from winning again)
-            </span>
-          )}
-        </div>
+        {/* Soft pastel bokeh dots */}
+        <div className="absolute left-[12%] top-[22%] h-3 w-3 rounded-full bg-[#f4cfd4] opacity-70" />
+        <div className="absolute right-[16%] top-[25%] h-3 w-3 rounded-full bg-[#fae7cf] opacity-80" />
+        <div className="absolute left-[14%] bottom-[28%] h-3 w-3 rounded-full bg-[#fae7cf] opacity-80" />
+        <div className="absolute right-[14%] bottom-[25%] h-3 w-3 rounded-full bg-[#f4cfd4] opacity-70" />
+
+        {/* Soft ribbon swirls */}
+        <svg
+          className="absolute left-[18%] bottom-[40%] w-12 h-12 text-[#f3d0d6] opacity-70 hidden sm:block"
+          viewBox="0 0 50 50"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        >
+          <path d="M10 40 Q 25 10, 45 25" />
+        </svg>
+        <svg
+          className="absolute right-[17%] bottom-[35%] w-14 h-14 text-[#f3d0d6] opacity-70 hidden sm:block"
+          viewBox="0 0 50 50"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        >
+          <path d="M5 15 Q 25 40, 45 20" />
+        </svg>
       </div>
 
-      {/* Draw Stage Screen */}
-      <div className="relative mx-auto mt-8 max-w-xl">
-        <div
-          className={`relative border-2 border-[#d4a017]/60 bg-gradient-to-b from-[#2a0c14] to-[#0f0407] p-6 text-center sm:p-8 md:p-12 ${
-            phase === 'ready' || phase === 'spinning' ? 'animate-glow' : ''
-          }`}
+      {/* Back to Dashboard Button */}
+      <div className="relative z-10 w-full max-w-[440px] mb-3.5 flex items-center justify-start">
+        <Link
+          to="/admin/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#5c0b17] transition bg-white/90 hover:bg-white px-3.5 py-1.5 rounded-none border border-[#e8decb] shadow-xs cursor-pointer"
         >
+          <ArrowLeft size={14} />
+          <span>Back to Dashboard</span>
+        </Link>
+      </div>
+
+      {/* Main Centered Card */}
+      <div className="relative z-10 w-full max-w-[440px] rounded-none bg-[#fffdfa] p-7 sm:p-10 text-center shadow-[0_22px_50px_rgba(0,0,0,0.06)] border border-[#f5ece0]">
+        {/* Draw Title */}
+        <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#5c0b17]">
+          Lucky Draw #{String(nextDraw.number).padStart(2, '0')}
+        </h1>
+
+        {/* Rose accent divider */}
+        <div className="mx-auto mt-2 h-[2px] w-12 rounded-none bg-[#deb3ba]" />
+
+        {/* Eligible Participants Count */}
+        <p className="mt-2.5 text-xs sm:text-[13px] text-slate-500 font-normal">
+          {pool.length} eligible participants in this draw
+        </p>
+
+        {/* Prize Image */}
+        <div className="mt-6 mb-4 w-full h-44 sm:h-48 overflow-hidden rounded-none shadow-xs border border-[#eee4d6]">
+          <img
+            src={activePrize.image}
+            alt={activePrize.name}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Prize Label & Name */}
+        <div>
+          <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.22em] text-[#ad823e] uppercase">
+            CURRENT PRIZE
+          </p>
+          <p className="text-xl sm:text-[22px] font-bold text-[#5c0b17] mt-1">
+            {activePrize.name} <span className="font-bold">({activePrize.value})</span>
+          </p>
+
+          {/* Change Prize Link */}
           {phase === 'ready' && (
-            <div className="py-2">
-              {/* Prize Preview Banner */}
-              <div className="mx-auto mb-6 max-w-xs overflow-hidden border border-[#d4a017]/40 bg-black/40">
-                <img
-                  src={activePrize.image}
-                  alt={activePrize.name}
-                  className="h-32 w-full object-cover transition duration-300 hover:scale-105"
-                />
-                <div className="p-2.5 text-center bg-black/70 border-t border-white/10">
-                  <p className="text-[10px] tracking-wider text-white/50 uppercase">CURRENT PRIZE</p>
-                  <p className="font-display text-sm text-[#f3d48a]">{activePrize.name}</p>
-                </div>
-              </div>
-
-              <p className="text-[11px] tracking-[0.35em] text-[#f3d48a] uppercase">READY FOR DRAW</p>
-              <h2 className="font-display mt-2 text-xl font-light tracking-wide text-white sm:text-2xl md:text-3xl">
-                START THE LIVE DRAW
-              </h2>
-              <p className="mx-auto mt-2 max-w-md text-xs font-light leading-relaxed text-white/60 sm:text-sm">
-                The algorithm will randomly spin through all {pool.length} registered eligible entries and select 1 winner.
-              </p>
-
-              {pool.length > 0 ? (
-                <button
-                  onClick={startDraw}
-                  className="mt-6 border border-[#d4a017] bg-[#d4a017] px-8 py-3.5 text-xs font-medium tracking-widest text-[#140d10] transition hover:bg-[#e5b32e] sm:text-sm shadow-lg shadow-[#d4a017]/20"
-                >
-                  LAUNCH RANDOMIZER
-                </button>
-              ) : (
-                <div className="mt-6 border border-red-500/40 bg-red-950/40 p-4 text-xs font-light text-red-200">
-                  No eligible participants remaining in the pool. All registered participants have already won or are inactive.
-                </div>
-              )}
-            </div>
-          )}
-
-          {phase === 'spinning' && display && (
-            <div className="py-4">
-              <p className="text-[10px] tracking-[0.35em] text-[#f3d48a] uppercase">SELECTING RANDOM WINNER…</p>
-              <div className={`mt-6 ${progress < 80 ? 'animate-slot' : ''}`}>
-                <p className="font-display text-2xl font-light uppercase tracking-wide text-white sm:text-3xl md:text-4xl">
-                  {display.name}
-                </p>
-                {display.couponId ? (
-                  <p className="mt-2 font-mono text-sm font-semibold tracking-wider text-[#f3d48a] sm:text-base">
-                    🎫 COUPON: {display.couponId}
-                  </p>
-                ) : (
-                  <p className="mt-2 font-mono text-sm tracking-wider text-white/70 sm:text-base">
-                    {maskPhone(display.phone)}
-                  </p>
-                )}
-                <p className="mt-1 text-xs font-light tracking-wider text-[#f3d48a] uppercase">
-                  {display.location} · {display.id}
-                </p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mt-8 h-1.5 w-full overflow-hidden bg-white/10">
-                <div className="h-full bg-[#d4a017] transition-all" style={{ width: `${progress}%` }} />
-              </div>
-
-              <div className="mt-6 flex items-center justify-center gap-2 text-xs font-light text-white/40">
-                <Sparkles size={13} className="text-[#f3d48a] animate-spin" />
-                Randomizing across {pool.length} registered coupon entries…
-              </div>
-            </div>
-          )}
-
-          {(phase === 'reveal' || phase === 'done') && winner && (
-            <div className="animate-reveal py-2">
-              <span className="inline-block border border-[#d4a017] bg-[#d4a017]/10 px-3 py-1 text-[10px] tracking-[0.35em] text-[#f3d48a] uppercase">
-                WINNER SELECTED
-              </span>
-              <h2 className="font-display mt-4 text-2xl font-light uppercase tracking-wide text-white sm:text-3xl md:text-4xl">
-                {winner.name}
-              </h2>
-              {winner.couponId && (
-                <div className="mt-3 inline-flex items-center gap-2 rounded border border-[#d4a017] bg-[#d4a017]/20 px-4 py-1.5 font-mono text-sm font-bold tracking-wider text-[#f3d48a] shadow-lg shadow-[#d4a017]/20">
-                  🎫 WINNING COUPON: {winner.couponId}
-                </div>
-              )}
-              <p className="mt-2 font-mono text-sm font-light tracking-widest text-white/80 sm:text-base">
-                {maskPhone(winner.phone)}
-              </p>
-              <p className="mt-1 text-xs font-light tracking-wider text-[#f3d48a] uppercase">
-                {winner.location} · Participant ID: {winner.id}
-              </p>
-
-              <div className="mx-auto mt-6 max-w-xs border border-white/20">
-                <img src={activePrize.image} alt={activePrize.name} className="h-36 w-full object-cover" />
-              </div>
-              <p className="mt-3 text-xs font-light text-white/50 uppercase">AWARDED GRAND PRIZE</p>
-              <p className="text-base font-light text-[#f3d48a] sm:text-lg">🎁 {activePrize.name.toUpperCase()} ({activePrize.value})</p>
-            </div>
+            <button
+              onClick={() => setShowPrizeSelector(true)}
+              className="mt-1.5 inline-block text-xs font-medium text-[#8b1e2e] hover:underline cursor-pointer transition"
+            >
+              Change Prize
+            </button>
           )}
         </div>
+
+        {/* Ready Phase - Prominent START LIVE DRAW Button */}
+        {phase === 'ready' && (
+          <div className="mt-6">
+            {pool.length > 0 ? (
+              <button
+                onClick={startDraw}
+                className="w-full rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3.5 px-6 text-xs sm:text-[13px] font-bold tracking-widest uppercase text-white shadow-[0_8px_20px_rgba(94,9,23,0.35)] transition duration-150 active:scale-[0.98] cursor-pointer"
+              >
+                START LIVE DRAW
+              </button>
+            ) : (
+              <p className="text-xs text-rose-700 font-medium py-2">
+                No eligible participants remaining in the pool.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Spinning Phase in Card */}
+        {phase === 'spinning' && display && (
+          <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-[#ad823e] uppercase animate-pulse">
+              Selecting Winner…
+            </p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight truncate">
+              {display.name}
+            </p>
+            {display.couponId && (
+              <span className="inline-block font-mono text-xs font-bold text-slate-800 bg-[#f7f0e6] px-3 py-1 rounded-none border border-[#e8decb]">
+                🎫 {display.couponId}
+              </span>
+            )}
+            <div className="h-1.5 w-full bg-slate-200 overflow-hidden rounded-none mt-3">
+              <div
+                className="h-full bg-[#5e0917] transition-all duration-75"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Reveal / Done Phase in Card */}
+        {(phase === 'reveal' || phase === 'done') && winner && (
+          <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
+            <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-0.5 rounded-none uppercase tracking-wider">
+              Winner Selected
+            </span>
+            <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight">
+              {winner.name}
+            </p>
+            {winner.couponId && (
+              <p className="font-mono text-xs sm:text-sm font-bold text-[#8b1e2e]">
+                🎫 Coupon: {winner.couponId}
+              </p>
+            )}
+            <p className="font-mono text-xs text-slate-500">
+              {maskPhone(winner.phone)} · {winner.location}
+            </p>
+
+            <div className="pt-2 flex flex-col gap-2 sm:flex-row">
+              <button
+                onClick={() => setShowModal(true)}
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition active:scale-95 cursor-pointer"
+              >
+                Confirm Winner
+              </button>
+              <button
+                onClick={() => setConfirmAgain(true)}
+                className="rounded-none border border-slate-300 py-3 px-4 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Re-spin
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}
       {showModal && winner && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/75 p-4">
-          <div className="animate-reveal w-full max-w-md border-2 border-[#d4a017] bg-white p-6 text-[#140d10] shadow-2xl md:p-8">
-            <p className="text-[10px] font-medium tracking-[0.3em] text-[#9b1c32] uppercase">RESULT READY</p>
-            <h3 className="font-display mt-1 text-2xl font-light tracking-wide text-[#140d10]">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="animate-reveal w-full max-w-md rounded-none border border-[#e8decb] bg-white p-6 sm:p-8 text-[#140d10] shadow-2xl">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-[#5c0b17] uppercase">RESULT READY</p>
+            <h3 className="mt-1 text-xl sm:text-2xl font-bold text-[#140d10]">
               Confirm Draw Winner
             </h3>
-            <p className="mt-2 text-xs font-light text-black/60">
+            <p className="mt-1.5 text-xs text-slate-600">
               The draw selected the following participant. Confirm to record this officially into the festival winners list and grant this prize.
             </p>
 
-            <div className="my-5 border border-black/10 bg-[#f7f0e6] p-4 text-left">
-              <p className="text-[10px] font-medium tracking-wider text-black/50 uppercase">Winner</p>
-              <p className="font-display text-xl font-normal text-[#140d10]">{winner.name}</p>
-              <p className="text-xs font-light text-black/70">Phone: {maskPhone(winner.phone)}</p>
-              <p className="text-xs font-light text-black/70">Location: {winner.location}</p>
-              <p className="text-xs font-mono text-[#6b1020]">Participant ID: {winner.id}</p>
+            <div className="my-4 rounded-none border border-[#e8decb] bg-[#faf7f0] p-4 text-left">
+              <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Winner</p>
+              <p className="text-lg font-bold text-[#140d10]">{winner.name}</p>
+              <p className="text-xs text-slate-600">Phone: {maskPhone(winner.phone)}</p>
+              <p className="text-xs text-slate-600">Location: {winner.location}</p>
+              <p className="text-xs font-mono font-semibold text-[#5c0b17]">Participant ID: {winner.id}</p>
               {winner.couponId && (
-                <p className="mt-1 font-mono text-xs font-semibold text-[#8c6710]">
+                <p className="mt-1 font-mono text-xs font-bold text-[#ad823e]">
                   🎫 Coupon Code: {winner.couponId}
                 </p>
               )}
 
-              <div className="mt-3 border-t border-black/10 pt-2">
-                <p className="text-[10px] font-medium tracking-wider text-black/50 uppercase">Awarded Prize</p>
-                <p className="text-sm font-medium text-[#6b1020]">{activePrize.name} ({activePrize.value})</p>
+              <div className="mt-3 border-t border-[#e8decb] pt-2">
+                <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Awarded Prize</p>
+                <p className="text-sm font-bold text-[#5c0b17]">{activePrize.name} ({activePrize.value})</p>
               </div>
             </div>
 
@@ -415,13 +454,13 @@ export function LuckyDrawPage() {
                     setToast(res.error)
                   }
                 }}
-                className="flex-1 border border-[#6b1020] bg-[#6b1020] py-3 text-xs font-medium tracking-widest text-white transition hover:bg-[#851629]"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
               >
                 CONFIRM WINNER
               </button>
               <button
                 onClick={() => setConfirmAgain(true)}
-                className="flex-1 border border-black/20 py-3 text-xs font-light tracking-widest text-black/80 transition hover:bg-black/5"
+                className="flex-1 rounded-none border border-slate-300 py-3 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 SPIN AGAIN
               </button>
@@ -432,22 +471,22 @@ export function LuckyDrawPage() {
 
       {/* Re-spin confirmation */}
       {confirmAgain && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="w-full max-w-sm border border-black/20 bg-white p-6 text-[#140d10] shadow-2xl">
-            <h4 className="font-display text-lg font-light">Select another winner?</h4>
-            <p className="mt-2 text-xs font-light text-black/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
+            <h4 className="text-lg font-bold text-[#140d10]">Select another winner?</h4>
+            <p className="mt-2 text-xs text-slate-600">
               This will discard the current draw result and allow you to re-spin the randomizer.
             </p>
             <div className="mt-6 flex gap-2">
               <button
                 onClick={() => setConfirmAgain(false)}
-                className="flex-1 border border-black/20 py-2.5 text-xs font-light text-black transition hover:bg-black/5"
+                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={resetSpin}
-                className="flex-1 border border-[#6b1020] bg-[#6b1020] py-2.5 text-xs font-medium text-white transition hover:bg-[#851629]"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
               >
                 Re-spin
               </button>
@@ -458,14 +497,14 @@ export function LuckyDrawPage() {
 
       {/* Prize / Gift Selector Modal */}
       {showPrizeSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto border-2 border-[#d4a017] bg-white p-6 text-[#140d10] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3">
               <div>
-                <h3 className="font-display text-xl font-light">Choose Gift for this Draw</h3>
-                <p className="text-xs font-light text-black/60">Select any prize to be awarded in Lucky Draw #{nextDraw.number}</p>
+                <h3 className="text-lg font-bold text-[#140d10]">Choose Gift for this Draw</h3>
+                <p className="text-xs text-slate-500">Select any prize to be awarded in Lucky Draw #{nextDraw.number}</p>
               </div>
-              <button onClick={() => setShowPrizeSelector(false)} className="text-black/50 hover:text-black">
+              <button onClick={() => setShowPrizeSelector(false)} className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer">
                 <X size={18} />
               </button>
             </div>
@@ -477,40 +516,40 @@ export function LuckyDrawPage() {
                   <div
                     key={p.id}
                     onClick={() => handleSelectPrize(p.id)}
-                    className={`cursor-pointer border p-3 transition flex items-center gap-3 ${
+                    className={`cursor-pointer border p-3 transition flex items-center gap-3 rounded-none ${
                       isSelected
-                        ? 'border-[#d4a017] bg-[#f7f0e6]'
-                        : 'border-black/10 hover:border-black/30 bg-white'
+                        ? 'border-[#5e0917] bg-[#fbf3f4] ring-1 ring-[#5e0917]'
+                        : 'border-[#e8decb] hover:border-slate-400 bg-[#faf7f0]'
                     }`}
                   >
-                    <img src={p.image} alt={p.name} className="h-14 w-14 object-cover border border-black/10" />
+                    <img src={p.image} alt={p.name} className="h-14 w-14 object-cover rounded-none border border-[#e8decb]" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium text-[#140d10] truncate">{p.name}</p>
-                        {isSelected && <Check size={14} className="text-[#6b1020] shrink-0" />}
+                        <p className="text-xs font-bold text-[#140d10] truncate">{p.name}</p>
+                        {isSelected && <Check size={14} className="text-[#5e0917] shrink-0" />}
                       </div>
-                      <p className="text-xs font-mono text-[#6b1020]">{p.value}</p>
-                      <p className="text-[10px] text-black/50 uppercase">{p.status}</p>
+                      <p className="text-xs font-mono font-bold text-[#5e0917]">{p.value}</p>
+                      <p className="text-[10px] text-slate-500 uppercase font-semibold">{p.status}</p>
                     </div>
                   </div>
                 )
               })}
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-4">
+            <div className="mt-6 flex items-center justify-between border-t border-[#e8decb] pt-4">
               <button
                 type="button"
                 onClick={() => {
                   setShowPrizeSelector(false)
                   setShowAddPrizeModal(true)
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#6b1020] hover:underline"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5e0917] hover:underline cursor-pointer"
               >
                 <Plus size={14} /> Add A Brand New Gift Instead
               </button>
               <button
                 onClick={() => setShowPrizeSelector(false)}
-                className="border border-black/20 px-4 py-2 text-xs font-light text-black hover:bg-black/5"
+                className="rounded-none border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Close
               </button>
@@ -521,59 +560,59 @@ export function LuckyDrawPage() {
 
       {/* Add New Gift Modal */}
       {showAddPrizeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto border-2 border-[#d4a017] bg-white p-6 text-[#140d10] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3">
               <div>
-                <h3 className="font-display text-xl font-light">Add New Gift (Frontend Only)</h3>
-                <p className="text-xs font-light text-black/60">Create a gift instantly and assign it to the live draw</p>
+                <h3 className="text-lg font-bold text-[#140d10]">Add New Gift</h3>
+                <p className="text-xs text-slate-500">Create a gift instantly and assign it to the live draw</p>
               </div>
-              <button onClick={() => setShowAddPrizeModal(false)} className="text-black/50 hover:text-black">
+              <button onClick={() => setShowAddPrizeModal(false)} className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
             <form onSubmit={handleSaveNewGift} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block text-[11px] font-medium text-black/70 uppercase">Gift / Prize Name *</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Gift / Prize Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 5G Smartphone, Gold Coin, Electric Bike"
                   value={newGift.name}
                   onChange={(e) => setNewGift({ ...newGift, name: e.target.value })}
-                  className="mt-1 w-full border border-black/20 bg-[#faf8f5] px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-black/70 uppercase">Approximate Value *</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Approximate Value *</label>
                 <input
                   type="text"
                   placeholder="e.g. ₹25,000"
                   value={newGift.value}
                   onChange={(e) => setNewGift({ ...newGift, value: e.target.value })}
-                  className="mt-1 w-full border border-black/20 bg-[#faf8f5] px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-black/70 uppercase">Description</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Description</label>
                 <input
                   type="text"
                   placeholder="Short description of prize"
                   value={newGift.description}
                   onChange={(e) => setNewGift({ ...newGift, description: e.target.value })}
-                  className="mt-1 w-full border border-black/20 bg-[#faf8f5] px-3 py-2 text-xs font-light outline-none focus:border-[#d4a017]"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                 />
               </div>
 
               {/* Quick Image Preset Selector */}
               <div>
-                <label className="block text-[11px] font-medium text-black/70 uppercase mb-1">
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1">
                   Choose Gift Image Preset or Custom URL
                 </label>
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto border border-black/10 p-2 bg-[#f7f0e6]">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-36 overflow-y-auto rounded-none border border-[#e8decb] p-2 bg-[#faf7f0]">
                   {GIFT_PRESETS.map((preset, idx) => (
                     <button
                       key={idx}
@@ -587,12 +626,12 @@ export function LuckyDrawPage() {
                           description: newGift.description || preset.description,
                         })
                       }}
-                      className={`relative border p-1 text-left transition ${
-                        newGift.image === preset.image ? 'border-[#6b1020] bg-white ring-2 ring-[#d4a017]' : 'border-black/10 bg-white'
+                      className={`relative border p-1 text-left transition rounded-none cursor-pointer ${
+                        newGift.image === preset.image ? 'border-[#5e0917] bg-white ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
                       }`}
                     >
-                      <img src={preset.image} alt={preset.name} className="h-12 w-full object-cover" />
-                      <p className="mt-1 text-[9px] truncate font-medium text-black/80">{preset.name}</p>
+                      <img src={preset.image} alt={preset.name} className="h-12 w-full object-cover rounded-none" />
+                      <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
                     </button>
                   ))}
                 </div>
@@ -603,22 +642,22 @@ export function LuckyDrawPage() {
                     placeholder="Or paste custom image URL here"
                     value={newGift.image}
                     onChange={(e) => setNewGift({ ...newGift, image: e.target.value })}
-                    className="w-full border border-black/20 bg-[#faf8f5] px-3 py-1.5 text-[11px] font-light outline-none"
+                    className="w-full rounded-none border border-slate-300 bg-white px-3.5 py-2 text-[11px] text-slate-900 outline-none focus:border-[#5e0917]"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-black/10">
+              <div className="flex gap-2 pt-2 border-t border-[#e8decb]">
                 <button
                   type="button"
                   onClick={() => setShowAddPrizeModal(false)}
-                  className="flex-1 border border-black/20 py-2.5 text-xs font-light text-black hover:bg-black/5"
+                  className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 border border-[#6b1020] bg-[#6b1020] py-2.5 text-xs font-medium tracking-wider text-white hover:bg-[#851629]"
+                  className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
                 >
                   Save & Use for Draw
                 </button>

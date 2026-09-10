@@ -27,7 +27,6 @@ router.post('/register', async (req, res) => {
   try {
     const { name, phone: rawPhone, address, location, couponId: rawCoupon } = req.body
 
-    if (!name?.trim()) return res.status(400).json({ ok: false, error: 'Name is required' })
     if (!rawPhone?.trim()) return res.status(400).json({ ok: false, error: 'Phone number is required' })
 
     const phone = rawPhone.replace(/\D/g, '').slice(-10)
@@ -35,19 +34,22 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'Please enter a valid 10-digit mobile number' })
     }
 
-    // Check coupon if provided
+    // Clean and validate coupon
     let cleanCoupon = ''
     if (rawCoupon) {
       cleanCoupon = rawCoupon.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
-      if (cleanCoupon.length >= 8 && cleanCoupon.length <= 16) {
-        // Check if coupon already used by someone else
-        const usedBy = await Participant.findOne({ couponId: cleanCoupon })
-        if (usedBy) {
-          return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
-        }
-      }
+    }
+    if (!cleanCoupon || cleanCoupon.length < 8 || cleanCoupon.length > 16) {
+      return res.status(400).json({ ok: false, error: 'Please enter a valid 13-character coupon code' })
     }
 
+    // Check if coupon already used by someone else
+    const usedBy = await Participant.findOne({ couponId: cleanCoupon })
+    if (usedBy) {
+      return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
+    }
+
+    const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`
     const now = new Date().toISOString().slice(0, 10)
     let newParticipant: any = null
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -55,11 +57,11 @@ router.post('/register', async (req, res) => {
         const id = await getNextParticipantId()
         newParticipant = await Participant.create({
           id,
-          name: name.trim(),
+          name: participantName,
           phone,
           address: address?.trim() || 'Valanchery',
           location: location?.trim() || 'Valanchery',
-          couponId: cleanCoupon || undefined,
+          couponId: cleanCoupon,
           registeredAt: now,
           eligibility: 'Eligible',
           status: 'Active',

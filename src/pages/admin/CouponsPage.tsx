@@ -40,10 +40,10 @@ export function CouponsPage() {
       {/* Title & Link to Directory */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
             Coupon Excel Generator
           </h1>
-          <p className="mt-1 text-xs text-black/60 sm:text-sm">
+          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
             Select the quantity to generate unique 13-character coupons and download directly as an Excel Sheet.
           </p>
         </div>

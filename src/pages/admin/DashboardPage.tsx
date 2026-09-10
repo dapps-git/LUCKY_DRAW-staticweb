@@ -20,10 +20,10 @@ export function DashboardPage() {
   return (
     <div>
       <div>
-        <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
           Festival Operations Dashboard
         </h1>
-        <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
+        <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
           Real-time summary of participant registrations and lucky draws.
         </p>
       </div>
@@ -32,8 +32,8 @@ export function DashboardPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {cards.map(([label, value]) => (
           <div key={label} className="border border-black/10 bg-white p-4 shadow-sm md:p-5">
-            <p className="text-[11px] font-light tracking-wider text-black/50 uppercase">{label}</p>
-            <p className="mt-2 font-display text-2xl font-light text-[#6b1020] sm:text-3xl">
+            <p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">{label}</p>
+            <p className="mt-2 text-2xl sm:text-3xl font-bold text-[#5e0917]">
               <AnimatedNumber value={value} />
             </p>
           </div>
@@ -48,24 +48,24 @@ export function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-[#12080c]" />
           </div>
           <div className="p-6 md:p-8">
-            <div className="inline-flex items-center gap-1.5 border border-[#d4a017]/50 bg-[#d4a017]/10 px-2.5 py-1 text-[10px] tracking-widest text-[#f3d48a]">
+            <div className="inline-flex items-center gap-1.5 border border-[#d4a017]/50 bg-[#d4a017]/10 px-2.5 py-1 text-[10px] font-bold tracking-widest text-[#f3d48a]">
               <Sparkles size={13} /> NEXT SCHEDULED DRAW
             </div>
-            <h2 className="font-display mt-3 text-2xl font-light tracking-wide sm:text-3xl md:text-4xl">
+            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
               Draw #{String(nextDraw.number).padStart(2, '0')}
             </h2>
-            <div className="mt-3 space-y-1 text-xs font-light text-white/70 sm:text-sm">
-              <p>Scheduled Date: {formatDate(nextDraw.date)}</p>
-              <p className="text-base font-light text-[#f3d48a]">Grand Prize: {prize.name}</p>
-              <p className="text-xs text-white/50">{prize.value}</p>
+            <div className="mt-3 space-y-1 text-xs text-white/80 sm:text-sm">
+              <p>Scheduled Date: <strong className="font-semibold text-white">{formatDate(nextDraw.date)}</strong></p>
+              <p className="text-base font-bold text-[#f3d48a]">Grand Prize: {prize.name}</p>
+              <p className="text-xs text-white/60">{prize.value}</p>
             </div>
-            <p className="mt-4 text-xs font-light text-white/60">
+            <p className="mt-4 text-xs text-white/70">
               {eligibleParticipants.length} Eligible participants in this raffle pool ({data.winners.length} past winners excluded).
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 to="/admin/lucky-draw"
-                className="inline-flex items-center gap-2 border border-[#d4a017] bg-[#d4a017] px-6 py-3 text-xs font-medium tracking-widest text-[#140d10] transition hover:bg-[#e5b32e]"
+                className="inline-flex items-center gap-2 border border-[#d4a017] bg-[#d4a017] px-6 py-3 text-xs font-bold tracking-widest text-[#140d10] transition hover:bg-[#e5b32e]"
               >
                 LAUNCH LIVE DRAW <ArrowRight size={14} />
               </Link>
@@ -78,8 +78,8 @@ export function DashboardPage() {
       <div className="mt-10">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-display text-xl font-light tracking-wide text-[#140d10]">Recent Winners</h3>
-            <p className="text-xs font-light text-black/50">Latest confirmed winners across festival draws</p>
+            <h3 className="text-xl font-bold tracking-tight text-[#140d10]">Recent Winners</h3>
+            <p className="text-xs text-slate-500">Latest confirmed winners across festival draws</p>
           </div>
           <Link
             to="/admin/winners"

@@ -27,10 +27,10 @@ export function DrawSchedulePage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
             Draw Schedule Timeline
           </h1>
-          <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
+          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
             Calendar view of all 2026 festival lucky draws
           </p>
         </div>

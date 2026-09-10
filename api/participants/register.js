@@ -23,7 +23,6 @@ export default async function handler(req, res) {
   try {
     const { name, phone: rawPhone, address, location, couponId: rawCoupon } = req.body || {}
 
-    if (!name?.trim()) return res.status(400).json({ ok: false, error: 'Name is required' })
     if (!rawPhone?.trim()) return res.status(400).json({ ok: false, error: 'Phone number is required' })
 
     const phone = rawPhone.replace(/\D/g, '').slice(-10)
@@ -31,23 +30,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'Please enter a valid 10-digit mobile number' })
     }
 
+    // Clean and validate coupon code
+    let cleanCoupon = ''
+    if (rawCoupon) {
+      cleanCoupon = rawCoupon.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+    }
+    if (!cleanCoupon || cleanCoupon.length < 8 || cleanCoupon.length > 16) {
+      return res.status(400).json({ ok: false, error: 'Please enter a valid 13-character coupon code' })
+    }
+
     const db = await connectDB()
     const participantsCol = db.collection('participants')
     const couponsCol = db.collection('coupons')
     const batchesCol = db.collection('couponbatches')
 
-    // Check coupon if provided
-    let cleanCoupon = ''
-    if (rawCoupon) {
-      cleanCoupon = rawCoupon.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
-      if (cleanCoupon.length >= 8 && cleanCoupon.length <= 16) {
-        const usedBy = await participantsCol.findOne({ couponId: cleanCoupon })
-        if (usedBy) {
-          return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
-        }
-      }
+    // Check if coupon already used
+    const usedBy = await participantsCol.findOne({ couponId: cleanCoupon })
+    if (usedBy) {
+      return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
     }
 
+    const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`
     const now = new Date().toISOString().slice(0, 10)
     let newParticipant = null
 
@@ -56,11 +59,11 @@ export default async function handler(req, res) {
         const id = await getNextParticipantId(participantsCol)
         const doc = {
           id,
-          name: name.trim(),
+          name: participantName,
           phone,
           address: address?.trim() || 'Valanchery',
           location: location?.trim() || 'Valanchery',
-          couponId: cleanCoupon || undefined,
+          couponId: cleanCoupon,
           registeredAt: now,
           eligibility: 'Eligible',
           status: 'Active',

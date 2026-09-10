@@ -23,42 +23,44 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.font-display {
-  font-family: 'Montserrat', sans-serif;
-  letter-spacing: -0.01em;
-}
-
-.font-heading {
-  font-family: 'Montserrat', sans-serif;
-}
-
+.font-serif,
 .font-serif-luxury {
-  font-family: 'Playfair Display', Georgia, serif;
-}
-
-.font-handwritten {
-  font-family: 'Caveat', cursive;
+  font-family: 'Playfair Display', Georgia, serif !important;
 }
 
 .font-cinzel {
-  font-family: 'Cinzel', Georgia, serif;
+  font-family: 'Cinzel', serif !important;
 }
 
-.font-sans-modern {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #140d10 !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Mobile responsive font sizing helpers */
-@media (max-width: 640px) {
-  h1 {
-    font-size: 1.75rem !important;
-    line-height: 1.2 !important;
-  }
-  h2 {
-    font-size: 1.35rem !important;
-    line-height: 1.25 !important;
-  }
+/* Zero Border Radius for Entire Admin Portal (Buttons, Tables, Boxes, Inputs, Cards, Modals, Images, etc.) */
+.admin-scope,
+.admin-scope *:not(.status-dot),
+.admin-scope button,
+.admin-scope input,
+.admin-scope select,
+.admin-scope textarea,
+.admin-scope article,
+.admin-scope table,
+.admin-scope th,
+.admin-scope td,
+.admin-scope tr,
+.admin-scope .card,
+.admin-scope div,
+.admin-scope a,
+.admin-scope span:not(.status-dot),
+.admin-scope img {
+  border-radius: 0px !important;
 }
+
 
 @keyframes fade-up {
   from {

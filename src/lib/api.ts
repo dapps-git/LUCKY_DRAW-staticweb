@@ -76,7 +76,7 @@ export const api = {
 
   // Participants
   async registerParticipant(input: {
-    name: string
+    name?: string
     phone: string
     address?: string
     location?: string

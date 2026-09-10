@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { formatDate } from '../../lib/format'
 import { PRIZE_IMAGES } from '../../data/mockData'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, ArrowRight, Calendar, Users, Sparkles } from 'lucide-react'
 
 export function LuckyDrawsPage() {
   const { data, getPrize, addDraw } = useApp()
@@ -15,45 +15,66 @@ export function LuckyDrawsPage() {
   })
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e8decb]/60 pb-5">
         <div>
-          <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
             Festival Lucky Draws
           </h1>
-          <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
-            Total 10 scheduled grand prize draws for Valanchery Festival 2026
+          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
+            Total {data.draws.length} scheduled grand prize draws for Valanchery Festival 2026
           </p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 border border-[#6b1020] bg-[#6b1020] px-4 py-2 text-xs font-medium tracking-wider text-white transition hover:bg-[#851629]"
-        >
-          <Plus size={15} /> CREATE NEW DRAW
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/admin/lucky-draw"
+            className="inline-flex items-center gap-1.5 rounded-none border border-[#e8decb] bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:text-[#5e0917] hover:border-[#5e0917] transition shadow-xs"
+          >
+            <Sparkles size={14} className="text-[#ad823e]" />
+            <span>Enter Live Stage</span>
+          </Link>
+          <button
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-none bg-[#5e0917] hover:bg-[#720e1e] px-4 py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
+          >
+            <Plus size={15} />
+            <span>Create New Draw</span>
+          </button>
+        </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grid of Lucky Draws */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {data.draws.map((d) => {
           const prize = getPrize(d.prizeId)
+          const isCompleted = d.status === 'Completed'
           return (
-            <article key={d.id} className="border border-black/10 bg-white shadow-sm transition hover:shadow-md">
-              <div className="relative h-36 w-full bg-black/60">
+            <article
+              key={d.id}
+              className="group rounded-none border border-[#e8decb] bg-white shadow-xs hover:shadow-md transition duration-200 flex flex-col overflow-hidden"
+            >
+              {/* Image Banner */}
+              <div className="relative h-44 w-full overflow-hidden bg-slate-100">
                 <img
                   src={prize?.image ?? PRIZE_IMAGES.festival}
-                  alt=""
-                  className="h-full w-full object-cover"
+                  alt={prize?.name ?? 'Prize'}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                <div className="absolute left-3 top-3 border border-[#d4a017] bg-black/70 px-2 py-0.5 text-[10px] font-light text-[#f3d48a]">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                {/* Draw Tag */}
+                <div className="absolute left-3 top-3 rounded-none bg-[#240a10]/85 backdrop-blur-xs border border-[#d4a017]/40 px-2.5 py-1 text-[10px] font-bold text-[#f3d48a] tracking-wider uppercase shadow-xs">
                   DRAW #{String(d.number).padStart(2, '0')}
                 </div>
-                <div className="absolute bottom-2 right-3">
+
+                {/* Status Badge */}
+                <div className="absolute bottom-3 right-3">
                   <span
-                    className={`px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase ${
-                      d.status === 'Completed'
-                        ? 'border border-emerald-500 bg-emerald-950/80 text-emerald-300'
-                        : 'border border-[#d4a017] bg-black/80 text-[#f3d48a]'
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-none text-[10px] font-bold tracking-wider uppercase shadow-xs backdrop-blur-xs ${
+                      isCompleted
+                        ? 'bg-emerald-600/90 text-white'
+                        : 'bg-amber-500/90 text-white'
                     }`}
                   >
                     {d.status}
@@ -61,16 +82,37 @@ export function LuckyDrawsPage() {
                 </div>
               </div>
 
-              <div className="p-4">
-                <h2 className="font-display text-lg font-light text-[#140d10]">{prize?.name ?? 'Prize'}</h2>
-                <p className="mt-1 text-xs font-light text-black/60">Draw Date: {formatDate(d.date)}</p>
-                <p className="mt-0.5 text-xs font-light text-black/50">Winners: {d.winnerCount} participant</p>
+              {/* Card Body */}
+              <div className="p-5 flex-1 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-[#140d10] leading-snug truncate">
+                    {prize?.name ?? 'Prize'}
+                  </h2>
 
-                <div className="mt-4 flex items-center justify-between border-t border-black/10 pt-3 text-xs font-light">
-                  <Link to="/admin/lucky-draw" className="text-[#6b1020] underline underline-offset-4">
-                    Live Stage →
+                  <div className="mt-2.5 space-y-1.5 text-xs text-slate-600">
+                    <p className="flex items-center gap-1.5 text-slate-500">
+                      <Calendar size={13} className="text-[#ad823e]" />
+                      <span>Draw Date: <strong className="font-semibold text-slate-700">{formatDate(d.date)}</strong></span>
+                    </p>
+                    <p className="flex items-center gap-1.5 text-slate-500">
+                      <Users size={13} className="text-[#ad823e]" />
+                      <span>Winners: <strong className="font-semibold text-slate-700">{d.winnerCount} participant</strong></span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Card Footer */}
+                <div className="mt-5 flex items-center justify-between border-t border-[#f0e6d6] pt-3.5">
+                  <Link
+                    to="/admin/lucky-draw"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#5e0917] hover:text-[#720e1e] transition group/btn"
+                  >
+                    <span>Live Stage</span>
+                    <ArrowRight size={13} className="transition-transform group-hover/btn:translate-x-1" />
                   </Link>
-                  <span className="text-black/40">{prize?.value}</span>
+                  <span className="font-mono text-xs font-bold text-slate-800 bg-[#faf7f0] px-2.5 py-1 rounded-none border border-[#e8decb]">
+                    {prize?.value ?? '₹0'}
+                  </span>
                 </div>
               </div>
             </article>
@@ -78,38 +120,54 @@ export function LuckyDrawsPage() {
         })}
       </div>
 
+      {/* Create New Draw Modal */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md border-2 border-black/20 bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/10 pb-3">
-              <h3 className="font-display text-lg font-light">Create New Draw</h3>
-              <button onClick={() => setOpen(false)} className="text-black/50 hover:text-black">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3.5">
+              <div>
+                <h3 className="text-lg font-bold text-[#140d10]">Create New Draw</h3>
+                <p className="text-xs text-slate-500">Schedule a new lucky draw sequence</p>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer transition"
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="mt-4 space-y-3 text-xs">
+
+            <div className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block text-black/60 uppercase">Draw Sequence Number</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Draw Sequence Number
+                </label>
                 <input
                   type="number"
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   value={form.number}
                   onChange={(e) => setForm({ ...form, number: Number(e.target.value) })}
                 />
               </div>
+
               <div>
-                <label className="block text-black/60 uppercase">Scheduled Date</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Scheduled Date
+                </label>
                 <input
                   type="date"
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                 />
               </div>
+
               <div>
-                <label className="block text-black/60 uppercase">Assigned Prize</label>
+                <label className="block text-[11px] font-semibold text-slate-700 uppercase">
+                  Assigned Prize
+                </label>
                 <select
-                  className="mt-1 w-full border border-black/20 bg-white px-3 py-2 outline-none"
+                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
                   value={form.prizeId}
                   onChange={(e) => setForm({ ...form, prizeId: e.target.value })}
                 >
@@ -121,15 +179,16 @@ export function LuckyDrawsPage() {
                 </select>
               </div>
             </div>
-            <div className="mt-6 flex gap-2">
+
+            <div className="mt-6 flex gap-2 pt-2 border-t border-[#e8decb]">
               <button
                 onClick={() => setOpen(false)}
-                className="flex-1 border border-black/20 py-2 text-xs font-light text-black hover:bg-black/5"
+                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
-                className="flex-1 border border-[#6b1020] bg-[#6b1020] py-2 text-xs font-medium text-white hover:bg-[#851629]"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
                 onClick={() => {
                   addDraw({ ...form, winnerCount: 1, status: 'Upcoming' })
                   setOpen(false)

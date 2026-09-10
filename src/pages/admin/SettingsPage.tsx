@@ -9,10 +9,10 @@ export function SettingsPage() {
   return (
     <div className="max-w-xl">
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
-      <h1 className="font-display text-2xl font-light tracking-wide text-[#140d10] sm:text-3xl">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
         Festival Settings
       </h1>
-      <p className="mt-1 text-xs font-light text-black/60 sm:text-sm">
+      <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
         Configure festival titles, campaign parameters, and local settings.
       </p>
 

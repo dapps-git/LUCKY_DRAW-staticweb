@@ -90,12 +90,6 @@ export function PublicUserLoginPage() {
           <Link to="/winners" className="text-white/70 transition hover:text-[#f3d48a] whitespace-nowrap">
             WINNERS
           </Link>
-          <Link
-            to="/admin/login"
-            className="border border-white/20 px-2 py-0.5 text-[10px] text-white/60 transition hover:border-[#f3d48a] hover:text-[#f3d48a] sm:px-2.5 sm:py-1 sm:text-[11px] whitespace-nowrap"
-          >
-            ADMIN
-          </Link>
         </nav>
       </header>
 

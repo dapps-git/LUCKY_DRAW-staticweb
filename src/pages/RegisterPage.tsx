@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Check,
   CheckCircle2,
@@ -12,7 +12,6 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { LOCATIONS } from '../data/mockData'
 import { isValidIndianPhone } from '../lib/format'
 import { Confetti } from '../components/Confetti'
 import { QrScannerModal } from '../components/QrScannerModal'
@@ -27,10 +26,7 @@ export function RegisterPage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    name: '',
     phone: '',
-    address: '',
-    location: 'Valanchery',
     couponId: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -140,14 +136,11 @@ export function RegisterPage() {
     setFormError('')
 
     const next: Record<string, string> = {}
-    if (!form.name.trim()) next.name = 'Full name is required'
-    if (!form.phone.trim()) next.phone = 'Mobile number is required'
-    else if (!isValidIndianPhone(form.phone)) next.phone = 'Enter valid 10-digit phone number'
-    if (!form.address.trim()) next.address = 'Address / Street is required'
-    if (!form.location.trim()) next.location = 'Select location'
 
-    // Validate coupon if entered
-    if (form.couponId.trim()) {
+    // 1. Coupon ID is strictly required
+    if (!form.couponId.trim()) {
+      next.couponId = 'Coupon code is required'
+    } else {
       const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
       if (cleanToken.length < 8 || cleanToken.length > 16) {
         next.couponId = 'Please enter a valid 13-character coupon code.'
@@ -163,17 +156,25 @@ export function RegisterPage() {
       }
     }
 
+    // 2. Phone is strictly required
+    if (!form.phone.trim()) {
+      next.phone = 'Mobile number is required'
+    } else if (!isValidIndianPhone(form.phone)) {
+      next.phone = 'Enter valid 10-digit mobile number'
+    }
+
     setErrors(next)
     if (Object.keys(next).length) return
 
     setIsSubmitting(true)
     try {
+      const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
       const result = await registerParticipant({
-        name: form.name.trim(),
+        name: `Shopper ${form.phone.trim().slice(-4)}`,
         phone: form.phone.trim(),
-        address: form.address.trim(),
-        location: form.location,
-        couponId: form.couponId.trim() || undefined,
+        address: 'Valanchery',
+        location: 'Valanchery',
+        couponId: cleanToken,
       })
 
       if (!result.ok) {
@@ -189,7 +190,7 @@ export function RegisterPage() {
       }
 
       setSuccessId(result.id)
-      setRegisteredCoupon(form.couponId.trim() || null)
+      setRegisteredCoupon(cleanToken)
       setConfetti(true)
       setTimeout(() => setConfetti(false), 4500)
     } finally {
@@ -198,7 +199,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] w-full bg-[#140603] text-slate-900 flex flex-col justify-between overflow-x-hidden select-none relative">
+    <div className="min-h-screen min-h-[100dvh] w-full text-slate-900 flex flex-col justify-between overflow-x-hidden select-none relative">
       {/* Background Image: Mobile Portrait (<640px) */}
       <div
         className="absolute inset-0 bg-cover bg-center sm:hidden z-0"
@@ -213,9 +214,6 @@ export function RegisterPage() {
           backgroundImage: `url(${bgWebp})`,
         }}
       />
-      {/* Translucent Dark Backdrop Overlay for High Contrast */}
-      <div className="absolute inset-0 bg-[#200d08]/60 sm:bg-black/50 backdrop-blur-[2px] z-0 pointer-events-none" />
-
       <Confetti active={confetti} />
 
       {/* QR Scanner Modal */}
@@ -229,37 +227,29 @@ export function RegisterPage() {
       <PublicNavbar active="register" />
 
       {/* Single-Screen Light-Theme Registration Form Container */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-3 py-16 sm:py-20 sm:px-4 max-w-lg mx-auto w-full">
-        {/* Card Wrapper */}
-        <div className="w-full border border-[#c28e18]/40 bg-white/95 sm:bg-white/98 backdrop-blur-md p-4 sm:p-6 shadow-2xl">
+      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-3 py-16 sm:py-20 sm:px-4 max-w-[360px] mx-auto w-full">
+        {/* Card Wrapper - Sharp, Compact, Luxury, Flat */}
+        <div className="w-full border border-[#c28e18]/40 bg-white p-4 sm:p-5 shadow-none rounded-none">
           {/* Card Header */}
-          <div className="text-center mb-3.5 space-y-1">
-            <div className="inline-flex items-center gap-1.5 font-cinzel text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[#8e6b1b] uppercase">
-              <span className="h-px w-4 bg-[#8e6b1b]" />
-              OFFICIAL FESTIVAL PARTICIPATION
-              <span className="h-px w-4 bg-[#8e6b1b]" />
-            </div>
-            <h1 className="font-serif-luxury text-xl sm:text-2xl font-bold tracking-tight text-[#140d10]">
-              Lucky Draw Registration
+          <div className="text-center mb-3">
+            <h1 className="text-[13px] sm:text-base font-medium text-[#140d10] tracking-normal">
+              Register Your Pass
             </h1>
-            <p className="text-[11px] sm:text-xs text-slate-600 max-w-sm mx-auto">
-              Enter your coupon token code and phone number to participate in 10 scheduled mega lucky draws.
-            </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={submit} className="space-y-2.5">
-            {/* Coupon / Token ID Section */}
-            <div className="rounded-xl border border-[#d4a017]/30 bg-[#fdfbf7] p-2.5">
-              <div className="flex items-center justify-between mb-1">
+          <form onSubmit={submit} className="space-y-3">
+            {/* 1. Coupon / Token ID Section */}
+            <div className="rounded-none border border-[#d4a017]/40 bg-[#fdfbf7] p-2.5">
+              <div className="flex items-center justify-between mb-1.5">
                 <label className="flex items-center gap-1 text-[11px] font-semibold tracking-wide text-[#7a1426] uppercase">
-                  <Ticket size={13} className="text-[#c28e18]" /> Coupon Token ID
+                  <Ticket size={13} className="text-[#c28e18]" /> Coupon Token ID *
                 </label>
                 {!form.couponId && (
                   <button
                     type="button"
                     onClick={() => setIsScannerOpen(true)}
-                    className="flex items-center gap-1 rounded bg-[#c28e18] px-2 py-0.5 text-[10px] font-bold text-white transition hover:bg-[#a67912]"
+                    className="flex items-center gap-1 rounded-none bg-[#c28e18] px-2 py-0.5 text-[10px] font-bold text-white transition hover:bg-[#a67912]"
                   >
                     <Camera size={11} /> Scan QR
                   </button>
@@ -271,7 +261,7 @@ export function RegisterPage() {
                 <div>
                   {/* Valid Token State */}
                   {tokenStatus.status === 'Valid' && (
-                    <div className="flex items-center justify-between rounded-lg border border-emerald-600/30 bg-emerald-50 px-2.5 py-1.5">
+                    <div className="flex items-center justify-between rounded-none border border-emerald-600/30 bg-emerald-50 px-2.5 py-1.5">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
                         <div>
@@ -284,7 +274,7 @@ export function RegisterPage() {
                       <button
                         type="button"
                         onClick={clearCoupon}
-                        className="text-[10px] text-slate-500 hover:text-slate-800 underline"
+                        className="text-[10px] text-slate-500 hover:text-slate-800 underline font-medium"
                       >
                         Change
                       </button>
@@ -293,7 +283,7 @@ export function RegisterPage() {
 
                   {/* ALREADY USED State */}
                   {tokenStatus.status === 'Used' && (
-                    <div className="rounded-lg border border-red-500/40 bg-red-50 px-2.5 py-2 text-left">
+                    <div className="rounded-none border border-red-500/40 bg-red-50 px-2.5 py-2 text-left">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-1.5">
                           <XCircle size={15} className="text-red-600 shrink-0 mt-0.5" />
@@ -320,7 +310,7 @@ export function RegisterPage() {
 
                   {/* Invalid Token State */}
                   {tokenStatus.status === 'Invalid' && (
-                    <div className="flex items-center justify-between rounded-lg border border-red-500/40 bg-red-50 px-2.5 py-1.5">
+                    <div className="flex items-center justify-between rounded-none border border-red-500/40 bg-red-50 px-2.5 py-1.5">
                       <div className="flex items-center gap-1.5">
                         <ShieldAlert size={15} className="text-red-600 shrink-0" />
                         <div>
@@ -331,7 +321,7 @@ export function RegisterPage() {
                       <button
                         type="button"
                         onClick={clearCoupon}
-                        className="text-[10px] text-red-700 underline"
+                        className="text-[10px] text-red-700 underline font-medium"
                       >
                         Change
                       </button>
@@ -353,11 +343,11 @@ export function RegisterPage() {
                     type="text"
                     value={form.couponId}
                     onChange={(e) => handleCouponChange(e.target.value)}
-                    placeholder="13-character coupon code (e.g. A1D3S123F89K2)"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+                    placeholder="Enter coupon code (e.g. A1D3S123F89K2)"
+                    className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
                   />
                   {isValidatingToken && (
-                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
                       <Loader2 size={13} className="animate-spin text-[#c28e18]" />
                     </div>
                   )}
@@ -367,94 +357,48 @@ export function RegisterPage() {
               {errors.couponId && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>}
             </div>
 
-            {/* Full Name & Phone in 2 cols */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                  placeholder="Your Name"
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
-                />
-                {errors.name && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
-                  Mobile (WhatsApp) *
-                </label>
+            {/* 2. Phone Number Section */}
+            <div className="rounded-none border border-slate-200 bg-white p-2.5">
+              <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wide mb-1">
+                Phone Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  +91
+                </span>
                 <input
                   type="tel"
                   maxLength={10}
                   value={form.phone}
                   onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
-                  placeholder="10-digit number"
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+                  placeholder="Phone number"
+                  className="w-full rounded-none border border-slate-300 bg-white pl-10 pr-2.5 py-1.5 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
                 />
-                {errors.phone && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.phone}</p>}
               </div>
-            </div>
-
-            {/* Location dropdown & Address */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
-                  Location *
-                </label>
-                <select
-                  value={form.location}
-                  onChange={(e) => set('location', e.target.value)}
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
-                >
-                  {LOCATIONS.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-                {errors.location && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.location}</p>}
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 uppercase tracking-wide">
-                  Address / Locality *
-                </label>
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) => set('address', e.target.value)}
-                  placeholder="House / Street"
-                  className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
-                />
-                {errors.address && <p className="mt-0.5 text-[9px] font-medium text-red-600">{errors.address}</p>}
-              </div>
+              {errors.phone && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.phone}</p>}
             </div>
 
             {formError && (
-              <div className="rounded-lg border border-red-500/40 bg-red-50 p-2 text-center">
+              <div className="rounded-none border border-red-500/40 bg-red-50 p-2 text-center">
                 <p className="text-xs font-semibold text-red-700">{formError}</p>
               </div>
             )}
 
             {/* Submit Button */}
-            <div className="pt-1.5">
+            <div className="pt-0.5">
               <button
                 type="submit"
                 disabled={tokenStatus.status === 'Used' || tokenStatus.status === 'Invalid' || isSubmitting}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-[#7a1426] bg-[#7a1426] py-2.5 text-xs font-bold tracking-wider text-white transition hover:bg-[#961a30] shadow-md shadow-[#7a1426]/20 disabled:opacity-45 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 rounded-none bg-[#720e1e] hover:bg-[#891326] py-2.5 text-xs font-bold tracking-wider text-white transition disabled:opacity-45 disabled:cursor-not-allowed active:scale-[0.99]"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={15} className="animate-spin text-white" />
+                    <Loader2 size={14} className="animate-spin text-white" />
                     <span>REGISTERING...</span>
                   </>
                 ) : (
                   <>
-                    <span>SUBMIT REGISTRATION</span>
+                    <span>REGISTER PASS NOW</span>
                     <ArrowRight size={13} />
                   </>
                 )}
@@ -502,10 +446,7 @@ export function RegisterPage() {
                 onClick={() => {
                   setSuccessId(null)
                   setForm({
-                    name: '',
                     phone: '',
-                    address: '',
-                    location: 'Valanchery',
                     couponId: '',
                   })
                   setTokenStatus({ status: 'Idle', message: '' })
@@ -520,7 +461,7 @@ export function RegisterPage() {
       )}
 
       {/* Elegant Bottom Footer */}
-      <footer className="relative z-10 shrink-0 py-3 sm:py-4 text-center text-[10px] sm:text-xs font-medium text-white/75">
+      <footer className="relative z-10 shrink-0 py-3 sm:py-4 text-center text-[10px] sm:text-xs font-medium text-slate-500">
         © 2026 Valanchery Festival. All rights reserved. Official Lucky Draw Portal · Valanchery
       </footer>
     </div>
