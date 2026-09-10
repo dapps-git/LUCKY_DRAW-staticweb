@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Loader2, FileSpreadsheet, ListFilter } from 'lucide-react'
+import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
+import { formatShortDate } from '../../lib/format'
 
 export function CouponsPage() {
-  const { generateCouponBatch } = useApp()
+  const { generateCouponBatch, data, coupons } = useApp()
 
   const [count, setCount] = useState<number>(100)
   const [customDomain, setCustomDomain] = useState<string>(() => {
@@ -35,8 +36,21 @@ export function CouponsPage() {
     }
   }
 
+  // Re-download an existing prepared batch
+  const handleDownloadBatch = (batchId: string, batchName: string) => {
+    const batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
+    if (batchCoupons.length === 0) {
+      alert('No coupons found for this batch.')
+      return
+    }
+    const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
+    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`, activeBase)
+  }
+
+  const batches = data.batches || []
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       {/* Title & Link to Directory */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -132,6 +146,75 @@ export function CouponsPage() {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Prepared Coupon Batches Section */}
+      <div className="border border-[#e8decb] bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-[#e8decb] bg-[#faf6ee] px-5 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#5e0917] uppercase tracking-wider">
+            <Layers size={15} className="text-[#a46e09]" />
+            <span>Prepared Coupon Batches ({batches.length})</span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-normal">
+            Total Prepared: <strong className="font-bold text-slate-800">{(coupons || []).length}</strong> coupons
+          </p>
+        </div>
+
+        {batches.length > 0 ? (
+          <div className="divide-y divide-[#f3ebde]">
+            {batches.map((b, idx) => {
+              const batchCoupons = (coupons || []).filter((c) => c.batchId === b.id)
+              const totalCount = b.count || batchCoupons.length
+              const usedInBatch = batchCoupons.filter((c) => c.status === 'Used').length
+              const unusedInBatch = totalCount - usedInBatch
+
+              return (
+                <div
+                  key={b.id || idx}
+                  className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#fcfaf5] transition"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-[#140d10]">{b.name || `Batch #${idx + 1}`}</span>
+                      <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5">
+                        {b.id}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <Calendar size={12} className="text-[#a46e09]" />
+                        <span>Date: <strong className="font-semibold text-slate-700">{formatShortDate(b.createdAt)}</strong></span>
+                      </span>
+
+                      <span className="flex items-center gap-1 text-slate-500">
+                        <Ticket size={12} className="text-[#a46e09]" />
+                        <span>Count: <strong className="font-bold text-emerald-800">{totalCount} pcs</strong></span>
+                      </span>
+
+                      <span className="text-[11px] text-slate-500">
+                        ({usedInBatch} used · {unusedInBatch} available)
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`)}
+                    className="inline-flex items-center justify-center gap-1.5 border border-[#e8decb] bg-white hover:bg-[#faf6ee] hover:border-[#5e0917] px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#5e0917] transition shadow-2xs cursor-pointer self-start sm:self-auto shrink-0"
+                    title="Re-download Excel Sheet for this batch"
+                  >
+                    <Download size={13} className="text-[#5e0917]" />
+                    <span>Download Excel</span>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-xs text-slate-500">
+            <p>No coupon batches generated yet. Select a count above to generate your first batch.</p>
+          </div>
+        )}
       </div>
     </div>
   )

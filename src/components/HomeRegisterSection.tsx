@@ -202,7 +202,7 @@ export function HomeRegisterSection() {
   return (
     <section
       id="register"
-      className="scroll-mt-12 sm:scroll-mt-16 min-h-[90vh] sm:min-h-[90dvh] relative py-14 sm:py-20 px-3 sm:px-4 flex flex-col justify-center items-center overflow-hidden border-t border-[#e8decb]"
+      className="scroll-mt-12 sm:scroll-mt-16 relative py-8 sm:py-12 px-3 sm:px-4 flex flex-col justify-center items-center overflow-hidden border-t border-[#e8decb]"
     >
       {/* Background Image: Mobile Portrait (<640px) */}
       <div
@@ -228,12 +228,12 @@ export function HomeRegisterSection() {
         onScanSuccess={handleScanSuccess}
       />
 
-      {/* Card Wrapper - Sharp, Compact, Luxury, Flat - EXACT same theme as RegisterPage */}
-      <div className="relative z-10 w-full max-w-[360px] mx-auto">
-        <div className="w-full border border-[#c28e18]/40 bg-white p-4 sm:p-5 shadow-2xl rounded-none">
+      {/* Card Wrapper - Compact, Clean, Centered */}
+      <div className="relative z-10 w-full max-w-[375px] sm:max-w-[400px] mx-auto my-auto">
+        <div className="w-full border border-[#c28e18]/40 bg-white p-5 sm:p-6 shadow-2xl rounded-sm">
           {/* Card Header */}
-          <div className="text-center mb-3">
-            <h2 className="text-[13px] sm:text-base font-medium text-[#140d10] tracking-normal">
+          <div className="text-center mb-4">
+            <h2 className="text-sm sm:text-base font-bold text-[#140d10] tracking-normal">
               Register Your Pass
             </h2>
           </div>
@@ -283,7 +283,7 @@ export function HomeRegisterSection() {
             </div>
           ) : (
             /* Main Form */
-            <form onSubmit={submit} className="space-y-3">
+            <form onSubmit={submit} className="space-y-4">
               {formError && (
                 <div className="border border-red-200 bg-red-50 p-2 text-[11px] text-red-700 font-medium">
                   {formError}
@@ -291,18 +291,18 @@ export function HomeRegisterSection() {
               )}
 
               {/* 1. Coupon Token ID Section */}
-              <div className="rounded-none border border-[#d4a017]/40 bg-[#fdfbf7] p-2.5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="flex items-center gap-1 text-[11px] font-semibold tracking-wide text-[#7a1426] uppercase">
-                    <Ticket size={13} className="text-[#c28e18]" /> Coupon Token ID *
+              <div className="rounded-none border border-[#d4a017]/50 bg-[#fdfbf7] p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-[#720e1e] uppercase">
+                    <Ticket size={13} className="text-[#c28e18]" /> COUPON TOKEN ID *
                   </label>
                   {!form.couponId && (
                     <button
                       type="button"
                       onClick={() => setIsScannerOpen(true)}
-                      className="flex items-center gap-1 rounded-none bg-[#c28e18] px-2 py-0.5 text-[10px] font-bold text-white transition hover:bg-[#a67912] cursor-pointer"
+                      className="flex items-center gap-1 rounded-none bg-[#c28e18] px-2.5 py-1 text-[10px] sm:text-[11px] font-bold text-white transition hover:bg-[#a67912] cursor-pointer"
                     >
-                      <Camera size={11} /> Scan QR
+                      <Camera size={12} /> Scan QR
                     </button>
                   )}
                 </div>
@@ -368,12 +368,12 @@ export function HomeRegisterSection() {
                             value={form.couponId}
                             onChange={(e) => handleCouponChange(e.target.value)}
                             placeholder="e.g. 7492018401"
-                            className="w-full rounded-none border border-red-300 bg-white px-2.5 py-1.5 font-mono text-xs font-semibold text-slate-900 outline-none focus:border-red-500"
+                            className="w-full rounded-none border border-red-300 bg-white px-2.5 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:border-red-500"
                           />
                           <button
                             type="button"
                             onClick={clearCoupon}
-                            className="absolute right-2 top-1.5 text-[9px] font-bold text-slate-400 hover:text-slate-700 cursor-pointer"
+                            className="absolute right-2 top-2 text-[9px] font-bold text-slate-400 hover:text-slate-700 cursor-pointer"
                           >
                             CLEAR
                           </button>
@@ -389,7 +389,7 @@ export function HomeRegisterSection() {
                         value={form.couponId}
                         onChange={(e) => handleCouponChange(e.target.value)}
                         placeholder="Enter coupon ID (e.g. 7492018401)"
-                        className="w-full rounded-none border border-black/15 bg-white px-2.5 py-1.5 font-mono text-xs font-semibold text-slate-900 outline-none focus:border-[#c28e18]"
+                        className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:border-[#c28e18]"
                       />
                     )}
                   </div>
@@ -400,7 +400,7 @@ export function HomeRegisterSection() {
                       value={form.couponId}
                       onChange={(e) => handleCouponChange(e.target.value)}
                       placeholder="Enter 13-character coupon code"
-                      className="w-full rounded-none border border-black/15 bg-white px-2.5 py-1.5 font-mono text-xs font-semibold text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#c28e18]"
+                      className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#c28e18]"
                     />
                     {isValidatingToken && (
                       <Loader2 size={13} className="animate-spin text-slate-400 absolute right-2.5 top-2.5" />
@@ -415,11 +415,11 @@ export function HomeRegisterSection() {
 
               {/* 2. Mobile Phone Number */}
               <div>
-                <label className="block text-[11px] font-medium text-black/70 mb-1">
+                <label className="block text-[11px] sm:text-xs font-bold text-slate-800 mb-1.5 text-left">
                   Mobile Number *
                 </label>
-                <div className="flex">
-                  <span className="inline-flex items-center rounded-none border border-r-0 border-black/15 bg-[#f7f0e6] px-2.5 text-xs text-black/60">
+                <div className="flex border border-slate-300 focus-within:border-[#720e1e]">
+                  <span className="inline-flex items-center rounded-none border-r border-slate-300 bg-[#f7f0e6] px-3 text-xs font-bold text-slate-600">
                     +91
                   </span>
                   <input
@@ -429,13 +429,13 @@ export function HomeRegisterSection() {
                     value={form.phone}
                     onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
                     placeholder="10-digit mobile number"
-                    className="w-full rounded-none border border-black/15 bg-white px-2.5 py-1.5 font-mono text-xs text-black outline-none transition focus:border-[#c28e18]"
+                    className="w-full rounded-none bg-white px-3 py-2 font-mono text-xs sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
                   />
                 </div>
                 {errors.phone && (
-                  <p className="mt-1 text-[10px] text-red-600">{errors.phone}</p>
+                  <p className="mt-1 text-[10px] text-red-600 text-left">{errors.phone}</p>
                 )}
-                <p className="mt-1 text-[9px] text-black/45">
+                <p className="mt-1 text-[10px] text-slate-500 text-left">
                   Winners are directly notified on this phone number.
                 </p>
               </div>
@@ -445,24 +445,24 @@ export function HomeRegisterSection() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-none border border-[#500b14] bg-[#610a17] hover:bg-[#720e1e] py-2 text-xs font-semibold tracking-wider uppercase text-white shadow-none transition active:scale-98 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="w-full rounded-none border border-[#500b14] bg-[#610a17] hover:bg-[#720e1e] py-2.5 sm:py-3 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-white shadow-sm transition active:scale-98 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 size={13} className="animate-spin" />
+                      <Loader2 size={14} className="animate-spin" />
                       <span>Validating & Entering…</span>
                     </>
                   ) : (
                     <>
-                      <span>Enter Lucky Draw</span>
-                      <ArrowRight size={13} />
+                      <span>ENTER LUCKY DRAW</span>
+                      <ArrowRight size={14} />
                     </>
                   )}
                 </button>
               </div>
 
-              <div className="flex items-center justify-center gap-1 text-[9px] text-black/40 pt-1">
-                <ShieldCheck size={11} className="text-[#c28e18]" />
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 pt-1">
+                <ShieldCheck size={13} className="text-[#c28e18]" />
                 <span>Official Valanchery Festival 2026 Portal</span>
               </div>
             </form>

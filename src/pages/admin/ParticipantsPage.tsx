@@ -7,7 +7,6 @@ import type { Participant, ParticipantStatus } from '../../types'
 import {
   Search,
   Eye,
-  Edit,
   Trash2,
   X,
   Trophy,
@@ -30,7 +29,6 @@ export function ParticipantsPage() {
   const [winnerFilter, setWinnerFilter] = useState('')
   const [page, setPage] = useState(1)
   const [view, setView] = useState<Participant | null>(null)
-  const [edit, setEdit] = useState<Participant | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newParticipant, setNewParticipant] = useState({
     name: '',
@@ -347,13 +345,6 @@ export function ParticipantsPage() {
                           <Eye size={12} /> View
                         </button>
                         <button
-                          onClick={() => setEdit({ ...p })}
-                          className="inline-flex items-center gap-1 border border-[#e8decb] bg-white hover:bg-[#faf6ee] hover:text-[#5e0917] px-2.5 py-1 text-xs font-semibold text-slate-700 transition cursor-pointer"
-                          title="Edit Participant"
-                        >
-                          <Edit size={12} /> Edit
-                        </button>
-                        <button
                           onClick={() => {
                             if (window.confirm(`Are you sure you want to delete participant ${p.id}?`)) {
                               deleteParticipant(p.id)
@@ -546,87 +537,6 @@ export function ParticipantsPage() {
                 className="border border-[#e8decb] bg-white hover:bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 transition cursor-pointer"
               >
                 Close
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Edit Modal */}
-      {edit && (
-        <Modal onClose={() => setEdit(null)} title="Edit Participant">
-          <div className="space-y-3.5">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Full Name</label>
-              <input
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                value={edit.name}
-                onChange={(e) => setEdit({ ...edit, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Token / Coupon ID</label>
-              <input
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                placeholder="Coupon token ID"
-                value={edit.couponId || ''}
-                onChange={(e) => setEdit({ ...edit, couponId: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Phone Number</label>
-              <input
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 font-mono text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                value={edit.phone}
-                onChange={(e) => setEdit({ ...edit, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Address</label>
-              <input
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                value={edit.address}
-                onChange={(e) => setEdit({ ...edit, address: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Location</label>
-              <select
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#5e0917]"
-                value={edit.location}
-                onChange={(e) => setEdit({ ...edit, location: e.target.value })}
-              >
-                {LOCATIONS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Status</label>
-              <select
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#5e0917]"
-                value={edit.status}
-                onChange={(e) => setEdit({ ...edit, status: e.target.value as ParticipantStatus })}
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-            <div className="pt-2">
-              <button
-                className="w-full bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm transition cursor-pointer"
-                onClick={() => {
-                  if (!isValidIndianPhone(edit.phone)) {
-                    alert('Please enter a valid 10-digit mobile number')
-                    return
-                  }
-                  updateParticipant(edit.id, edit)
-                  setEdit(null)
-                }}
-              >
-                SAVE CHANGES
               </button>
             </div>
           </div>

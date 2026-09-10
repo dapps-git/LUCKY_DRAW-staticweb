@@ -172,14 +172,14 @@ export function HomePage() {
             </div>
           </div>
 
-          {/* Center/Lower Coupon Banner with Rainbow Glow Border */}
-          <div className="w-full max-w-[620px] sm:max-w-[740px] lg:max-w-[820px] mx-auto my-2 sm:my-3">
+          {/* Center/Lower Coupon Banner with Rainbow Glow Border - Vertically Stretched */}
+          <div className="w-full max-w-[620px] sm:max-w-[760px] lg:max-w-[860px] mx-auto my-2 sm:my-3">
             <div className="p-[2.5px] sm:p-[3px] rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#00d2ff] via-[#ea00d9] via-[#fa709a] via-[#fee140] to-[#38ef7d] shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
               <div className="rounded-[9.5px] sm:rounded-[13px] overflow-hidden leading-none bg-white">
                 <img
                   src={couponBannerImg}
                   alt="Kerala Vyapari Vyavasayi Ekopana Samithi - Valanchery Shopping Festival Season 2 Official Coupon"
-                  className="w-full aspect-[1024/401] object-fill block"
+                  className="w-full h-[185px] xs:h-[210px] sm:h-[265px] md:h-[300px] lg:h-[320px] object-fill block"
                   loading="eager"
                 />
               </div>
@@ -187,48 +187,48 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* 3. Bottom 4-Feature Bar (Resting on Pedestal Steps) */}
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 pb-4 sm:pb-6">
-          <div className="bg-[#f8f5ee]/95 backdrop-blur-md border border-[#e2d5bf] rounded-xl shadow-lg px-4 sm:px-8 py-3 flex items-center justify-between gap-2 sm:gap-6">
+        {/* 3. Bottom 4-Feature Bar (Resting on Pedestal Steps) - Sleek & Compact */}
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 pb-3 sm:pb-5">
+          <div className="bg-[#f8f5ee]/95 backdrop-blur-md border border-[#e2d5bf] rounded-lg shadow-sm px-3 sm:px-5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-3">
             {/* Feature 1 */}
-            <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-center sm:justify-start">
-              <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-[#720e1e] shrink-0 stroke-[1.75]" />
-              <div className="text-left leading-tight">
-                <div className="text-[11px] sm:text-[13px] font-bold text-[#1f1510]">Exclusive</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-[#5c4a3f]">Offers</div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+              <div className="text-left leading-none space-y-0.5">
+                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Exclusive</div>
+                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Offers</div>
               </div>
             </div>
 
-            <div className="h-7 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
             {/* Feature 2 */}
-            <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-center sm:justify-start">
-              <Store className="w-6 h-6 sm:w-8 sm:h-8 text-[#720e1e] shrink-0 stroke-[1.75]" />
-              <div className="text-left leading-tight">
-                <div className="text-[11px] sm:text-[13px] font-bold text-[#1f1510]">Support</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-[#5c4a3f]">Local Business</div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+              <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+              <div className="text-left leading-none space-y-0.5">
+                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Support</div>
+                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Local Business</div>
               </div>
             </div>
 
-            <div className="h-7 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
             {/* Feature 3 */}
-            <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-center sm:justify-start">
-              <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-[#720e1e] shrink-0 stroke-[1.75]" />
-              <div className="text-left leading-tight">
-                <div className="text-[11px] sm:text-[13px] font-bold text-[#1f1510]">Win</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-[#5c4a3f]">Exciting Prizes</div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+              <div className="text-left leading-none space-y-0.5">
+                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">Win</div>
+                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Exciting Prizes</div>
               </div>
             </div>
 
-            <div className="h-7 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
+            <div className="h-4 w-px bg-[#ded3be] shrink-0 hidden xs:block" />
 
             {/* Feature 4 */}
-            <div className="flex items-center gap-2.5 sm:gap-3.5 flex-1 justify-center sm:justify-start">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-[#720e1e] shrink-0 stroke-[1.75]" />
-              <div className="text-left leading-tight">
-                <div className="text-[11px] sm:text-[13px] font-bold text-[#1f1510]">A Stronger</div>
-                <div className="text-[10px] sm:text-xs font-semibold text-[#5c4a3f]">Valanchery</div>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#720e1e] shrink-0 stroke-[1.5]" />
+              <div className="text-left leading-none space-y-0.5">
+                <div className="text-[9px] sm:text-[10px] font-bold text-[#1f1510]">A Stronger</div>
+                <div className="text-[8px] sm:text-[8.5px] font-medium text-[#5c4a3f]">Valanchery</div>
               </div>
             </div>
           </div>

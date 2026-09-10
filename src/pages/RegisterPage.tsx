@@ -227,12 +227,12 @@ export function RegisterPage() {
       <PublicNavbar active="register" />
 
       {/* Single-Screen Light-Theme Registration Form Container */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-3 py-16 sm:py-20 sm:px-4 max-w-[360px] mx-auto w-full">
+      <main className="relative z-10 flex-1 flex flex-col justify-center items-center px-3 pt-16 pb-12 sm:py-16 sm:px-4 max-w-[375px] sm:max-w-[400px] mx-auto w-full">
         {/* Card Wrapper - Sharp, Compact, Luxury, Flat */}
-        <div className="w-full border border-[#c28e18]/40 bg-white p-4 sm:p-5 shadow-none rounded-none">
+        <div className="w-full border border-[#c28e18]/40 bg-white p-5 sm:p-6 shadow-2xl rounded-sm">
           {/* Card Header */}
-          <div className="text-center mb-3">
-            <h1 className="text-[13px] sm:text-base font-medium text-[#140d10] tracking-normal">
+          <div className="text-center mb-4">
+            <h1 className="text-sm sm:text-base font-bold text-[#140d10] tracking-normal">
               Register Your Pass
             </h1>
           </div>
