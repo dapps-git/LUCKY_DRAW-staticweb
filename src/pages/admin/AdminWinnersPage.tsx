@@ -1,22 +1,26 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { formatDate, maskPhone } from '../../lib/format'
-import { Search, Trophy, Calendar, Award, RotateCcw, CheckCircle2 } from 'lucide-react'
+import { formatDate } from '../../lib/format'
+import { Search, Trophy, Calendar, Award, RotateCcw, CheckCircle2, ArrowLeft, User } from 'lucide-react'
 
 export function AdminWinnersPage() {
   const { data, getParticipant, getPrize, getDraw } = useApp()
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [prize, setPrize] = useState('')
   const [date, setDate] = useState('')
 
   const rows = useMemo(() => {
-    return [...data.winners].reverse().filter((w) => {
-      const p = getParticipant(w.participantId) || { phone: 'Verified', name: 'Participant' }
-      const pr = getPrize(w.prizeId) || { id: w.prizeId, name: 'Festival Prize' }
-      const d = getDraw(w.drawId)
-      const hit = `${d ? '#' + d.number : w.drawId} ${p.phone} ${pr.name} ${w.status}`.toLowerCase().includes(q.toLowerCase())
-      return hit && (!prize || pr.id === prize) && (!date || w.date === date)
-    })
+    return [...data.winners]
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
+      .filter((w) => {
+        const p = getParticipant(w.participantId) || { phone: '', name: 'Participant', location: 'Valanchery' }
+        const pr = getPrize(w.prizeId) || { id: w.prizeId, name: 'Festival Prize' }
+        const d = getDraw(w.drawId)
+        const hit = `${d ? '#' + d.number : w.drawId} ${p.name || ''} ${p.phone || ''} ${pr.name} ${w.status}`.toLowerCase().includes(q.toLowerCase())
+        return hit && (!prize || pr.id === prize) && (!date || w.date === date)
+      })
   }, [data.winners, q, prize, date, getParticipant, getPrize, getDraw])
 
   const hasActiveFilters = Boolean(q || prize || date)
@@ -34,15 +38,24 @@ export function AdminWinnersPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e8decb]/80 pb-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-            Official Winner Records
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Logged winners across completed Valanchery Festival 2026 lucky draws
-          </p>
+      {/* Header with Back button */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e8decb]/80 pb-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+              Official Winner Records
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
+              Logged winners across completed Valanchery Festival 2026 lucky draws
+            </p>
+          </div>
         </div>
       </div>
 
@@ -85,7 +98,7 @@ export function AdminWinnersPage() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search draw #, phone, or prize name…"
+            placeholder="Search draw #, name, phone, or prize…"
             className="w-full border border-[#e8decb] bg-white pl-9 pr-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-[#5e0917]"
           />
           <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-400" size={15} />
@@ -130,9 +143,11 @@ export function AdminWinnersPage() {
               <tr>
                 <th className="w-12 px-4 py-3.5 text-center">SL</th>
                 <th className="px-4 py-3.5">Draw</th>
-                <th className="px-4 py-3.5">Draw Date</th>
+                <th className="px-4 py-3.5">Winner Name</th>
                 <th className="px-4 py-3.5">Phone</th>
+                <th className="px-4 py-3.5">Location</th>
                 <th className="px-4 py-3.5">Prize Awarded</th>
+                <th className="px-4 py-3.5">Draw Date</th>
                 <th className="px-4 py-3.5 text-right">Status</th>
               </tr>
             </thead>
@@ -147,7 +162,9 @@ export function AdminWinnersPage() {
                   ? `#${w.drawId.replace('draw-', '').padStart(2, '0')}`
                   : `#${idx + 1}`
                 const prizeName = pr?.name || 'Festival Prize'
-                const phoneDisplay = p?.phone ? maskPhone(p.phone) : 'Verified Participant'
+                const nameDisplay = p?.name || 'Verified Winner'
+                const phoneDisplay = p?.phone || '—'
+                const locationDisplay = p?.location || 'Valanchery'
                 return (
                   <tr key={w.id} className="hover:bg-[#fcfaf5] transition-colors">
                     {/* SL Number */}
@@ -160,14 +177,19 @@ export function AdminWinnersPage() {
                       {drawTag}
                     </td>
 
-                    {/* Draw Date */}
-                    <td className="px-4 py-3.5 text-xs font-medium text-slate-600 whitespace-nowrap">
-                      {formatDate(w.date)}
+                    {/* Winner Name */}
+                    <td className="px-4 py-3.5 font-semibold text-[#140d10]">
+                      {nameDisplay}
                     </td>
 
-                    {/* Masked Phone Number */}
-                    <td className="px-4 py-3.5 font-mono text-xs font-semibold text-slate-800">
+                    {/* Full Phone Number */}
+                    <td className="px-4 py-3.5 font-mono text-xs font-bold text-slate-900">
                       {phoneDisplay}
+                    </td>
+
+                    {/* Location */}
+                    <td className="px-4 py-3.5 text-slate-600">
+                      {locationDisplay}
                     </td>
 
                     {/* Prize Awarded */}
@@ -175,6 +197,11 @@ export function AdminWinnersPage() {
                       <span className="inline-flex items-center gap-1.5 font-semibold text-[#5e0917]">
                         <Award size={14} className="text-[#a46e09]" /> {prizeName}
                       </span>
+                    </td>
+
+                    {/* Draw Date */}
+                    <td className="px-4 py-3.5 text-xs font-medium text-slate-600 whitespace-nowrap">
+                      {formatDate(w.date)}
                     </td>
 
                     {/* Status */}

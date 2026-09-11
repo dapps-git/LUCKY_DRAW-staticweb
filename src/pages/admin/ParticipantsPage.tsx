@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { LOCATIONS } from '../../data/mockData'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate, isValidIndianPhone } from '../../lib/format'
@@ -17,12 +18,15 @@ import {
   Sparkles,
   Ticket,
   RotateCcw,
+  ArrowLeft,
+  User,
 } from 'lucide-react'
 
 const PAGE = 10
 
 export function ParticipantsPage() {
   const { data, updateParticipant, deleteParticipant, registerParticipant, getPrize, getDraw } = useApp()
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [location, setLocation] = useState('')
   const [status, setStatus] = useState('')
@@ -137,15 +141,24 @@ export function ParticipantsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header with Title and Primary Actions */}
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e8decb]/80 pb-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-            Participants Directory
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Comprehensive registry of all festival ticket holders and draw entrants.
-          </p>
+      {/* Header with Title, Back button and Primary Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e8decb]/80 pb-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+              Participants Directory
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
+              Comprehensive registry of all festival ticket holders and draw entrants.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <button
@@ -159,7 +172,7 @@ export function ParticipantsPage() {
             onClick={() => setShowAddModal(true)}
             className="inline-flex items-center gap-1.5 bg-[#5e0917] hover:bg-[#720e1e] px-4.5 py-2 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/25 transition active:scale-98 cursor-pointer"
           >
-            <Plus size={15} /> ADD PARTICIPANT
+            <Plus size={14} /> ADD ENTRANT
           </button>
         </div>
       </div>
@@ -265,17 +278,18 @@ export function ParticipantsPage() {
         )}
       </div>
 
-      {/* Clean Table: Showing ONLY ID, Coupon ID, Date, Number, Draw Status & Actions */}
+      {/* Table: Showing ID, Name, Phone Number, Coupon ID, Date, Draw Status & Actions */}
       <div className="overflow-hidden border border-[#e8decb] bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-xs">
+          <table className="w-full min-w-[820px] text-left text-xs">
             <thead className="border-b border-[#e8decb] bg-[#faf6ee] text-[11px] font-bold tracking-wider text-[#5e0917] uppercase">
               <tr>
                 <th className="w-12 px-4 py-3.5 text-center">SL</th>
                 <th className="px-4 py-3.5">ID</th>
+                <th className="px-4 py-3.5">Name</th>
+                <th className="px-4 py-3.5">Phone</th>
                 <th className="px-4 py-3.5">Coupon ID</th>
-                <th className="px-4 py-3.5">Date</th>
-                <th className="px-4 py-3.5">Number</th>
+                <th className="px-4 py-3.5">Reg. Date</th>
                 <th className="px-4 py-3.5">Draw Status</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
@@ -296,6 +310,16 @@ export function ParticipantsPage() {
                       {p.id}
                     </td>
 
+                    {/* Name */}
+                    <td className="px-4 py-3.5 font-semibold text-slate-900">
+                      {p.name || 'Participant'}
+                    </td>
+
+                    {/* Number (Phone) */}
+                    <td className="px-4 py-3.5 font-mono text-xs font-bold text-slate-900">
+                      {p.phone}
+                    </td>
+
                     {/* Coupon ID */}
                     <td className="px-4 py-3.5 font-mono text-xs">
                       {p.couponId ? (
@@ -309,12 +333,7 @@ export function ParticipantsPage() {
 
                     {/* Date */}
                     <td className="px-4 py-3.5 text-xs text-slate-600 font-medium whitespace-nowrap">
-                      {formatShortDate(p.registeredAt)}
-                    </td>
-
-                    {/* Number (Phone) */}
-                    <td className="px-4 py-3.5 font-mono text-xs font-semibold text-slate-800">
-                      {p.phone}
+                      {formatShortDate(p.registeredAt || p.createdAt || '')}
                     </td>
 
                     {/* Draw Status */}

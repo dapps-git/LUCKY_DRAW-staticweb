@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { formatDate } from '../../lib/format'
 import { PRIZE_IMAGES } from '../../data/mockData'
-import { Plus, X, ArrowRight, Calendar, Users, Sparkles } from 'lucide-react'
+import { Plus, X, ArrowRight, Calendar, Users, Sparkles, ArrowLeft } from 'lucide-react'
 
 export function LuckyDrawsPage() {
   const { data, getPrize, addDraw } = useApp()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({
     number: data.draws.length + 1,
@@ -18,13 +19,22 @@ export function LuckyDrawsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e8decb]/60 pb-5">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-            Festival Lucky Draws
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Total {data.draws.length} scheduled grand prize draws for Valanchery Festival 2026
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+              Festival Lucky Draws
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
+              Total {data.draws.length} scheduled grand prize draws for Valanchery Festival 2026
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Link

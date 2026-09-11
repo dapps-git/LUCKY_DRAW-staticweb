@@ -93,7 +93,7 @@ export default async function handler(req, res) {
               status: 'Used',
               usedAt: now,
               usedByParticipantId: newParticipant.id,
-              usedByParticipantName: name.trim(),
+              usedByParticipantName: participantName,
               usedByParticipantPhone: phone,
             },
           }
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
           createdAt: now,
           usedAt: now,
           usedByParticipantId: newParticipant.id,
-          usedByParticipantName: name.trim(),
+          usedByParticipantName: participantName,
           usedByParticipantPhone: phone,
         })
       }

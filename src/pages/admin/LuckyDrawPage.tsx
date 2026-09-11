@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Confetti } from '../../components/Confetti'
 import { Toast } from '../../components/Toast'
 import { useApp } from '../../context/AppContext'
 import { GIFT_PRESETS } from '../../data/mockData'
-import { maskPhone } from '../../lib/format'
 import type { Participant, Prize } from '../../types'
 import {
   Sparkles,
@@ -19,9 +18,10 @@ import {
   X,
   Sparkle,
   Upload,
+  Loader2,
 } from 'lucide-react'
 
-type Phase = 'ready' | 'spinning' | 'reveal' | 'done'
+type Phase = 'ready' | 'spinning' | 'verifying' | 'reveal' | 'done'
 
 export function LuckyDrawPage() {
   const {
@@ -34,6 +34,7 @@ export function LuckyDrawPage() {
     addPrize,
     assignPrizeToDraw,
   } = useApp()
+  const navigate = useNavigate()
 
   // Selected prize for current draw (defaults to draw's assigned prize)
   const defaultPrize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
@@ -68,6 +69,7 @@ export function LuckyDrawPage() {
   const [progress, setProgress] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [confirmAgain, setConfirmAgain] = useState(false)
+  const [isConfirming, setIsConfirming] = useState(false)
   const [toast, setToast] = useState('')
   const [flash, setFlash] = useState(false)
   const timers = useRef<number[]>([])
@@ -99,7 +101,7 @@ export function LuckyDrawPage() {
   }
 
   const startDraw = () => {
-    if (!pool.length || phase === 'spinning') return
+    if (!pool.length || phase === 'spinning' || phase === 'verifying') return
     const chosen = pickWinner()
     if (!chosen) return
 
@@ -108,7 +110,7 @@ export function LuckyDrawPage() {
     setProgress(0)
     setShowModal(false)
 
-    const duration = 6500
+    const duration = 5000
     const start = Date.now()
     let delay = 50
 
@@ -125,14 +127,20 @@ export function LuckyDrawPage() {
         timers.current.push(window.setTimeout(tick, 280))
       } else {
         setDisplay(chosen)
-        setFlash(true)
-        setPhase('reveal')
+        // Switch to verifying phase with spinner
+        setPhase('verifying')
         timers.current.push(
           window.setTimeout(() => {
-            setFlash(false)
-            setPhase('done')
-            setShowModal(true)
-          }, 900),
+            setFlash(true)
+            setPhase('reveal')
+            timers.current.push(
+              window.setTimeout(() => {
+                setFlash(false)
+                setPhase('done')
+                setShowModal(true)
+              }, 900),
+            )
+          }, 1800),
         )
       }
     }
@@ -378,6 +386,26 @@ export function LuckyDrawPage() {
           </div>
         )}
 
+        {/* Verifying Phase with Spinner */}
+        {phase === 'verifying' && display && (
+          <div className="mt-6 border-t border-[#f0e6d6] pt-6 pb-2 space-y-3">
+            <div className="flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fbf4ea] text-[#ad823e]">
+                <Loader2 size={26} className="animate-spin" />
+              </div>
+            </div>
+            <p className="text-xs font-bold tracking-wider text-[#ad823e] uppercase">
+              Verifying Winner & Token…
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-[#5c0b17] tracking-tight truncate">
+              {display.name}
+            </p>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Checking tamper-proof certificate & coupon status in ledger…
+            </p>
+          </div>
+        )}
+
         {/* Reveal / Done Phase in Card */}
         {(phase === 'reveal' || phase === 'done') && winner && (
           <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
@@ -392,8 +420,8 @@ export function LuckyDrawPage() {
                 🎫 Coupon: {winner.couponId}
               </p>
             )}
-            <p className="font-mono text-xs text-slate-500">
-              {maskPhone(winner.phone)} · {winner.location}
+            <p className="font-mono text-xs font-bold text-slate-800">
+              Phone: {winner.phone} · {winner.location}
             </p>
 
             <div className="pt-2 flex flex-col gap-2 sm:flex-row">
@@ -429,7 +457,7 @@ export function LuckyDrawPage() {
             <div className="my-4 rounded-none border border-[#e8decb] bg-[#faf7f0] p-4 text-left">
               <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Winner</p>
               <p className="text-lg font-bold text-[#140d10]">{winner.name}</p>
-              <p className="text-xs text-slate-600">Phone: {maskPhone(winner.phone)}</p>
+              <p className="text-xs font-bold text-slate-900 font-mono">Phone: {winner.phone}</p>
               <p className="text-xs text-slate-600">Location: {winner.location}</p>
               <p className="text-xs font-mono font-semibold text-[#5c0b17]">Participant ID: {winner.id}</p>
               {winner.couponId && (
@@ -446,22 +474,36 @@ export function LuckyDrawPage() {
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
+                disabled={isConfirming}
                 onClick={async () => {
-                  const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
-                  if (res.ok) {
-                    setShowModal(false)
-                    setToast(`Winner "${winner.name}" officially confirmed with ${activePrize.name}!`)
-                  } else {
-                    setToast(res.error)
+                  setIsConfirming(true)
+                  try {
+                    const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
+                    if (res.ok) {
+                      setShowModal(false)
+                      setToast(`Winner "${winner.name}" officially confirmed with ${activePrize.name}!`)
+                    } else {
+                      setToast(res.error)
+                    }
+                  } finally {
+                    setIsConfirming(false)
                   }
                 }}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                CONFIRM WINNER
+                {isConfirming ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin text-white" />
+                    <span>RECORDING WINNER…</span>
+                  </>
+                ) : (
+                  <span>CONFIRM WINNER</span>
+                )}
               </button>
               <button
+                disabled={isConfirming}
                 onClick={() => setConfirmAgain(true)}
-                className="flex-1 rounded-none border border-slate-300 py-3 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="flex-1 rounded-none border border-slate-300 py-3 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
               >
                 SPIN AGAIN
               </button>

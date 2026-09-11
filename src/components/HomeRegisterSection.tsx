@@ -21,12 +21,14 @@ export function HomeRegisterSection() {
   const { registerParticipant, validateCouponAsync } = useApp()
 
   const [form, setForm] = useState({
+    name: '',
     phone: '',
     couponId: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [successId, setSuccessId] = useState<string | null>(null)
   const [registeredCoupon, setRegisteredCoupon] = useState<string | null>(null)
+  const [registeredName, setRegisteredName] = useState<string | null>(null)
   const [confetti, setConfetti] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -125,7 +127,8 @@ export function HomeRegisterSection() {
   const resetForm = () => {
     setSuccessId(null)
     setRegisteredCoupon(null)
-    setForm({ phone: '', couponId: '' })
+    setRegisteredName(null)
+    setForm({ name: '', phone: '', couponId: '' })
     setTokenStatus({ status: 'Idle', message: '' })
     setErrors({})
     setFormError('')
@@ -157,7 +160,12 @@ export function HomeRegisterSection() {
       }
     }
 
-    // 2. Phone validation
+    // 2. Name validation
+    if (!form.name.trim()) {
+      next.name = 'Full name is required'
+    }
+
+    // 3. Phone validation
     if (!form.phone.trim()) {
       next.phone = 'Mobile number is required'
     } else if (!isValidIndianPhone(form.phone)) {
@@ -170,8 +178,9 @@ export function HomeRegisterSection() {
     setIsSubmitting(true)
     try {
       const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+      const userName = form.name.trim()
       const result = await registerParticipant({
-        name: `Shopper ${form.phone.trim().slice(-4)}`,
+        name: userName,
         phone: form.phone.trim(),
         address: 'Valanchery',
         location: 'Valanchery',
@@ -192,6 +201,7 @@ export function HomeRegisterSection() {
 
       setSuccessId(result.id)
       setRegisteredCoupon(cleanToken)
+      setRegisteredName(userName)
       setConfetti(true)
       setTimeout(() => setConfetti(false), 4500)
     } finally {
@@ -259,6 +269,12 @@ export function HomeRegisterSection() {
                   <span className="text-slate-500">Participant ID:</span>
                   <span className="font-mono font-bold text-[#5e0917]">{successId}</span>
                 </div>
+                {registeredName && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Name:</span>
+                    <span className="font-semibold text-slate-900">{registeredName}</span>
+                  </div>
+                )}
                 {registeredCoupon && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Coupon Token:</span>
@@ -283,7 +299,7 @@ export function HomeRegisterSection() {
             </div>
           ) : (
             /* Main Form */
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={submit} className="space-y-3.5">
               {formError && (
                 <div className="border border-red-200 bg-red-50 p-2 text-[11px] text-red-700 font-medium">
                   {formError}
@@ -413,9 +429,28 @@ export function HomeRegisterSection() {
                 )}
               </div>
 
-              {/* 2. Mobile Phone Number */}
+              {/* 2. Full Name / Username Section */}
               <div>
-                <label className="block text-[11px] sm:text-xs font-bold text-slate-800 mb-1.5 text-left">
+                <label className="block text-[11px] sm:text-xs font-bold text-slate-800 mb-1 text-left">
+                  Full Name / Username *
+                </label>
+                <div className="border border-slate-300 focus-within:border-[#720e1e]">
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => set('name', e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full rounded-none bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
+                  />
+                </div>
+                {errors.name && (
+                  <p className="mt-1 text-[10px] text-red-600 text-left">{errors.name}</p>
+                )}
+              </div>
+
+              {/* 3. Mobile Phone Number */}
+              <div>
+                <label className="block text-[11px] sm:text-xs font-bold text-slate-800 mb-1 text-left">
                   Mobile Number *
                 </label>
                 <div className="flex border border-slate-300 focus-within:border-[#720e1e]">
@@ -435,7 +470,7 @@ export function HomeRegisterSection() {
                 {errors.phone && (
                   <p className="mt-1 text-[10px] text-red-600 text-left">{errors.phone}</p>
                 )}
-                <p className="mt-1 text-[10px] text-slate-500 text-left">
+                <p className="mt-1 text-[9px] text-slate-500 text-left">
                   Winners are directly notified on this phone number.
                 </p>
               </div>

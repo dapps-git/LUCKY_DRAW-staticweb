@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
 import { formatShortDate } from '../../lib/format'
 
 export function CouponsPage() {
   const { generateCouponBatch, data, coupons } = useApp()
+  const navigate = useNavigate()
 
   const [count, setCount] = useState<number>(100)
   const [customDomain, setCustomDomain] = useState<string>(() => {
@@ -53,13 +54,22 @@ export function CouponsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Title & Link to Directory */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-            Coupon Excel Generator
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Select the quantity to generate unique 13-character coupons and download directly as an Excel Sheet.
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+              Coupon Excel Generator
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
+              Produce serialized coupon tokens with live QR URLs and export directly to Excel.
+            </p>
+          </div>
         </div>
 
         <Link

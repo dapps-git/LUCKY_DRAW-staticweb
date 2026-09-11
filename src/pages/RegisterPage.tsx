@@ -26,12 +26,14 @@ export function RegisterPage() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
+    name: '',
     phone: '',
     couponId: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [successId, setSuccessId] = useState<string | null>(null)
   const [registeredCoupon, setRegisteredCoupon] = useState<string | null>(null)
+  const [registeredName, setRegisteredName] = useState<string | null>(null)
   const [confetti, setConfetti] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -130,6 +132,16 @@ export function RegisterPage() {
     }
   }
 
+  const resetForm = () => {
+    setSuccessId(null)
+    setRegisteredCoupon(null)
+    setRegisteredName(null)
+    setForm({ name: '', phone: '', couponId: '' })
+    setTokenStatus({ status: 'Idle', message: '' })
+    setErrors({})
+    setFormError('')
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return
@@ -156,7 +168,12 @@ export function RegisterPage() {
       }
     }
 
-    // 2. Phone is strictly required
+    // 2. Name is required
+    if (!form.name.trim()) {
+      next.name = 'Full name is required'
+    }
+
+    // 3. Phone is strictly required
     if (!form.phone.trim()) {
       next.phone = 'Mobile number is required'
     } else if (!isValidIndianPhone(form.phone)) {
@@ -169,8 +186,9 @@ export function RegisterPage() {
     setIsSubmitting(true)
     try {
       const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
+      const userName = form.name.trim()
       const result = await registerParticipant({
-        name: `Shopper ${form.phone.trim().slice(-4)}`,
+        name: userName,
         phone: form.phone.trim(),
         address: 'Valanchery',
         location: 'Valanchery',
@@ -191,6 +209,7 @@ export function RegisterPage() {
 
       setSuccessId(result.id)
       setRegisteredCoupon(cleanToken)
+      setRegisteredName(userName)
       setConfetti(true)
       setTimeout(() => setConfetti(false), 4500)
     } finally {
@@ -357,7 +376,22 @@ export function RegisterPage() {
               {errors.couponId && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>}
             </div>
 
-            {/* 2. Phone Number Section */}
+            {/* 2. Full Name / Username Section */}
+            <div className="rounded-none border border-slate-200 bg-white p-2.5">
+              <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wide mb-1">
+                Full Name / Username *
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
+              />
+              {errors.name && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.name}</p>}
+            </div>
+
+            {/* 3. Phone Number Section */}
             <div className="rounded-none border border-slate-200 bg-white p-2.5">
               <label className="block text-[10px] font-semibold text-slate-700 uppercase tracking-wide mb-1">
                 Phone Number *
@@ -427,6 +461,12 @@ export function RegisterPage() {
                 <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">PARTICIPANT ID</p>
                 <p className="font-mono text-sm font-bold text-[#7a1426]">{successId}</p>
               </div>
+              {registeredName && (
+                <div className="border-t border-slate-200 pt-1.5 mt-1.5">
+                  <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">PARTICIPANT NAME</p>
+                  <p className="text-xs font-semibold text-slate-900">{registeredName}</p>
+                </div>
+              )}
               {registeredCoupon && (
                 <div className="border-t border-slate-200 pt-1.5 mt-1.5">
                   <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">COUPON CODE</p>
@@ -443,14 +483,7 @@ export function RegisterPage() {
                 <Home size={13} /> GO TO HOME
               </button>
               <button
-                onClick={() => {
-                  setSuccessId(null)
-                  setForm({
-                    phone: '',
-                    couponId: '',
-                  })
-                  setTokenStatus({ status: 'Idle', message: '' })
-                }}
+                onClick={resetForm}
                 className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 + REGISTER ANOTHER

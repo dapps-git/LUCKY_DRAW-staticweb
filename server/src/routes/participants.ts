@@ -85,7 +85,7 @@ router.post('/register', async (req, res) => {
         existingCoupon.status = 'Used'
         existingCoupon.usedAt = now
         existingCoupon.usedByParticipantId = id
-        existingCoupon.usedByParticipantName = name.trim()
+        existingCoupon.usedByParticipantName = participantName
         existingCoupon.usedByParticipantPhone = phone
         await existingCoupon.save()
 
@@ -103,7 +103,7 @@ router.post('/register', async (req, res) => {
           createdAt: now,
           usedAt: now,
           usedByParticipantId: id,
-          usedByParticipantName: name.trim(),
+          usedByParticipantName: participantName,
           usedByParticipantPhone: phone,
         })
       }

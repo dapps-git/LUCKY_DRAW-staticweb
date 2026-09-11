@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { GIFT_PRESETS, PRIZE_IMAGES } from '../../data/mockData'
 import type { Prize, PrizeStatus } from '../../types'
-import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2, Upload } from 'lucide-react'
+import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2, Upload, ArrowLeft } from 'lucide-react'
 
 export function PrizesPage() {
   const { data, addPrize, updatePrize, deletePrize, getDraw } = useApp()
+  const navigate = useNavigate()
   const [edit, setEdit] = useState<Partial<Prize> | null>(null)
 
   const save = () => {
@@ -32,13 +34,22 @@ export function PrizesPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#e8decb]/60 pb-5">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-            Festival Prizes Vault
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Total {data.prizes.length} prizes configured · <strong className="text-emerald-700 font-semibold">{awardedCount} Awarded</strong> · <strong className="text-amber-700 font-semibold">{availableCount} Available</strong>
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+              Festival Prizes Vault
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
+              Total {data.prizes.length} prizes configured · <strong className="text-emerald-700 font-semibold">{awardedCount} Awarded</strong> · <strong className="text-amber-700 font-semibold">{availableCount} Available</strong>
+            </p>
+          </div>
         </div>
         <button
           onClick={() =>

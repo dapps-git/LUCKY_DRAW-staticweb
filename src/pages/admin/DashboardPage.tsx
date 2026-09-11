@@ -7,7 +7,9 @@ import { Sparkles, ArrowRight, Trophy } from 'lucide-react'
 export function DashboardPage() {
   const { data, nextDraw, getPrize, getParticipant, getDraw, eligibleParticipants } = useApp()
   const prize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
-  const recent = [...data.winners].reverse().slice(0, 4)
+  const recent = [...data.winners]
+    .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
+    .slice(0, 5)
 
   const cards = [
     ['Total Registered', data.participants.length],
@@ -83,15 +85,15 @@ export function DashboardPage() {
           </div>
           <Link
             to="/admin/winners"
-            className="text-xs font-light text-[#6b1020] underline underline-offset-4 hover:text-[#9b1c32]"
+            className="text-xs font-semibold text-[#6b1020] underline underline-offset-4 hover:text-[#9b1c32]"
           >
             View all history →
           </Link>
         </div>
 
         <div className="mt-4 overflow-x-auto border border-black/10 bg-white shadow-sm">
-          <table className="w-full min-w-[650px] text-left text-xs font-light sm:text-sm">
-            <thead className="border-b border-black/10 bg-[#f7f0e6] text-[11px] font-medium tracking-wider text-black/60 uppercase">
+          <table className="w-full min-w-[650px] text-left text-xs sm:text-sm">
+            <thead className="border-b border-black/10 bg-[#f7f0e6] text-[11px] font-semibold tracking-wider text-black/70 uppercase">
               <tr>
                 <th className="px-4 py-3">Winner Name</th>
                 <th className="px-4 py-3">Phone</th>
@@ -104,14 +106,16 @@ export function DashboardPage() {
               {recent.map((w) => {
                 const p = getParticipant(w.participantId)
                 const pr = getPrize(w.prizeId)
-                const draw = getDraw(w.drawId)
-                if (!p || !pr || !draw) return null
+                const nameDisplay = p?.name || 'Verified Winner'
+                const phoneDisplay = p?.phone || '—'
+                const locationDisplay = p?.location || 'Valanchery'
+                const prizeDisplay = pr?.name || 'Festival Prize'
                 return (
                   <tr key={w.id} className="border-b border-black/5 hover:bg-[#faf7f2]">
-                    <td className="px-4 py-3 font-medium text-[#140d10]">{p.name}</td>
-                    <td className="px-4 py-3 text-black/70">{maskPhone(p.phone)}</td>
-                    <td className="px-4 py-3 text-black/70">{p.location}</td>
-                    <td className="px-4 py-3 text-[#6b1020]">{pr.name}</td>
+                    <td className="px-4 py-3 font-semibold text-[#140d10]">{nameDisplay}</td>
+                    <td className="px-4 py-3 font-mono font-medium text-black/80">{phoneDisplay}</td>
+                    <td className="px-4 py-3 text-black/70">{locationDisplay}</td>
+                    <td className="px-4 py-3 font-medium text-[#6b1020]">{prizeDisplay}</td>
                     <td className="px-4 py-3 text-black/60">{formatDate(w.date)}</td>
                   </tr>
                 )

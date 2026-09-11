@@ -7,13 +7,15 @@ import { formatDate, maskPhone } from '../lib/format'
 export function PublicWinnersPage() {
   const { data, getParticipant, getPrize, getDraw } = useApp()
   const [filter, setFilter] = useState('')
-  const winners = [...data.winners].reverse()
+  const winners = [...data.winners].sort(
+    (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id)
+  )
 
   const filteredWinners = winners.filter((w) => {
     const p = getParticipant(w.participantId)
     const prize = getPrize(w.prizeId)
     if (!p || !prize) return false
-    const match = `${p.name} ${p.location} ${prize.name}`.toLowerCase()
+    const match = `${p.name} ${p.phone} ${p.location} ${prize.name}`.toLowerCase()
     return match.includes(filter.toLowerCase())
   })
 
@@ -97,7 +99,7 @@ export function PublicWinnersPage() {
                     {p.name}
                   </h2>
                   <div className="mt-3 space-y-1 text-xs font-light text-white/70">
-                    <p>Phone: {maskPhone(p.phone)}</p>
+                    <p>Phone: {p.phone}</p>
                     <p>Location: {p.location}</p>
                   </div>
 
