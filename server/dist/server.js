@@ -17,29 +17,41 @@ const MONGODB_URI = process.env.MONGODB_URI ||
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-// Root & Health Check Endpoints
-app.get(['/', '/festival', '/api', '/festival/api'], (_req, res) => {
-    res.json({
-        status: 'online',
-        service: 'Valanchery Festival Lucky Draw API',
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        endpoints: {
-            health: '/api/health',
-            coupons: '/api/coupons',
-            participants: '/api/participants',
-            prizes: '/api/prizes',
-            draws: '/api/draws',
-            winners: '/api/winners',
-        },
-        timestamp: new Date().toISOString(),
-    });
-});
-app.get(['/api/health', '/health', '/festival/health', '/festival/api/health'], (_req, res) => {
-    res.json({
-        status: 'online',
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString(),
-    });
+// Universal Health & Root Handler
+app.use((req, res, next) => {
+    const p = req.path.toLowerCase();
+    if (p === '/health' || p.endsWith('/health') || p === '/api/health') {
+        return res.json({
+            status: 'online',
+            service: 'Valanchery Festival Lucky Draw API',
+            database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+            timestamp: new Date().toISOString(),
+        });
+    }
+    if (p === '/' ||
+        p === '' ||
+        p === '/festival' ||
+        p === '/festival/' ||
+        p === '/api' ||
+        p === '/api/' ||
+        p === '/festival/api' ||
+        p === '/festival/api/') {
+        return res.json({
+            status: 'online',
+            service: 'Valanchery Festival Lucky Draw API',
+            database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+            endpoints: {
+                health: '/health',
+                coupons: '/coupons',
+                participants: '/participants',
+                prizes: '/prizes',
+                draws: '/draws',
+                winners: '/winners',
+            },
+            timestamp: new Date().toISOString(),
+        });
+    }
+    next();
 });
 // Routes
 app.use('/api/coupons', couponsRouter);
@@ -54,6 +66,18 @@ app.use('/prizes', prizesRouter);
 app.use('/draws', drawsRouter);
 app.use('/winners', winnersRouter);
 app.use('/auth', authRouter);
+app.use('/festival/api/coupons', couponsRouter);
+app.use('/festival/api/participants', participantsRouter);
+app.use('/festival/api/prizes', prizesRouter);
+app.use('/festival/api/draws', drawsRouter);
+app.use('/festival/api/winners', winnersRouter);
+app.use('/festival/api/auth', authRouter);
+app.use('/festival/coupons', couponsRouter);
+app.use('/festival/participants', participantsRouter);
+app.use('/festival/prizes', prizesRouter);
+app.use('/festival/draws', drawsRouter);
+app.use('/festival/winners', winnersRouter);
+app.use('/festival/auth', authRouter);
 // Database Connection & Server Start
 async function startServer() {
     try {
