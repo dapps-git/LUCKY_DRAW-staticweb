@@ -193,27 +193,47 @@ export function LuckyDrawPage() {
 
   if (!nextDraw || !activePrize) {
     return (
-      <div className="border border-black/10 bg-white p-8 text-center text-[#140d10] md:p-12">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f7f0e6] text-[#d4a017]">
-          <Trophy size={28} />
+      <div className="space-y-4 font-['Montserrat',sans-serif]">
+        <div className="flex items-center justify-start">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
         </div>
-        <h2 className="font-display mt-4 text-2xl font-light">All Scheduled Draws are Completed!</h2>
-        <p className="mt-2 text-xs font-light text-black/60 sm:text-sm">
-          Check the Winners records for complete festival history or configure a new draw in Schedule.
-        </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link
-            to="/admin/winners"
-            className="border border-[#6b1020] bg-[#6b1020] px-5 py-2.5 text-xs font-medium tracking-wider uppercase text-white transition hover:bg-[#851629]"
-          >
-            View All Winners
-          </Link>
-          <Link
-            to="/admin/dashboard"
-            className="border border-black/20 bg-[#f7f0e6] px-5 py-2.5 text-xs font-light tracking-wider uppercase text-black transition hover:bg-black/5"
-          >
-            Dashboard
-          </Link>
+
+        <div className="border border-[#e8decb] bg-white p-8 text-center text-[#140d10] md:p-12 shadow-xs">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f7f0e6] text-[#ad823e]">
+            <Trophy size={28} />
+          </div>
+          <h2 className="mt-4 text-2xl font-bold tracking-tight text-[#140d10]">
+            All Scheduled Draws are Completed!
+          </h2>
+          <p className="mt-2 text-xs text-slate-600 sm:text-sm max-w-md mx-auto leading-relaxed">
+            Check the Winners records for complete festival history or configure a new draw in Schedule.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-1.5 border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-700 transition cursor-pointer"
+            >
+              <ArrowLeft size={14} /> Back
+            </button>
+            <Link
+              to="/admin/winners"
+              className="border border-[#5e0917] bg-[#5e0917] px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-white transition hover:bg-[#720e1e] shadow-sm shadow-[#5e0917]/20"
+            >
+              View All Winners
+            </Link>
+            <Link
+              to="/admin/dashboard"
+              className="border border-slate-300 bg-[#fbf4ea] px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-800 transition hover:bg-[#f6ebd8]"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -334,13 +354,14 @@ export function LuckyDrawPage() {
             {activePrize.name} <span className="font-bold">({activePrize.value})</span>
           </p>
 
-          {/* Change Prize Link */}
+          {/* Change Prize Button */}
           {phase === 'ready' && (
             <button
               onClick={() => setShowPrizeSelector(true)}
-              className="mt-1.5 inline-block text-xs font-medium text-[#8b1e2e] hover:underline cursor-pointer transition"
+              className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[#5c0b17] hover:text-white bg-[#fbf4ea] hover:bg-[#5c0b17] border border-[#e8decb] hover:border-[#5c0b17] px-3.5 py-1.5 transition cursor-pointer shadow-2xs"
             >
-              Change Prize
+              <Gift size={13} className="text-[#ad823e]" />
+              <span>Select Gift from Vault</span>
             </button>
           )}
         </div>
@@ -442,37 +463,166 @@ export function LuckyDrawPage() {
         )}
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal - Festive Certificate Design */}
       {showModal && winner && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="animate-reveal w-full max-w-md rounded-none border border-[#e8decb] bg-white p-6 sm:p-8 text-[#140d10] shadow-2xl">
-            <p className="text-[10px] font-bold tracking-[0.25em] text-[#5c0b17] uppercase">RESULT READY</p>
-            <h3 className="mt-1 text-xl sm:text-2xl font-bold text-[#140d10]">
-              Confirm Draw Winner
-            </h3>
-            <p className="mt-1.5 text-xs text-slate-600">
-              The draw selected the following participant. Confirm to record this officially into the festival winners list and grant this prize.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto font-['Montserrat',sans-serif]">
+          <div className="animate-reveal relative w-full max-w-2xl my-auto rounded-none border border-[#e8decb] bg-[#fffaf6] p-6 sm:p-9 text-[#140d10] shadow-[0_25px_60px_rgba(0,0,0,0.25)] overflow-hidden">
+            {/* Background Decorative Floral & Bokeh Accents */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden select-none opacity-40">
+              <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-[#fde2e4] blur-2xl" />
+              <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#faecd6] blur-2xl" />
+              <div className="absolute -right-12 -bottom-12 h-40 w-40 rounded-full bg-[#fde2e4] blur-2xl" />
+              <div className="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-[#faecd6] blur-2xl" />
+            </div>
 
-            <div className="my-4 rounded-none border border-[#e8decb] bg-[#faf7f0] p-4 text-left">
-              <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Winner</p>
-              <p className="text-lg font-bold text-[#140d10]">{winner.name}</p>
-              <p className="text-xs font-bold text-slate-900 font-mono">Phone: {winner.phone}</p>
-              <p className="text-xs text-slate-600">Location: {winner.location}</p>
-              <p className="text-xs font-mono font-semibold text-[#5c0b17]">Participant ID: {winner.id}</p>
-              {winner.couponId && (
-                <p className="mt-1 font-mono text-xs font-bold text-[#ad823e]">
-                  🎫 Coupon Code: {winner.couponId}
+            {/* Top Bar: Brand & Festive Note */}
+            <div className="relative z-10 flex items-center justify-between border-b border-[#f3e5d7] pb-3 text-left">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center bg-[#5e0917] text-white font-bold text-xs shadow-xs">
+                  VF
+                </div>
+                <div>
+                  <p className="text-xs font-bold tracking-tight text-[#140d10] uppercase">
+                    Valanchery Festival
+                  </p>
+                  <p className="text-[9px] tracking-widest text-[#ad823e] uppercase font-semibold">
+                    Shop · Celebrate · Win Together
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden sm:block text-right">
+                <p className="font-serif italic text-xs text-[#720e1e] font-medium">
+                  Thank you for being a part of our festival! ♡
                 </p>
-              )}
-
-              <div className="mt-3 border-t border-[#e8decb] pt-2">
-                <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Awarded Prize</p>
-                <p className="text-sm font-bold text-[#5c0b17]">{activePrize.name} ({activePrize.value})</p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            {/* Center Trophy & Congratulations Header */}
+            <div className="relative z-10 text-center mt-5 mb-4">
+              {/* Golden Trophy with Laurel Icon */}
+              <div className="mx-auto flex items-center justify-center gap-2">
+                <span className="text-[#ad823e] text-lg select-none">🌿</span>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#fff3db] to-[#fce4ba] border border-[#e5c278] text-[#ad823e] shadow-sm">
+                  <Trophy size={28} className="text-[#b58737] drop-shadow-xs" />
+                </div>
+                <span className="text-[#ad823e] text-lg select-none scale-x-[-1]">🌿</span>
+              </div>
+
+              {/* Congratulations Title */}
+              <h2 className="mt-2 font-serif italic text-3xl sm:text-4xl font-bold tracking-tight text-[#5e0917]">
+                Congratulations!
+              </h2>
+
+              {/* Subtitle with gold accent lines */}
+              <div className="mt-1.5 flex items-center justify-center gap-3">
+                <div className="h-[1px] w-12 sm:w-20 bg-gradient-to-r from-transparent to-[#ad823e]" />
+                <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.25em] text-[#8c6727] uppercase">
+                  LUCKY DRAW WINNER · DRAW #{String(nextDraw.number).padStart(2, '0')}
+                </p>
+                <div className="h-[1px] w-12 sm:w-20 bg-gradient-to-l from-transparent to-[#ad823e]" />
+              </div>
+            </div>
+
+            {/* Main Winner Card */}
+            <div className="relative z-10 my-5 rounded-none border border-[#eddcd0] bg-white p-5 sm:p-6 shadow-md text-left">
+              {/* Grand Prize Floating Badge on Card Top */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5e0917] px-4 py-1 text-[11px] font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 border border-[#8a1a2e]">
+                  <Gift size={12} className="text-[#fce4ba]" />
+                  <span>Grand Prize Draw</span>
+                </span>
+              </div>
+
+              {/* Winner Profile & Info Section */}
+              <div className="mt-2 flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                {/* Avatar with Golden Crown */}
+                <div className="relative shrink-0">
+                  <div className="absolute -top-3 -left-1 text-base select-none z-10 rotate-[-15deg] drop-shadow-xs">
+                    👑
+                  </div>
+                  <div className="flex h-18 w-18 items-center justify-center rounded-full bg-[#f7d6dc] border-2 border-white shadow-sm text-[#720e1e] font-bold text-2xl">
+                    {winner.name.charAt(0).toUpperCase()}
+                  </div>
+                </div>
+
+                {/* Winner Name, Phone & Coupon ID */}
+                <div className="flex-1 text-center sm:text-left min-w-0">
+                  <h3 className="text-2xl sm:text-[26px] font-bold tracking-tight text-[#140d10] truncate">
+                    {winner.name}
+                  </h3>
+
+                  <div className="mt-1.5 flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 text-xs">
+                    <span className="font-semibold text-slate-800 tracking-wide">
+                      +91 {winner.phone}
+                    </span>
+                    {winner.location && (
+                      <>
+                        <span className="text-slate-300">·</span>
+                        <span className="text-slate-500 font-medium">
+                          {winner.location}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Clean Inline Coupon ID without box */}
+                  {winner.couponId && (
+                    <div className="mt-1.5 flex items-center justify-center sm:justify-start gap-1.5 text-xs">
+                      <span className="text-[11px] font-semibold text-[#8c6727] tracking-wider uppercase">
+                        Token ID:
+                      </span>
+                      <span className="font-mono font-bold text-xs tracking-wider text-[#5e0917]">
+                        {winner.couponId}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Prize Inset Banner Box */}
+              <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3.5 rounded-none border border-[#f2ded6] bg-[#fbf2ef] p-3.5 sm:p-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <img
+                    src={activePrize.image}
+                    alt={activePrize.name}
+                    className="h-14 w-16 sm:h-16 sm:w-20 object-cover border border-[#e8decb] bg-white shrink-0 shadow-2xs"
+                  />
+                  <div>
+                    <p className="text-[10px] font-bold tracking-widest text-[#8c6727] uppercase">
+                      PRIZE WON
+                    </p>
+                    <p className="text-base sm:text-lg font-bold text-[#5e0917] leading-snug">
+                      {activePrize.name}
+                    </p>
+                    {activePrize.description && (
+                      <p className="text-[11px] text-slate-500 line-clamp-1">
+                        {activePrize.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="hidden sm:block h-10 w-[1px] bg-[#e4cdc4]" />
+
+                <div className="text-center sm:text-right w-full sm:w-auto border-t sm:border-t-0 border-[#f0dbd2] pt-2 sm:pt-0">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase block sm:hidden">
+                    Value
+                  </span>
+                  <span className="font-mono text-xl sm:text-2xl font-bold text-[#5e0917]">
+                    {activePrize.value}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Participation Note */}
+            <p className="relative z-10 text-center text-xs text-slate-500 font-medium">
+              We appreciate your participation! Keep shopping, keep supporting local.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="relative z-10 mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 disabled={isConfirming}
                 onClick={async () => {
@@ -489,24 +639,34 @@ export function LuckyDrawPage() {
                     setIsConfirming(false)
                   }
                 }}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto min-w-[200px] rounded-full bg-[#5e0917] hover:bg-[#720e1e] py-3 px-6 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-white transition duration-150 active:scale-95 cursor-pointer shadow-lg shadow-[#5e0917]/30 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isConfirming ? (
                   <>
-                    <Loader2 size={14} className="animate-spin text-white" />
+                    <Loader2 size={15} className="animate-spin text-white" />
                     <span>RECORDING WINNER…</span>
                   </>
                 ) : (
-                  <span>CONFIRM WINNER</span>
+                  <span>CONFIRM WINNER →</span>
                 )}
               </button>
+
               <button
                 disabled={isConfirming}
                 onClick={() => setConfirmAgain(true)}
-                className="flex-1 rounded-none border border-slate-300 py-3 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto rounded-full border border-[#d8c5b6] bg-white hover:bg-[#faf6f0] py-3 px-6 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-slate-700 transition cursor-pointer disabled:opacity-50"
               >
                 SPIN AGAIN
               </button>
+            </div>
+
+            {/* Bottom Tagline Footer */}
+            <div className="relative z-10 mt-6 pt-3 border-t border-[#f3e5d7] flex items-center justify-center gap-3 text-center">
+              <div className="h-[1px] w-8 sm:w-16 bg-[#e2cebf]" />
+              <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[#8c6727] uppercase">
+                VALANCHERY FESTIVAL · A BRIGHTER TOWN TOGETHER
+              </p>
+              <div className="h-[1px] w-8 sm:w-16 bg-[#e2cebf]" />
             </div>
           </div>
         </div>
@@ -514,22 +674,22 @@ export function LuckyDrawPage() {
 
       {/* Re-spin confirmation */}
       {confirmAgain && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 font-['Montserrat',sans-serif]">
           <div className="w-full max-w-sm rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
             <h4 className="text-lg font-bold text-[#140d10]">Select another winner?</h4>
-            <p className="mt-2 text-xs text-slate-600">
-              This will discard the current draw result and allow you to re-spin the randomizer.
+            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+              This will discard the current draw result and allow you to re-spin the randomizer for another participant.
             </p>
             <div className="mt-6 flex gap-2">
               <button
                 onClick={() => setConfirmAgain(false)}
-                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={resetSpin}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
+                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
               >
                 Re-spin
               </button>
@@ -545,7 +705,7 @@ export function LuckyDrawPage() {
             <div className="flex items-center justify-between border-b border-[#e8decb] pb-3">
               <div>
                 <h3 className="text-lg font-bold text-[#140d10]">Choose Gift for this Draw</h3>
-                <p className="text-xs text-slate-500">Select any prize to be awarded in Lucky Draw #{nextDraw.number}</p>
+                <p className="text-xs text-slate-500">Select any gift from the vault to award in Lucky Draw #{nextDraw.number}</p>
               </div>
               <button onClick={() => setShowPrizeSelector(false)} className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer">
                 <X size={18} />
@@ -554,25 +714,27 @@ export function LuckyDrawPage() {
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {data.prizes.map((p) => {
-                const isSelected = p.id === activePrize.id
+                const isSelected = p.id === activePrize?.id
                 return (
                   <div
                     key={p.id}
                     onClick={() => handleSelectPrize(p.id)}
-                    className={`cursor-pointer border p-3 transition flex items-center gap-3 rounded-none ${
+                    className={`cursor-pointer border p-3.5 transition flex items-center gap-3 rounded-none ${
                       isSelected
-                        ? 'border-[#5e0917] bg-[#fbf3f4] ring-1 ring-[#5e0917]'
-                        : 'border-[#e8decb] hover:border-slate-400 bg-[#faf7f0]'
+                        ? 'border-[#5e0917] bg-[#fbf3f4] ring-2 ring-[#5e0917]'
+                        : 'border-[#e8decb] hover:border-[#5e0917] hover:bg-[#fbf3f4]/40 bg-[#faf7f0]'
                     }`}
                   >
-                    <img src={p.image} alt={p.name} className="h-14 w-14 object-cover rounded-none border border-[#e8decb]" />
+                    <img src={p.image} alt={p.name} className="h-14 w-14 object-cover rounded-none border border-[#e8decb] shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-[#140d10] truncate">{p.name}</p>
                         {isSelected && <Check size={14} className="text-[#5e0917] shrink-0" />}
                       </div>
-                      <p className="text-xs font-mono font-bold text-[#5e0917]">{p.value}</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-semibold">{p.status}</p>
+                      <p className="text-xs font-mono font-bold text-[#5e0917] mt-0.5">{p.value}</p>
+                      {p.description && (
+                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{p.description}</p>
+                      )}
                     </div>
                   </div>
                 )

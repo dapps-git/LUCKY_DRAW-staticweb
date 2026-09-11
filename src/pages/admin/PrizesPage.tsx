@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { GIFT_PRESETS, PRIZE_IMAGES } from '../../data/mockData'
-import type { Prize, PrizeStatus } from '../../types'
-import { Plus, X, Sparkles, Tag, Dices, Edit3, Trash2, Upload, ArrowLeft } from 'lucide-react'
+import { GIFT_PRESETS } from '../../data/mockData'
+import type { Prize } from '../../types'
+import { Plus, X, Edit3, Trash2, Upload, ArrowLeft } from 'lucide-react'
 
 export function PrizesPage() {
-  const { data, addPrize, updatePrize, deletePrize, getDraw } = useApp()
+  const { data, addPrize, updatePrize, deletePrize } = useApp()
   const navigate = useNavigate()
   const [edit, setEdit] = useState<Partial<Prize> | null>(null)
 
@@ -20,15 +20,12 @@ export function PrizesPage() {
         description: edit.description ?? '',
         value: edit.value ?? '₹0',
         image: edit.image ?? GIFT_PRESETS[0].image,
-        assignedDrawId: edit.assignedDrawId ?? null,
-        status: (edit.status as PrizeStatus) ?? 'Available',
+        assignedDrawId: null,
+        status: 'Available',
       })
     }
     setEdit(null)
   }
-
-  const awardedCount = data.prizes.filter((p) => p.status === 'Awarded').length
-  const availableCount = data.prizes.filter((p) => p.status !== 'Awarded').length
 
   return (
     <div className="space-y-6">
@@ -44,10 +41,10 @@ export function PrizesPage() {
           </button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-              Festival Prizes Vault
+              Festival Gifts Vault
             </h1>
             <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
-              Total {data.prizes.length} prizes configured · <strong className="text-emerald-700 font-semibold">{awardedCount} Awarded</strong> · <strong className="text-amber-700 font-semibold">{availableCount} Available</strong>
+              Total <strong className="text-[#5e0917] font-semibold">{data.prizes.length} gifts</strong> in vault · Manage gifts and prizes for lucky draws
             </p>
           </div>
         </div>
@@ -64,45 +61,29 @@ export function PrizesPage() {
           className="inline-flex items-center gap-1.5 rounded-none bg-[#5e0917] hover:bg-[#720e1e] px-4 py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer self-start sm:self-auto"
         >
           <Plus size={15} />
-          <span>Add New Prize</span>
+          <span>Add New Gift</span>
         </button>
       </div>
 
       {/* Grid of Prizes */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {data.prizes.map((p) => {
-          const draw = p.assignedDrawId ? getDraw(p.assignedDrawId) : undefined
           return (
             <article
               key={p.id}
               className="group rounded-none border border-[#e8decb] bg-white shadow-xs hover:shadow-md transition duration-200 flex flex-col overflow-hidden"
             >
               {/* Prize Image */}
-              <div className="relative h-44 w-full overflow-hidden bg-slate-100">
+              <div className="relative h-48 w-full overflow-hidden bg-slate-100">
                 <img
                   src={p.image}
                   alt={p.name}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-
-                {/* Status Badge */}
-                <div className="absolute bottom-3 left-3">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-none text-[10px] font-bold tracking-wider uppercase shadow-xs backdrop-blur-xs ${
-                      p.status === 'Awarded'
-                        ? 'bg-emerald-600/90 text-white'
-                        : p.status === 'Assigned'
-                        ? 'bg-blue-600/90 text-white'
-                        : 'bg-amber-500/90 text-white'
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
                 {/* Value Pill Top Right */}
-                <div className="absolute top-3 right-3 rounded-none bg-white/90 backdrop-blur-xs border border-[#e8decb] px-3 py-1 text-xs font-bold font-mono text-[#5e0917] shadow-xs">
+                <div className="absolute top-3 right-3 rounded-none bg-white/95 backdrop-blur-xs border border-[#e8decb] px-3 py-1 text-xs font-bold font-mono text-[#5e0917] shadow-xs">
                   {p.value}
                 </div>
               </div>
@@ -113,19 +94,9 @@ export function PrizesPage() {
                   <h2 className="text-lg font-bold text-[#140d10] leading-snug truncate">
                     {p.name}
                   </h2>
-                  <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                  <p className="mt-1.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
                     {p.description || 'Valanchery Festival official grand prize reward'}
                   </p>
-
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-600">
-                    <Dices size={13} className="text-[#ad823e]" />
-                    <span>
-                      Assigned:{' '}
-                      <strong className="font-semibold text-slate-800">
-                        {draw ? `Draw #${String(draw.number).padStart(2, '0')}` : 'Unassigned'}
-                      </strong>
-                    </span>
-                  </div>
                 </div>
 
                 {/* Card Actions Footer */}
@@ -158,9 +129,9 @@ export function PrizesPage() {
             <div className="flex items-center justify-between border-b border-[#e8decb] pb-3.5">
               <div>
                 <h3 className="text-lg font-bold text-[#140d10]">
-                  {edit.id ? 'Edit Prize' : 'Add New Prize'}
+                  {edit.id ? 'Edit Gift' : 'Add New Gift'}
                 </h3>
-                <p className="text-xs text-slate-500">Configure prize details in the festival vault</p>
+                <p className="text-xs text-slate-500">Configure gift details in the festival vault</p>
               </div>
               <button
                 onClick={() => setEdit(null)}
@@ -329,7 +300,7 @@ export function PrizesPage() {
                 onClick={save}
                 className="flex-1 bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white shadow-sm shadow-[#5e0917]/20 transition active:scale-95 cursor-pointer"
               >
-                Save Prize
+                Save Gift
               </button>
             </div>
           </div>
