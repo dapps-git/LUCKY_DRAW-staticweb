@@ -23,6 +23,32 @@ const MONGODB_URI =
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 
+// Root & Health Check Endpoints
+app.get(['/', '/festival', '/api', '/festival/api'], (_req, res) => {
+  res.json({
+    status: 'online',
+    service: 'Valanchery Festival Lucky Draw API',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    endpoints: {
+      health: '/api/health',
+      coupons: '/api/coupons',
+      participants: '/api/participants',
+      prizes: '/api/prizes',
+      draws: '/api/draws',
+      winners: '/api/winners',
+    },
+    timestamp: new Date().toISOString(),
+  })
+})
+
+app.get(['/api/health', '/health', '/festival/health', '/festival/api/health'], (_req, res) => {
+  res.json({
+    status: 'online',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString(),
+  })
+})
+
 // Routes
 app.use('/api/coupons', couponsRouter)
 app.use('/api/participants', participantsRouter)
@@ -31,14 +57,12 @@ app.use('/api/draws', drawsRouter)
 app.use('/api/winners', winnersRouter)
 app.use('/api/auth', authRouter)
 
-// Health Check
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'online',
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    timestamp: new Date().toISOString(),
-  })
-})
+app.use('/coupons', couponsRouter)
+app.use('/participants', participantsRouter)
+app.use('/prizes', prizesRouter)
+app.use('/draws', drawsRouter)
+app.use('/winners', winnersRouter)
+app.use('/auth', authRouter)
 
 // Database Connection & Server Start
 async function startServer() {
