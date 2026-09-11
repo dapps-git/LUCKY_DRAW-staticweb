@@ -501,16 +501,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const winnerId = `win-${Date.now()}`
         const now = new Date().toISOString().slice(0, 10)
 
-        try {
-          const res = await api.confirmWinner(participantId, drawId, awardedPrizeId)
-          if (res.ok && res.winner) {
-            await refreshData()
-            return { ok: true, winnerId: res.winnerId || winnerId }
-          }
-        } catch {
-          // fallback
-        }
-
         const winner: Winner = {
           id: winnerId,
           drawId,
@@ -520,6 +510,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: 'Confirmed',
         }
 
+        // Optimistically update state immediately
         setData((prev) => ({
           ...prev,
           winners: [winner, ...prev.winners],
@@ -530,6 +521,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
             p.id === awardedPrizeId ? { ...p, status: 'Awarded' as const, assignedDrawId: drawId } : p,
           ),
         }))
+
+        // Sync with server in background
+        api
+          .confirmWinner(participantId, drawId, awardedPrizeId)
+          .then((res) => {
+            if (res.ok && res.winner) {
+              refreshData().catch(() => {})
+            }
+          })
+          .catch((err) => {
+            console.warn('Backend sync deferred:', err)
+          })
 
         return { ok: true, winnerId }
       },
