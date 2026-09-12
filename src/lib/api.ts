@@ -3,7 +3,7 @@ import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } f
 const rawUrl = (import.meta.env.VITE_API_URL || 'https://tweaki.pw/festival').replace(/\/+$/, '')
 const API_BASE = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
@@ -17,7 +17,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 export const api = {
   // Check Backend Health
   async health(): Promise<{ status: string; database: string }> {
-    const res = await fetchWithTimeout(`${API_BASE}/health`)
+    const res = await fetchWithTimeout(`${API_BASE}/health`, {}, 8000)
     return res.json()
   },
 
@@ -27,24 +27,27 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-    })
+    }, 10000)
     return res.json()
   },
 
   // Fetch full Initial App Data from MongoDB
   async getAllData(): Promise<AppData> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/all`, {}, 7000)
+      const res = await fetchWithTimeout(`${API_BASE}/all`, {}, 8000)
       if (res.ok) {
-        const d = await res.json()
-        if (d.ok || d.prizes) {
-          return {
-            prizes: d.prizes || [],
-            draws: d.draws || [],
-            participants: d.participants || [],
-            winners: d.winners || [],
-            coupons: d.coupons || [],
-            batches: d.batches || [],
+        const ct = res.headers.get('content-type') || ''
+        if (ct.includes('application/json')) {
+          const d = await res.json()
+          if (d.ok || d.prizes || d.participants) {
+            return {
+              prizes: d.prizes || [],
+              draws: d.draws || [],
+              participants: d.participants || [],
+              winners: d.winners || [],
+              coupons: d.coupons || [],
+              batches: d.batches || [],
+            }
           }
         }
       }
@@ -54,17 +57,20 @@ export const api = {
 
     try {
       const [prizesRes, drawsRes, participantsRes, winnersRes, couponsRes] = await Promise.allSettled([
-        fetchWithTimeout(`${API_BASE}/prizes`),
-        fetchWithTimeout(`${API_BASE}/draws`),
-        fetchWithTimeout(`${API_BASE}/participants`),
-        fetchWithTimeout(`${API_BASE}/winners`),
-        fetchWithTimeout(`${API_BASE}/coupons`),
+        fetchWithTimeout(`${API_BASE}/prizes`, {}, 10000),
+        fetchWithTimeout(`${API_BASE}/draws`, {}, 10000),
+        fetchWithTimeout(`${API_BASE}/participants`, {}, 12000),
+        fetchWithTimeout(`${API_BASE}/winners`, {}, 10000),
+        fetchWithTimeout(`${API_BASE}/coupons?limit=2000`, {}, 12000),
       ])
 
       const parse = async (p: PromiseSettledResult<Response>) => {
         if (p.status === 'fulfilled' && p.value.ok) {
           try {
-            return await p.value.json()
+            const ct = p.value.headers.get('content-type') || ''
+            if (ct.includes('application/json')) {
+              return await p.value.json()
+            }
           } catch {
             return {}
           }

@@ -149,11 +149,12 @@ router.post('/generate', async (req, res) => {
         res.status(500).json({ ok: false, error: error.message });
     }
 });
-// 3. Get all coupons & batches
-router.get('/', async (_req, res) => {
+// 3. Get coupons & batches
+router.get('/', async (req, res) => {
     try {
+        const limit = Math.min(Math.max(1, Number(req.query.limit) || 2000), 10000);
         const [coupons, batches] = await Promise.all([
-            Coupon.find().sort({ createdAt: -1 }).lean(),
+            Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1 }).sort({ createdAt: -1 }).limit(limit).lean(),
             CouponBatch.find().sort({ createdAt: -1 }).lean(),
         ]);
         res.json({ ok: true, coupons, batches });

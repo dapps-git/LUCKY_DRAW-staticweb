@@ -21,7 +21,12 @@ const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI ||
     'mongodb+srv://dappstech2025_db_user:dapps1234@cluster0.ecrnbjn.mongodb.net/FESTIVAL?retryWrites=true&w=majority&appName=Cluster0';
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 // Aggregated Data Route for ultra-fast single request app hydration
 app.get(['/api/all', '/all', '/festival/api/all', '/festival/all'], async (_req, res) => {
@@ -31,8 +36,8 @@ app.get(['/api/all', '/all', '/festival/api/all', '/festival/all'], async (_req,
             Draw.find().sort({ number: 1 }).lean(),
             Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean(),
             Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
-            Coupon.find().lean(),
-            CouponBatch.find().lean(),
+            Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1 }).sort({ createdAt: -1 }).limit(1000).lean(),
+            CouponBatch.find().sort({ createdAt: -1 }).lean(),
         ]);
         res.json({
             ok: true,
