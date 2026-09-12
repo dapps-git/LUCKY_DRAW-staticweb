@@ -33,29 +33,70 @@ export const api = {
 
   // Fetch full Initial App Data from MongoDB
   async getAllData(): Promise<AppData> {
-    const [prizesRes, drawsRes, participantsRes, winnersRes, couponsRes] = await Promise.all([
-      fetchWithTimeout(`${API_BASE}/prizes`),
-      fetchWithTimeout(`${API_BASE}/draws`),
-      fetchWithTimeout(`${API_BASE}/participants`),
-      fetchWithTimeout(`${API_BASE}/winners`),
-      fetchWithTimeout(`${API_BASE}/coupons`),
-    ])
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/all`, {}, 7000)
+      if (res.ok) {
+        const d = await res.json()
+        if (d.ok || d.prizes) {
+          return {
+            prizes: d.prizes || [],
+            draws: d.draws || [],
+            participants: d.participants || [],
+            winners: d.winners || [],
+            coupons: d.coupons || [],
+            batches: d.batches || [],
+          }
+        }
+      }
+    } catch {
+      // fallback to individual fetch
+    }
 
-    const [prizesData, drawsData, participantsData, winnersData, couponsData] = await Promise.all([
-      prizesRes.json(),
-      drawsRes.json(),
-      participantsRes.json(),
-      winnersRes.json(),
-      couponsRes.json(),
-    ])
+    try {
+      const [prizesRes, drawsRes, participantsRes, winnersRes, couponsRes] = await Promise.allSettled([
+        fetchWithTimeout(`${API_BASE}/prizes`),
+        fetchWithTimeout(`${API_BASE}/draws`),
+        fetchWithTimeout(`${API_BASE}/participants`),
+        fetchWithTimeout(`${API_BASE}/winners`),
+        fetchWithTimeout(`${API_BASE}/coupons`),
+      ])
 
-    return {
-      prizes: prizesData.prizes || [],
-      draws: drawsData.draws || [],
-      participants: participantsData.participants || [],
-      winners: winnersData.winners || [],
-      coupons: couponsData.coupons || [],
-      batches: couponsData.batches || [],
+      const parse = async (p: PromiseSettledResult<Response>) => {
+        if (p.status === 'fulfilled' && p.value.ok) {
+          try {
+            return await p.value.json()
+          } catch {
+            return {}
+          }
+        }
+        return {}
+      }
+
+      const [prizesData, drawsData, participantsData, winnersData, couponsData] = await Promise.all([
+        parse(prizesRes),
+        parse(drawsRes),
+        parse(participantsRes),
+        parse(winnersRes),
+        parse(couponsRes),
+      ])
+
+      return {
+        prizes: prizesData.prizes || [],
+        draws: drawsData.draws || [],
+        participants: participantsData.participants || [],
+        winners: winnersData.winners || [],
+        coupons: couponsData.coupons || [],
+        batches: couponsData.batches || [],
+      }
+    } catch {
+      return {
+        prizes: [],
+        draws: [],
+        participants: [],
+        winners: [],
+        coupons: [],
+        batches: [],
+      }
     }
   },
 

@@ -11,6 +11,13 @@ import drawsRouter from './routes/draws.js'
 import winnersRouter from './routes/winners.js'
 import authRouter from './routes/auth.js'
 
+import { Prize } from './models/Prize.js'
+import { Draw } from './models/Draw.js'
+import { Participant } from './models/Participant.js'
+import { Winner } from './models/Winner.js'
+import { Coupon } from './models/Coupon.js'
+import { CouponBatch } from './models/CouponBatch.js'
+
 dotenv.config()
 
 const app = express()
@@ -22,6 +29,31 @@ const MONGODB_URI =
 // Middleware
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
+
+// Aggregated Data Route for ultra-fast single request app hydration
+app.get(['/api/all', '/all', '/festival/api/all', '/festival/all'], async (_req, res) => {
+  try {
+    const [prizes, draws, participants, winners, coupons, batches] = await Promise.all([
+      Prize.find().lean(),
+      Draw.find().sort({ number: 1 }).lean(),
+      Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean(),
+      Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
+      Coupon.find().lean(),
+      CouponBatch.find().lean(),
+    ])
+    res.json({
+      ok: true,
+      prizes: prizes || [],
+      draws: draws || [],
+      participants: participants || [],
+      winners: winners || [],
+      coupons: coupons || [],
+      batches: batches || [],
+    })
+  } catch (error: any) {
+    res.status(500).json({ ok: false, error: error.message })
+  }
+})
 
 // Universal Health & Root Handler
 app.use((req, res, next) => {
