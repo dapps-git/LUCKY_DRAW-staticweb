@@ -138,14 +138,13 @@ export function AdminWinnersPage() {
       {/* Winners Table */}
       <div className="overflow-hidden border border-[#e8decb] bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs">
+          <table className="w-full min-w-[650px] text-left text-xs">
             <thead className="border-b border-[#e8decb] bg-[#faf6ee] text-[11px] font-bold tracking-wider text-[#5e0917] uppercase">
               <tr>
                 <th className="w-12 px-4 py-3.5 text-center">SL</th>
                 <th className="px-4 py-3.5">Draw</th>
                 <th className="px-4 py-3.5">Winner Name</th>
                 <th className="px-4 py-3.5">Phone</th>
-                <th className="px-4 py-3.5">Location</th>
                 <th className="px-4 py-3.5">Prize Awarded</th>
                 <th className="px-4 py-3.5">Draw Date</th>
                 <th className="px-4 py-3.5 text-right">Status</th>
@@ -164,7 +163,6 @@ export function AdminWinnersPage() {
                 const prizeName = pr?.name || 'Festival Prize'
                 const nameDisplay = p?.name || 'Verified Winner'
                 const phoneDisplay = p?.phone || '—'
-                const locationDisplay = p?.location || 'Valanchery'
                 return (
                   <tr key={w.id} className="hover:bg-[#fcfaf5] transition-colors">
                     {/* SL Number */}
@@ -185,11 +183,6 @@ export function AdminWinnersPage() {
                     {/* Full Phone Number */}
                     <td className="px-4 py-3.5 font-mono text-xs font-bold text-slate-900">
                       {phoneDisplay}
-                    </td>
-
-                    {/* Location */}
-                    <td className="px-4 py-3.5 text-slate-600">
-                      {locationDisplay}
                     </td>
 
                     {/* Prize Awarded */}
@@ -215,7 +208,7 @@ export function AdminWinnersPage() {
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-xs text-slate-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-500">
                     No winner records matching current filters.
                   </td>
                 </tr>

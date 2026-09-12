@@ -9,7 +9,7 @@ export interface Participant {
   name: string
   phone: string
   address: string
-  location: string
+  location?: string
   registeredAt: string
   eligibility: Eligibility
   status: ParticipantStatus

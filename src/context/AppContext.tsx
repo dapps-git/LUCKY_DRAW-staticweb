@@ -307,7 +307,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const apiRes = await api.registerParticipant({
             name: input.name.trim(),
             phone,
-            address: input.address.trim(),
+            address: input.address?.trim() || 'Valanchery',
             location: input.location,
             couponId: cleanCouponId || undefined,
           })
@@ -349,6 +349,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const now = new Date().toISOString().slice(0, 10)
         const participant: Participant = {
           ...input,
+          address: input.address || 'Valanchery',
           phone,
           id,
           couponId: cleanCouponId || undefined,
@@ -424,8 +425,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           newParticipants.push({
             name: input.name.trim(),
             phone,
-            address: input.address.trim() || 'Valanchery',
-            location: input.location.trim() || 'Valanchery',
+            address: input.address?.trim() || 'Valanchery',
+            location: input.location?.trim() || 'Valanchery',
             couponId: input.couponId ? input.couponId.replace(/\D/g, '').trim() : undefined,
             id,
             registeredAt: new Date().toISOString().slice(0, 10),

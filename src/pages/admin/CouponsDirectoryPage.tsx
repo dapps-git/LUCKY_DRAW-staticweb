@@ -318,7 +318,7 @@ export function CouponsDirectoryPage() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Registered Participant</th>
                 <th className="px-4 py-3">Mobile (WhatsApp)</th>
-                <th className="px-4 py-3">Address & Location</th>
+                <th className="px-4 py-3">Address</th>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3 text-right">QR Link</th>
               </tr>
@@ -415,19 +415,13 @@ export function CouponsDirectoryPage() {
                         )}
                       </td>
 
-                      {/* Address & Location */}
+                      {/* Address */}
                       <td className="px-4 py-3">
                         {isUsed ? (
                           <div className="max-w-xs text-slate-700">
-                            <p className="truncate font-medium flex items-center gap-1">
-                              <MapPin size={11} className="text-slate-400 shrink-0" />
-                              {item.participantLocation || 'Valanchery'}
+                            <p className="text-xs font-medium text-slate-700 truncate">
+                              {item.participantAddress || '—'}
                             </p>
-                            {item.participantAddress && (
-                              <p className="text-[10px] text-slate-500 truncate pl-4">
-                                {item.participantAddress}
-                              </p>
-                            )}
                           </div>
                         ) : (
                           <span className="text-slate-300">—</span>

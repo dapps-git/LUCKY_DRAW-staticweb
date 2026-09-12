@@ -102,7 +102,7 @@ export function PublicUserLoginPage() {
             Check Your Lucky Draw Pass
           </h1>
           <p className="animate-fade-up mt-3 text-xs font-light text-white/70 sm:text-sm md:text-base">
-            Enter your 10-digit mobile number or Festival ID to verify your entry and live eligibility.
+            Enter your 10-digit mobile number or Coupon Code to verify your entry and live eligibility.
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export function PublicUserLoginPage() {
           <form onSubmit={handleLookup} className="space-y-4">
             <div>
               <label className="block text-xs font-light tracking-widest text-white/70 uppercase">
-                Mobile Number or Participant ID
+                Mobile Number or Coupon Code
               </label>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 <div className="relative flex-1">
@@ -119,7 +119,7 @@ export function PublicUserLoginPage() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="e.g. 9876543210 or VF2026-00101"
+                    placeholder="e.g. 9876543210 or 3QZ19QN24045F"
                     className="w-full border border-white/20 bg-black/50 px-4 py-3 text-sm font-light text-white placeholder-white/30 outline-none transition focus:border-[#d4a017]"
                   />
                   <Search className="pointer-events-none absolute right-3 top-3.5 text-white/40" size={16} />
@@ -146,7 +146,7 @@ export function PublicUserLoginPage() {
                 onClick={loadDemoUser}
                 className="text-[#f3d48a] underline underline-offset-4 hover:text-white"
               >
-                Auto-fill demo user (Saleel)
+                Auto-fill demo user
               </button>
               <Link to="/register" className="hover:text-white">
                 Not registered yet? <span className="text-[#f3d48a]">Register now →</span>
@@ -180,12 +180,14 @@ export function PublicUserLoginPage() {
                   </h2>
                   <p className="mt-1 text-xs font-light text-white/60">Registered on {formatDate(participant.registeredAt)}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] tracking-widest text-white/40">ENTRY PASS ID</p>
-                  <p className="font-mono text-base font-light tracking-wider text-[#f3d48a] md:text-xl">
-                    {participant.id}
-                  </p>
-                </div>
+                {participant.couponId && (
+                  <div className="text-right">
+                    <p className="text-[10px] tracking-widest text-white/40">COUPON CODE</p>
+                    <p className="font-mono text-base font-bold tracking-wider text-[#f3d48a] md:text-xl">
+                      {participant.couponId}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Winner Announcement Banner */}
@@ -209,12 +211,8 @@ export function PublicUserLoginPage() {
                   <p className="mt-1 text-sm font-light text-white font-mono">{participant.phone}</p>
                 </div>
                 <div className="border border-white/10 bg-black/30 p-4">
-                  <p className="text-[10px] tracking-widest text-white/40 uppercase">Festival Location</p>
-                  <p className="mt-1 text-sm font-light text-white">{participant.location}</p>
-                </div>
-                <div className="border border-white/10 bg-black/30 p-4 sm:col-span-2">
                   <p className="text-[10px] tracking-widest text-white/40 uppercase">Registered Address</p>
-                  <p className="mt-1 text-sm font-light text-white/80">{participant.address}</p>
+                  <p className="mt-1 text-sm font-light text-white/80">{participant.address || 'Valanchery'}</p>
                 </div>
               </div>
 

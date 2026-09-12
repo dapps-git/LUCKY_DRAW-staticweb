@@ -28,7 +28,6 @@ export function ParticipantsPage() {
   const { data, updateParticipant, deleteParticipant, registerParticipant, getPrize, getDraw } = useApp()
   const navigate = useNavigate()
   const [q, setQ] = useState('')
-  const [location, setLocation] = useState('')
   const [status, setStatus] = useState('')
   const [winnerFilter, setWinnerFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -38,7 +37,6 @@ export function ParticipantsPage() {
     name: '',
     phone: '',
     address: '',
-    location: LOCATIONS[0],
   })
   const [addError, setAddError] = useState('')
 
@@ -69,28 +67,20 @@ export function ParticipantsPage() {
         const dateB = b.registeredAt || ''
         if (dateB !== dateA) return dateB.localeCompare(dateA)
 
-        // 2. Tiebreaker: higher numeric ID suffix
-        const matchA = a.id.match(/\d+$/)
-        const matchB = b.id.match(/\d+$/)
-        const numA = matchA ? parseInt(matchA[0], 10) : 0
-        const numB = matchB ? parseInt(matchB[0], 10) : 0
-        if (numB !== numA) return numB - numA
-
         return b.id.localeCompare(a.id, undefined, { numeric: true })
       })
       .filter((p) => {
         const isWinner = winnerMap.has(p.id)
-        const hit = `${p.id} ${p.name} ${p.phone} ${p.location} ${p.couponId || ''}`.toLowerCase().includes(q.toLowerCase())
-        const locationMatch = !location || p.location === location
+        const hit = `${p.name} ${p.phone} ${p.couponId || ''}`.toLowerCase().includes(q.toLowerCase())
         const statusMatch = !status || p.status === status
         const winnerMatch =
           !winnerFilter ||
           (winnerFilter === 'winner' && isWinner) ||
           (winnerFilter === 'eligible' && !isWinner && p.status === 'Active')
 
-        return hit && locationMatch && statusMatch && winnerMatch
+        return hit && statusMatch && winnerMatch
       })
-  }, [data.participants, q, location, status, winnerFilter, winnerMap])
+  }, [data.participants, q, status, winnerFilter, winnerMap])
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE))
   const rows = filtered.slice((page - 1) * PAGE, page * PAGE)
@@ -106,7 +96,6 @@ export function ParticipantsPage() {
 
   const handleResetFilters = () => {
     setQ('')
-    setLocation('')
     setStatus('')
     setWinnerFilter('')
     setPage(1)
@@ -127,17 +116,16 @@ export function ParticipantsPage() {
       name: newParticipant.name.trim(),
       phone: newParticipant.phone.trim(),
       address: newParticipant.address.trim() || 'Valanchery',
-      location: newParticipant.location,
     })
     if (!res.ok) {
       setAddError(res.error)
       return
     }
     setShowAddModal(false)
-    setNewParticipant({ name: '', phone: '', address: '', location: LOCATIONS[0] })
+    setNewParticipant({ name: '', phone: '', address: '' })
   }
 
-  const hasActiveFilters = Boolean(q || location || status || winnerFilter)
+  const hasActiveFilters = Boolean(q || status || winnerFilter)
 
   return (
     <div className="space-y-5">
@@ -219,7 +207,7 @@ export function ParticipantsPage() {
               setQ(e.target.value)
               setPage(1)
             }}
-            placeholder="Search ID, coupon, number, name…"
+            placeholder="Search coupon, phone number, name…"
             className="w-full border border-[#e8decb] bg-white pl-9 pr-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-[#5e0917]"
           />
           <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-400" size={15} />
@@ -251,22 +239,6 @@ export function ParticipantsPage() {
           <option value="Inactive">Inactive</option>
         </select>
 
-        <select
-          value={location}
-          onChange={(e) => {
-            setLocation(e.target.value)
-            setPage(1)
-          }}
-          className="border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#5e0917] cursor-pointer"
-        >
-          <option value="">All Locations</option>
-          {LOCATIONS.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
-
         {hasActiveFilters && (
           <button
             onClick={handleResetFilters}
@@ -278,14 +250,13 @@ export function ParticipantsPage() {
         )}
       </div>
 
-      {/* Table: Showing ID, Name, Phone Number, Coupon ID, Date, Draw Status & Actions */}
+      {/* Table: Showing SL, Name, Phone Number, Coupon ID, Date, Draw Status & Actions */}
       <div className="overflow-hidden border border-[#e8decb] bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-xs">
+          <table className="w-full min-w-[720px] text-left text-xs">
             <thead className="border-b border-[#e8decb] bg-[#faf6ee] text-[11px] font-bold tracking-wider text-[#5e0917] uppercase">
               <tr>
                 <th className="w-12 px-4 py-3.5 text-center">SL</th>
-                <th className="px-4 py-3.5">ID</th>
                 <th className="px-4 py-3.5">Name</th>
                 <th className="px-4 py-3.5">Phone</th>
                 <th className="px-4 py-3.5">Coupon ID</th>
@@ -303,11 +274,6 @@ export function ParticipantsPage() {
                     {/* SL Number */}
                     <td className="w-12 px-4 py-3.5 text-center font-mono text-xs font-semibold text-slate-500">
                       {slNo}
-                    </td>
-
-                    {/* ID */}
-                    <td className="px-4 py-3.5 font-mono text-xs font-bold text-[#5e0917]">
-                      {p.id}
                     </td>
 
                     {/* Name */}
@@ -348,29 +314,29 @@ export function ParticipantsPage() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-rose-700 shadow-2xs">
-                          Inactive
+                          {p.status}
                         </span>
                       )}
                     </td>
 
-                    {/* Actions */}
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="inline-flex items-center gap-1.5">
+                    {/* Actions: View Details & Delete */}
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setView(p)}
-                          className="inline-flex items-center gap-1 border border-[#e8decb] bg-white hover:bg-[#faf6ee] hover:text-[#5e0917] px-2.5 py-1 text-xs font-semibold text-slate-700 transition cursor-pointer"
-                          title="View Full Participant Details"
+                          className="inline-flex items-center gap-1 border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-2xs transition cursor-pointer"
+                          title="View Participant Profile"
                         >
                           <Eye size={12} /> View
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete participant ${p.id}?`)) {
-                              deleteParticipant(p.id)
+                          onClick={async () => {
+                            if (window.confirm(`Delete entry for "${p.name || p.phone}" permanently?`)) {
+                              await deleteParticipant(p.id)
                             }
                           }}
-                          className="inline-flex items-center gap-1 border border-rose-200 bg-rose-50/60 hover:bg-rose-100 hover:border-rose-300 px-2.5 py-1 text-xs font-semibold text-rose-700 transition cursor-pointer"
-                          title="Delete Participant"
+                          className="inline-flex items-center gap-1 border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-700 px-2.5 py-1 text-[11px] font-semibold shadow-2xs transition cursor-pointer"
+                          title="Delete participant record"
                         >
                           <Trash2 size={12} /> Delete
                         </button>
@@ -382,7 +348,7 @@ export function ParticipantsPage() {
               {rows.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-500">
-                    No participants found matching your criteria.
+                    No participants found matching current filters.
                   </td>
                 </tr>
               )}
@@ -457,20 +423,6 @@ export function ParticipantsPage() {
                 onChange={(e) => setNewParticipant({ ...newParticipant, address: e.target.value })}
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Location</label>
-              <select
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#5e0917]"
-                value={newParticipant.location}
-                onChange={(e) => setNewParticipant({ ...newParticipant, location: e.target.value })}
-              >
-                {LOCATIONS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="pt-2">
               <button
                 type="submit"
@@ -488,22 +440,23 @@ export function ParticipantsPage() {
         <Modal onClose={() => setView(null)} title="Participant Details">
           <div className="space-y-4 text-xs">
             {/* Header Ticket Banner */}
-            <div className="border border-[#e2cca0] bg-[#fffdf7] p-3.5 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Participant ID</p>
-                  <p className="font-mono text-base font-bold text-[#5e0917]">{view.id}</p>
-                </div>
-                {view.couponId && (
-                  <div className="text-right">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Coupon Token</p>
-                    <span className="inline-flex items-center gap-1 font-mono text-sm font-bold text-[#8a5b00]">
-                      <Ticket size={13} /> {view.couponId}
+            {view.couponId && (
+              <div className="border border-[#e2cca0] bg-[#fffdf7] p-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Coupon Token ID</p>
+                    <span className="inline-flex items-center gap-1 font-mono text-base font-bold text-[#8a5b00]">
+                      <Ticket size={15} /> {view.couponId}
                     </span>
                   </div>
-                )}
+                  <div className="text-right">
+                    <span className="inline-flex items-center gap-1 border border-[#b2e2c8] bg-[#f2faf5] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#136c42]">
+                      <span className="status-dot h-1.5 w-1.5 rounded-full bg-emerald-500" /> {view.status}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Participant Details Grid */}
             <div className="grid grid-cols-2 gap-3.5 border border-[#e8decb] bg-white p-3.5">
@@ -515,11 +468,7 @@ export function ParticipantsPage() {
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phone</p>
                 <p className="font-mono text-sm font-semibold text-[#140d10] mt-0.5">{view.phone}</p>
               </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Location</p>
-                <p className="text-xs font-medium text-slate-700 mt-0.5">{view.location}</p>
-              </div>
-              <div>
+              <div className="col-span-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Address</p>
                 <p className="text-xs font-medium text-slate-700 mt-0.5">{view.address || '—'}</p>
               </div>

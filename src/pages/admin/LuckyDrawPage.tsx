@@ -442,7 +442,7 @@ export function LuckyDrawPage() {
               </p>
             )}
             <p className="font-mono text-xs font-bold text-slate-800">
-              Phone: {winner.phone} · {winner.location}
+              Phone: +91 {winner.phone}
             </p>
 
             <div className="pt-2 flex flex-col gap-2 sm:flex-row">
@@ -556,14 +556,6 @@ export function LuckyDrawPage() {
                     <span className="font-semibold text-slate-800 tracking-wide">
                       +91 {winner.phone}
                     </span>
-                    {winner.location && (
-                      <>
-                        <span className="text-slate-300">·</span>
-                        <span className="text-slate-500 font-medium">
-                          {winner.location}
-                        </span>
-                      </>
-                    )}
                   </div>
 
                   {/* Clean Inline Coupon ID without box */}

@@ -92,12 +92,11 @@ export function DashboardPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto border border-black/10 bg-white shadow-sm">
-          <table className="w-full min-w-[650px] text-left text-xs sm:text-sm">
+          <table className="w-full min-w-[550px] text-left text-xs sm:text-sm">
             <thead className="border-b border-black/10 bg-[#f7f0e6] text-[11px] font-semibold tracking-wider text-black/70 uppercase">
               <tr>
                 <th className="px-4 py-3">Winner Name</th>
                 <th className="px-4 py-3">Phone</th>
-                <th className="px-4 py-3">Location</th>
                 <th className="px-4 py-3">Prize Won</th>
                 <th className="px-4 py-3">Draw Date</th>
               </tr>
@@ -108,13 +107,11 @@ export function DashboardPage() {
                 const pr = getPrize(w.prizeId)
                 const nameDisplay = p?.name || 'Verified Winner'
                 const phoneDisplay = p?.phone || '—'
-                const locationDisplay = p?.location || 'Valanchery'
                 const prizeDisplay = pr?.name || 'Festival Prize'
                 return (
                   <tr key={w.id} className="border-b border-black/5 hover:bg-[#faf7f2]">
                     <td className="px-4 py-3 font-semibold text-[#140d10]">{nameDisplay}</td>
                     <td className="px-4 py-3 font-mono font-medium text-black/80">{phoneDisplay}</td>
-                    <td className="px-4 py-3 text-black/70">{locationDisplay}</td>
                     <td className="px-4 py-3 font-medium text-[#6b1020]">{prizeDisplay}</td>
                     <td className="px-4 py-3 text-black/60">{formatDate(w.date)}</td>
                   </tr>
@@ -122,7 +119,7 @@ export function DashboardPage() {
               })}
               {recent.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-xs text-black/50">
+                  <td colSpan={4} className="px-4 py-6 text-center text-xs text-black/50">
                     No completed draws yet.
                   </td>
                 </tr>

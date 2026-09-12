@@ -465,20 +465,16 @@ export function RegisterPage() {
             </p>
 
             <div className="my-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
-              <div>
-                <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">PARTICIPANT ID</p>
-                <p className="font-mono text-sm font-bold text-[#7a1426]">{successId}</p>
-              </div>
               {registeredName && (
-                <div className="border-t border-slate-200 pt-1.5 mt-1.5">
+                <div>
                   <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">PARTICIPANT NAME</p>
                   <p className="text-xs font-semibold text-slate-900">{registeredName}</p>
                 </div>
               )}
               {registeredCoupon && (
-                <div className="border-t border-slate-200 pt-1.5 mt-1.5">
+                <div className={`${registeredName ? 'border-t border-slate-200 pt-1.5 mt-1.5' : ''}`}>
                   <p className="text-[9px] tracking-widest text-slate-500 uppercase font-semibold">COUPON CODE</p>
-                  <p className="font-mono text-xs text-slate-800">{formatCouponDisplay(registeredCoupon)}</p>
+                  <p className="font-mono text-xs font-bold text-[#7a1426]">{formatCouponDisplay(registeredCoupon)}</p>
                 </div>
               )}
             </div>

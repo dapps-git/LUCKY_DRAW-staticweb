@@ -274,10 +274,6 @@ export function HomeRegisterSection() {
               </div>
 
               <div className="border border-[#e8decb] bg-[#faf6ee] p-3 text-left space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Participant ID:</span>
-                  <span className="font-mono font-bold text-[#5e0917]">{successId}</span>
-                </div>
                 {registeredName && (
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Name:</span>
