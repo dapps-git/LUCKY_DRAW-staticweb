@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ADMIN_EMAIL, ADMIN_PASSWORD, seedData } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
@@ -92,36 +92,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(false)
 
   // Fetch data from MongoDB Atlas and auto-sync in real-time
+  const isRefreshingRef = useRef(false)
   const refreshData = async () => {
+    if (isRefreshingRef.current) return
+    isRefreshingRef.current = true
     try {
       const serverData = await api.getAllData()
       const participants = serverData.participants || []
       const winners = serverData.winners || []
-      setData((prev) => {
-        if (
-          prev.participants?.length === participants.length &&
-          (prev.winners?.length || 0) === winners.length &&
-          (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
-          (prev.draws?.length || 0) === (serverData.draws?.length || 0)
-        ) {
-          return prev
-        }
-        return {
-          ...serverData,
-          participants,
-          winners,
-        }
-      })
-      setIsOnline(true)
+      if (participants.length > 0 || winners.length > 0 || (serverData.prizes && serverData.prizes.length > 0)) {
+        setData((prev) => {
+          if (
+            prev.participants?.length === participants.length &&
+            (prev.winners?.length || 0) === winners.length &&
+            (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
+            (prev.draws?.length || 0) === (serverData.draws?.length || 0)
+          ) {
+            return prev
+          }
+          return {
+            ...serverData,
+            participants,
+            winners,
+          }
+        })
+        setIsOnline(true)
+      }
     } catch {
       setIsOnline(false)
+    } finally {
+      isRefreshingRef.current = false
     }
   }
 
   useEffect(() => {
     refreshData()
-    // Polling every 5 seconds to auto-load new participants registered
-    const timer = setInterval(refreshData, 5000)
+    // Polling every 20 seconds to prevent Cloudflare / Namecheap 429 rate limits
+    const timer = setInterval(refreshData, 20000)
     const onFocus = () => refreshData()
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onFocus)
