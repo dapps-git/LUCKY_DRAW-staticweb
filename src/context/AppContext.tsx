@@ -220,6 +220,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       batches,
       refreshData,
       login: async (email, password) => {
+        const cleanEmail = email.trim().toLowerCase()
+        const isMaster = cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD
+
+        if (isMaster) {
+          localStorage.setItem(AUTH_KEY, '1')
+          setIsAdmin(true)
+          api.login(email, password).catch(() => {})
+          return true
+        }
+
         try {
           const res = await api.login(email, password)
           if (res.ok) {
@@ -229,11 +239,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         } catch {
           // fallback
-        }
-        if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-          localStorage.setItem(AUTH_KEY, '1')
-          setIsAdmin(true)
-          return true
         }
         return false
       },

@@ -13,17 +13,29 @@ export function AdminLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!login(email, password)) {
-      setError('Invalid admin credentials. Please try again.')
-      return
+    setLoading(true)
+
+    try {
+      const ok = await login(email, password)
+      if (!ok) {
+        setError('Invalid admin credentials. Please check email and password.')
+        setLoading(false)
+        return
+      }
+      setSuccess(true)
+      setTimeout(() => {
+        navigate('/admin/dashboard', { replace: true })
+      }, 400)
+    } catch {
+      setError('Login failed. Please try again.')
+      setLoading(false)
     }
-    setSuccess(true)
-    setTimeout(() => navigate('/admin/dashboard'), 1000)
   }
 
   const fillDemoAdmin = () => {
@@ -146,10 +158,10 @@ export function AdminLoginPage() {
               <div className="pt-1">
                 <button
                   type="submit"
-                  disabled={success}
+                  disabled={loading || success}
                   className="w-full flex items-center justify-center gap-2 bg-[#720e1e] hover:bg-[#891326] py-2.5 text-xs font-bold tracking-wider text-white transition active:scale-[0.99] rounded-none shadow-none disabled:opacity-50 cursor-pointer"
                 >
-                  <span>ACCESS DASHBOARD</span>
+                  <span>{loading ? 'VERIFYING CREDENTIALS…' : 'ACCESS DASHBOARD'}</span>
                   <ArrowRight size={13} />
                 </button>
               </div>
