@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   CheckCircle2,
   XCircle,
@@ -32,6 +32,7 @@ export function HomeRegisterSection() {
   const [confetti, setConfetti] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   // Live Token validation state
   const [isValidatingToken, setIsValidatingToken] = useState(false)
@@ -132,11 +133,15 @@ export function HomeRegisterSection() {
     setTokenStatus({ status: 'Idle', message: '' })
     setErrors({})
     setFormError('')
+    isSubmittingRef.current = false
+    setIsSubmitting(false)
   }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isSubmitting) return
+    if (isSubmittingRef.current || isSubmitting) return
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
     setFormError('')
 
     const next: Record<string, string> = {}
@@ -173,9 +178,12 @@ export function HomeRegisterSection() {
     }
 
     setErrors(next)
-    if (Object.keys(next).length) return
+    if (Object.keys(next).length) {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      return
+    }
 
-    setIsSubmitting(true)
     try {
       const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
       const userName = form.name.trim()
@@ -206,6 +214,7 @@ export function HomeRegisterSection() {
       setTimeout(() => setConfetti(false), 4500)
     } finally {
       setIsSubmitting(false)
+      isSubmittingRef.current = false
     }
   }
 

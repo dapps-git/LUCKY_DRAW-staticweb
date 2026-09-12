@@ -2,12 +2,12 @@
   "name": "luckydraw-backend",
   "version": "1.0.0",
   "description": "Valanchery Festival Lucky Draw Backend API with MongoDB",
-  "main": "app.js",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node app.js"
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

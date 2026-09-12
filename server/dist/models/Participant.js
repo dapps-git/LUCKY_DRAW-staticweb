@@ -5,7 +5,7 @@ const ParticipantSchema = new Schema({
     phone: { type: String, required: true },
     address: { type: String, required: true },
     location: { type: String, required: true },
-    couponId: { type: String, index: true },
+    couponId: { type: String, unique: true, sparse: true, index: true },
     registeredAt: { type: String, required: true },
     eligibility: { type: String, enum: ['Eligible', 'Ineligible'], default: 'Eligible', index: true },
     status: { type: String, enum: ['Active', 'Suspended'], default: 'Active', index: true },

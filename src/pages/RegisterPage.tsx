@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Check,
@@ -37,6 +37,7 @@ export function RegisterPage() {
   const [confetti, setConfetti] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   // Live Token validation state
   const [isValidatingToken, setIsValidatingToken] = useState(false)
@@ -140,11 +141,15 @@ export function RegisterPage() {
     setTokenStatus({ status: 'Idle', message: '' })
     setErrors({})
     setFormError('')
+    isSubmittingRef.current = false
+    setIsSubmitting(false)
   }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isSubmitting) return
+    if (isSubmittingRef.current || isSubmitting) return
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
     setFormError('')
 
     const next: Record<string, string> = {}
@@ -181,9 +186,12 @@ export function RegisterPage() {
     }
 
     setErrors(next)
-    if (Object.keys(next).length) return
+    if (Object.keys(next).length) {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      return
+    }
 
-    setIsSubmitting(true)
     try {
       const cleanToken = extractCouponId(form.couponId) || form.couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase()
       const userName = form.name.trim()
@@ -198,22 +206,22 @@ export function RegisterPage() {
       if (!result.ok) {
         if (result.error.toLowerCase().includes('coupon')) {
           setErrors({ couponId: result.error })
-          setTokenStatus({ status: 'Used', message: result.error })
-        } else if (result.error.toLowerCase().includes('phone') || result.error.toLowerCase().includes('mobile')) {
-          setErrors({ phone: result.error })
         } else {
           setFormError(result.error)
         }
         return
       }
 
+      // Success
       setSuccessId(result.id)
       setRegisteredCoupon(cleanToken)
       setRegisteredName(userName)
       setConfetti(true)
-      setTimeout(() => setConfetti(false), 4500)
+    } catch {
+      setFormError('Registration failed. Please try again.')
     } finally {
       setIsSubmitting(false)
+      isSubmittingRef.current = false
     }
   }
 

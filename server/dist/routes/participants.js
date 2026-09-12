@@ -62,10 +62,15 @@ router.post('/register', async (req, res) => {
                 break;
             }
             catch (err) {
-                if (err?.code === 11000 && attempt < 4) {
-                    // Retry on concurrent sequential ID collision
-                    await new Promise((r) => setTimeout(r, 40 * (attempt + 1)));
-                    continue;
+                if (err?.code === 11000) {
+                    if (err.keyPattern?.couponId || err.message?.includes('couponId')) {
+                        return res.status(400).json({ ok: false, error: 'This coupon is already taken.' });
+                    }
+                    if (attempt < 4) {
+                        // Retry on concurrent sequential ID collision
+                        await new Promise((r) => setTimeout(r, 40 * (attempt + 1)));
+                        continue;
+                    }
                 }
                 throw err;
             }

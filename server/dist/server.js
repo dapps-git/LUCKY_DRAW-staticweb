@@ -29,7 +29,7 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 // Aggregated Data Route for ultra-fast single request app hydration
-app.get(['/api/all', '/all', '/festival/api/all', '/festival/all'], async (_req, res) => {
+app.get(['/api/all', '/all'], async (_req, res) => {
     try {
         const [prizes, draws, participants, winners, coupons, batches] = await Promise.all([
             Prize.find().lean(),
@@ -64,56 +64,39 @@ app.use((req, res, next) => {
             timestamp: new Date().toISOString(),
         });
     }
-    if (p === '/' ||
-        p === '' ||
-        p === '/festival' ||
-        p === '/festival/' ||
-        p === '/api' ||
-        p === '/api/' ||
-        p === '/festival/api' ||
-        p === '/festival/api/') {
+    if (p === '/' || p === '' || p === '/api' || p === '/api/') {
         return res.json({
             status: 'online',
             service: 'Valanchery Festival Lucky Draw API',
             database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
             endpoints: {
                 health: '/health',
-                coupons: '/coupons',
-                participants: '/participants',
-                prizes: '/prizes',
-                draws: '/draws',
-                winners: '/winners',
+                coupons: '/api/coupons',
+                participants: '/api/participants',
+                prizes: '/api/prizes',
+                draws: '/api/draws',
+                winners: '/api/winners',
+                all: '/api/all',
             },
             timestamp: new Date().toISOString(),
         });
     }
     next();
 });
-// Routes
+// Standard API Routes
 app.use('/api/coupons', couponsRouter);
 app.use('/api/participants', participantsRouter);
 app.use('/api/prizes', prizesRouter);
 app.use('/api/draws', drawsRouter);
 app.use('/api/winners', winnersRouter);
 app.use('/api/auth', authRouter);
+// Fallback direct routes
 app.use('/coupons', couponsRouter);
 app.use('/participants', participantsRouter);
 app.use('/prizes', prizesRouter);
 app.use('/draws', drawsRouter);
 app.use('/winners', winnersRouter);
 app.use('/auth', authRouter);
-app.use('/festival/api/coupons', couponsRouter);
-app.use('/festival/api/participants', participantsRouter);
-app.use('/festival/api/prizes', prizesRouter);
-app.use('/festival/api/draws', drawsRouter);
-app.use('/festival/api/winners', winnersRouter);
-app.use('/festival/api/auth', authRouter);
-app.use('/festival/coupons', couponsRouter);
-app.use('/festival/participants', participantsRouter);
-app.use('/festival/prizes', prizesRouter);
-app.use('/festival/draws', drawsRouter);
-app.use('/festival/winners', winnersRouter);
-app.use('/festival/auth', authRouter);
 // Database Connection & Server Start
 async function startServer() {
     try {
