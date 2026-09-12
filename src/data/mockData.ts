@@ -88,7 +88,7 @@ export const seedData: AppData = {
       value: '₹42,000',
       image: PRIZE_IMAGES.tv,
       assignedDrawId: 'draw-01',
-      status: 'Awarded',
+      status: 'Assigned',
     },
     {
       id: 'prize-voucher',
@@ -97,7 +97,7 @@ export const seedData: AppData = {
       value: '₹10,000',
       image: PRIZE_IMAGES.voucher,
       assignedDrawId: 'draw-02',
-      status: 'Awarded',
+      status: 'Assigned',
     },
     {
       id: 'prize-laptop',

@@ -8,7 +8,7 @@ export const seedPrizes = [
         value: '₹42,000',
         image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=900&q=80',
         assignedDrawId: 'draw-01',
-        status: 'Awarded',
+        status: 'Assigned',
     },
     {
         id: 'prize-voucher',
@@ -17,7 +17,7 @@ export const seedPrizes = [
         value: '₹10,000',
         image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=900&q=80',
         assignedDrawId: 'draw-02',
-        status: 'Awarded',
+        status: 'Assigned',
     },
     {
         id: 'prize-laptop',

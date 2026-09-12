@@ -7,7 +7,7 @@ import { extractCouponId } from '../lib/tokenHelper'
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
 const AUTH_KEY = 'vf2026_admin_auth'
-const DATA_KEY = 'vf2026_app_data_v5'
+const DATA_KEY = 'vf2026_app_data_v6'
 
 interface CouponValidationResult {
   valid: boolean
@@ -62,6 +62,7 @@ function loadLocalData(): AppData {
       localStorage.removeItem('vf2026_app_data_v2')
       localStorage.removeItem('vf2026_app_data_v3')
       localStorage.removeItem('vf2026_app_data_v4')
+      localStorage.removeItem('vf2026_app_data_v5')
     }
 
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DATA_KEY) : null
