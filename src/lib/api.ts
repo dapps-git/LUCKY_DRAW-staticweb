@@ -3,7 +3,7 @@ import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } f
 const rawUrl = (import.meta.env.VITE_API_URL || 'https://tweaki.pw/festival').replace(/\/+$/, '')
 const API_BASE = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 3500): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {

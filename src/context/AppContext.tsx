@@ -98,7 +98,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const participants = serverData.participants || []
       const winners = serverData.winners || []
       setData((prev) => {
-        // Only update state if participant count or data actually changed to prevent jitter
         if (
           prev.participants?.length === participants.length &&
           (prev.winners?.length || 0) === winners.length &&
@@ -114,16 +113,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       })
       setIsOnline(true)
-    } catch (err) {
-      console.warn('Backend offline, using local state:', err)
+    } catch {
       setIsOnline(false)
     }
   }
 
   useEffect(() => {
     refreshData()
-    // Real-time polling every 3 seconds to auto-load new participants registered from anywhere
-    const timer = setInterval(refreshData, 3000)
+    // Polling every 5 seconds to auto-load new participants registered
+    const timer = setInterval(refreshData, 5000)
     const onFocus = () => refreshData()
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onFocus)
