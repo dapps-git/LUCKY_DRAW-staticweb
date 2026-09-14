@@ -44,7 +44,11 @@ interface AppContextValue {
   // Coupon System Methods
   coupons: Coupon[]
   batches: CouponBatch[]
-  generateCouponBatch: (count: number, name?: string) => Promise<{ batch: CouponBatch; coupons: Coupon[] }>
+  generateCouponBatch: (
+    count: number,
+    name?: string,
+    onProgress?: (saved: number, total: number) => void
+  ) => Promise<{ batch: CouponBatch; coupons: Coupon[] }>
   validateCoupon: (couponId: string) => CouponValidationResult
   validateCouponAsync: (couponId: string) => Promise<CouponValidationResult>
   deleteCouponBatch: (batchId: string) => void
@@ -275,28 +279,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       validateCoupon,
       validateCouponAsync,
-      generateCouponBatch: async (count: number, name?: string) => {
-        try {
-          const res = await api.generateBatch(count, name)
-          if (res.ok && res.batch && res.coupons) {
-            setData((prev) => ({
-              ...prev,
-              batches: [res.batch, ...(prev.batches || []).filter((b) => b.id !== res.batch.id)],
-              coupons: [...res.coupons, ...(prev.coupons || [])],
-            }))
-            return { batch: res.batch, coupons: res.coupons }
+      generateCouponBatch: async (count: number, name?: string, onProgress?: (saved: number, total: number) => void) => {
+        const batchId = `BATCH-${Date.now()}`
+        const now = new Date().toISOString()
+        const batchName = name || `Coupons Batch (${count} pcs)`
+
+        const existingIds = new Set((coupons || []).map((c) => c.id))
+        const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, batchName)
+        batch.id = batchId
+
+        // Stream to MongoDB in chunks of 5,000
+        const CHUNK_SIZE = 5000
+        let savedCount = 0
+
+        for (let i = 0; i < newCoupons.length; i += CHUNK_SIZE) {
+          const chunk = newCoupons.slice(i, i + CHUNK_SIZE)
+          const isLast = i + CHUNK_SIZE >= newCoupons.length
+          
+          await api.bulkInsertCoupons({
+            batch: isLast ? batch : { id: batchId, name: batchName, count, startId: batch.startId, endId: batch.endId, createdAt: now, unusedCount: count, usedCount: 0 },
+            coupons: chunk,
+          })
+
+          savedCount += chunk.length
+          if (onProgress) {
+            onProgress(savedCount, count)
           }
-        } catch (e) {
-          console.warn('API generate batch failed, falling back to local:', e)
         }
 
-        const existingIds = new Set(coupons.map((c) => c.id))
-        const { coupons: newCoupons, batch } = createCouponBatch(count, existingIds, name)
         setData((prev) => ({
           ...prev,
-          batches: [batch, ...(prev.batches || [])],
-          coupons: [...newCoupons, ...(prev.coupons || [])],
+          batches: [batch, ...(prev.batches || []).filter((b) => b.id !== batch.id)],
+          totalCouponsCount: (prev.totalCouponsCount || 0) + count,
         }))
+
+        // Refresh data in background
+        refreshData().catch(() => {})
+
         return { batch, coupons: newCoupons }
       },
       deleteCouponBatch: async (batchId: string) => {

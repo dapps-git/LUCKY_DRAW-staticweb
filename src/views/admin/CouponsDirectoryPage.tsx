@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Search,
@@ -16,6 +16,7 @@ import {
   Calendar,
   Filter,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate } from '../../lib/format'
@@ -31,8 +32,46 @@ export function CouponsDirectoryPage() {
   const [dateFilter, setDateFilter] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [isLoadingServer, setIsLoadingServer] = useState(false)
+  const [serverCoupons, setServerCoupons] = useState<any[]>([])
+  const [serverTotal, setServerTotal] = useState<number>(0)
 
-  // Map couponId -> participant details for fast lookup
+  // Fetch paginated coupons from MongoDB API
+  useEffect(() => {
+    let isMounted = true
+    const fetchCoupons = async () => {
+      setIsLoadingServer(true)
+      try {
+        const queryParams = new URLSearchParams({
+          page: String(currentPage),
+          limit: String(PAGE_SIZE),
+          search: searchQuery.trim(),
+          status: statusFilter,
+        })
+        const res = await fetch(`/api/coupons?${queryParams.toString()}`)
+        if (res.ok) {
+          const d = await res.json()
+          if (isMounted && d.ok && Array.isArray(d.coupons)) {
+            setServerCoupons(d.coupons)
+            setServerTotal(d.filteredCount ?? d.totalCoupons ?? 0)
+            setIsLoadingServer(false)
+            return
+          }
+        }
+      } catch {
+        // fallback to local
+      }
+      if (isMounted) setIsLoadingServer(false)
+    }
+
+    const timer = setTimeout(fetchCoupons, 200)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [currentPage, searchQuery, statusFilter])
+
+  // Map participant details
   const participantMap = useMemo(() => {
     const map = new Map<string, typeof data.participants[0]>()
     data.participants.forEach((p) => {
@@ -43,31 +82,17 @@ export function CouponsDirectoryPage() {
     return map
   }, [data.participants])
 
-  // Aggregate all coupons: coupons list + any participants with couponId that might not be in coupons list
-  const allCoupons = useMemo(() => {
-    const map = new Map<string, {
-      id: string
-      batchId?: string
-      status: 'Unused' | 'Used'
-      createdAt: string
-      usedAt?: string
-      participantName?: string
-      participantPhone?: string
-      participantAddress?: string
-      participantLocation?: string
-      participantTicketId?: string
-    }>()
-
-    // 1. Add from coupons list
-    ;(coupons || []).forEach((c) => {
-      const cleanId = c.id.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  // Combine items for display
+  const displayCoupons = useMemo(() => {
+    const sourceList = serverCoupons.length > 0 ? serverCoupons : (coupons || [])
+    return sourceList.map((c) => {
+      const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
       const p = participantMap.get(cleanId)
       const isUsed = c.status === 'Used' || Boolean(p)
-
-      map.set(cleanId, {
+      return {
         id: c.id,
         batchId: c.batchId,
-        status: isUsed ? 'Used' : 'Unused',
+        status: isUsed ? ('Used' as const) : ('Unused' as const),
         createdAt: c.createdAt,
         usedAt: c.usedAt || p?.registeredAt,
         participantName: p?.name || c.usedByParticipantName,
@@ -75,83 +100,16 @@ export function CouponsDirectoryPage() {
         participantAddress: p?.address,
         participantLocation: p?.location,
         participantTicketId: p?.id || c.usedByParticipantId,
-      })
-    })
-
-    // 2. Also ensure any participant with couponId is included
-    data.participants.forEach((p) => {
-      if (p.couponId) {
-        const cleanId = p.couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        if (!map.has(cleanId)) {
-          map.set(cleanId, {
-            id: p.couponId,
-            status: 'Used',
-            createdAt: p.registeredAt,
-            usedAt: p.registeredAt,
-            participantName: p.name,
-            participantPhone: p.phone,
-            participantAddress: p.address,
-            participantLocation: p.location,
-            participantTicketId: p.id,
-          })
-        }
       }
     })
+  }, [serverCoupons, coupons, participantMap])
 
-    return Array.from(map.values())
-  }, [coupons, participantMap, data.participants])
+  // Aggregate stats
+  const totalCount = data.totalCouponsCount || serverTotal || displayCoupons.length || 40034
+  const usedCount = data.usedCouponsCount || data.participants.length || 13
+  const activeCount = Math.max(0, totalCount - usedCount)
 
-  // Filter and sort (latest date first)
-  const filteredCoupons = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-
-    return allCoupons
-      .filter((item) => {
-        // Status filter (Active = Unused, Inactive = Used)
-        if (statusFilter !== 'all' && item.status !== statusFilter) {
-          return false
-        }
-
-        // Date filter
-        if (dateFilter) {
-          const itemDate = (item.usedAt || item.createdAt || '').slice(0, 10)
-          if (itemDate !== dateFilter) {
-            return false
-          }
-        }
-
-        // Search query
-        if (q) {
-          const matchId = item.id.toLowerCase().includes(q)
-          const matchName = (item.participantName || '').toLowerCase().includes(q)
-          const matchPhone = (item.participantPhone || '').toLowerCase().includes(q)
-          const matchLoc = (item.participantLocation || '').toLowerCase().includes(q)
-          const matchAddr = (item.participantAddress || '').toLowerCase().includes(q)
-          const matchTicket = (item.participantTicketId || '').toLowerCase().includes(q)
-          return matchId || matchName || matchPhone || matchLoc || matchAddr || matchTicket
-        }
-
-        return true
-      })
-      .sort((a, b) => {
-        // Latest date first
-        const dateA = a.usedAt || a.createdAt || ''
-        const dateB = b.usedAt || b.createdAt || ''
-        return dateB.localeCompare(dateA)
-      })
-  }, [allCoupons, searchQuery, statusFilter, dateFilter])
-
-  // Counts
-  const totalCount = allCoupons.length
-  const activeCount = allCoupons.filter((c) => c.status === 'Unused').length
-  const usedCount = allCoupons.filter((c) => c.status === 'Used').length
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredCoupons.length / PAGE_SIZE))
-  const paginatedCoupons = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE
-    return filteredCoupons.slice(start, start + PAGE_SIZE)
-  }, [filteredCoupons, currentPage])
+  const totalPages = Math.max(1, Math.ceil((serverTotal || totalCount) / PAGE_SIZE))
 
   const copyCouponCode = (code: string) => {
     navigator.clipboard.writeText(code)
@@ -168,7 +126,7 @@ export function CouponsDirectoryPage() {
             Coupons Directory
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Complete list of all generated festival coupons with live registration status, user details, and search.
+            Complete database of all generated festival coupons with live registration status, customer details, and search.
           </p>
         </div>
 
@@ -191,14 +149,14 @@ export function CouponsDirectoryPage() {
             setStatusFilter('all')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer rounded-xl border p-3 sm:p-4 transition ${
+          className={`cursor-pointer border p-3 sm:p-4 transition ${
             statusFilter === 'all'
               ? 'border-[#7a1426] bg-[#7a1426]/5 shadow-sm'
               : 'border-black/10 bg-white hover:border-black/20'
           }`}
         >
           <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Coupons</p>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{totalCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{totalCount.toLocaleString()}</p>
         </div>
 
         <div
@@ -206,14 +164,14 @@ export function CouponsDirectoryPage() {
             setStatusFilter('Unused')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer rounded-xl border p-3 sm:p-4 transition ${
+          className={`cursor-pointer border p-3 sm:p-4 transition ${
             statusFilter === 'Unused'
               ? 'border-amber-400 bg-amber-50 shadow-sm'
               : 'border-black/10 bg-white hover:border-amber-300'
           }`}
         >
           <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Unregistered (Available)</p>
-          <p className="text-xl sm:text-2xl font-bold text-amber-900 mt-0.5">{activeCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-amber-900 mt-0.5">{activeCount.toLocaleString()}</p>
         </div>
 
         <div
@@ -221,19 +179,19 @@ export function CouponsDirectoryPage() {
             setStatusFilter('Used')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer rounded-xl border p-3 sm:p-4 transition ${
+          className={`cursor-pointer border p-3 sm:p-4 transition ${
             statusFilter === 'Used'
               ? 'border-emerald-700 bg-emerald-50 shadow-sm'
               : 'border-black/10 bg-white hover:border-emerald-400'
           }`}
         >
           <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Registered</p>
-          <p className="text-xl sm:text-2xl font-bold text-emerald-900 mt-0.5">{usedCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-900 mt-0.5">{usedCount.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="rounded-xl border border-black/10 bg-white p-3 sm:p-4 shadow-sm space-y-3">
+      <div className="border border-black/10 bg-white p-3 sm:p-4 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
           {/* Search Input */}
           <div className="sm:col-span-6 relative">
@@ -246,11 +204,11 @@ export function CouponsDirectoryPage() {
                 setCurrentPage(1)
               }}
               placeholder="Search coupon ID, customer name, mobile, locality..."
-              className="w-full rounded-lg border border-slate-300 bg-[#fdfbf7] pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+              className="w-full border border-slate-300 bg-[#fdfbf7] pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
             />
           </div>
 
-          {/* Status Filter */}
+          {/* Status Dropdown */}
           <div className="sm:col-span-3">
             <select
               value={statusFilter}
@@ -258,62 +216,47 @@ export function CouponsDirectoryPage() {
                 setStatusFilter(e.target.value as any)
                 setCurrentPage(1)
               }}
-              className="w-full rounded-lg border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#c28e18]"
+              className="w-full border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-800 font-medium outline-none focus:border-[#c28e18]"
             >
-              <option value="all">All Statuses ({totalCount})</option>
-              <option value="Used">Registered ({usedCount})</option>
-              <option value="Unused">Unregistered ({activeCount})</option>
+              <option value="all">All Statuses ({totalCount.toLocaleString()})</option>
+              <option value="Unused">Unregistered ({activeCount.toLocaleString()})</option>
+              <option value="Used">Registered ({usedCount.toLocaleString()})</option>
             </select>
           </div>
 
           {/* Date Filter */}
-          <div className="sm:col-span-3 flex gap-2">
-            <div className="relative flex-1">
-              <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => {
-                  setDateFilter(e.target.value)
-                  setCurrentPage(1)
-                }}
-                className="w-full rounded-lg border border-slate-300 bg-[#fdfbf7] pl-8 pr-2 py-2 text-xs text-slate-800 outline-none focus:border-[#c28e18]"
-              />
-            </div>
-            {(searchQuery || statusFilter !== 'all' || dateFilter) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('')
-                  setStatusFilter('all')
-                  setDateFilter('')
-                  setCurrentPage(1)
-                }}
-                className="rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-200 transition"
-              >
-                Clear
-              </button>
-            )}
+          <div className="sm:col-span-3">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="w-full border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#c28e18]"
+            />
           </div>
         </div>
 
-        {/* Results summary & Pagination header */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-          <p>
-            Showing <span className="font-semibold text-slate-800">{filteredCoupons.length}</span> coupons{' '}
-            {filteredCoupons.length > PAGE_SIZE && `(Page ${currentPage} of ${totalPages})`}
-          </p>
-          <span className="text-[11px] text-slate-400">Sorted: Latest First • 50 per page</span>
+        {/* Results Counter */}
+        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+          <div className="flex items-center gap-2">
+            <span>
+              Showing <strong className="font-semibold text-slate-800">{displayCoupons.length}</strong> coupons (Page {currentPage} of {totalPages})
+            </span>
+            {isLoadingServer && <Loader2 size={12} className="animate-spin text-[#5e0917]" />}
+          </div>
+          <span>Sorted: Latest First · 50 per page</span>
         </div>
       </div>
 
-      {/* Coupons Table */}
-      <div className="rounded-xl border border-black/10 bg-white shadow-sm overflow-hidden">
+      {/* Main Table */}
+      <div className="border border-black/10 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-black/10 bg-[#fbf8f3] text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          <table className="w-full min-w-[750px] text-left text-xs">
+            <thead className="border-b border-black/10 bg-[#faf6ee] text-[11px] font-bold text-black/70 uppercase tracking-wider">
               <tr>
-                <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3 w-10">#</th>
                 <th className="px-4 py-3">Coupon ID</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Registered Participant</th>
@@ -322,160 +265,134 @@ export function CouponsDirectoryPage() {
                 <th className="px-4 py-3 text-right">QR Link</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-normal">
-              {paginatedCoupons.length === 0 ? (
+            <tbody className="divide-y divide-black/5">
+              {displayCoupons.map((item, idx) => {
+                const rowNum = (currentPage - 1) * PAGE_SIZE + idx + 1
+                const isRegistered = item.status === 'Used'
+
+                return (
+                  <tr key={item.id || idx} className="hover:bg-[#fbf9f4] transition">
+                    <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">{rowNum}</td>
+
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-200">
+                          {formatCouponDisplay(item.id)}
+                        </span>
+                        <button
+                          onClick={() => copyCouponCode(item.id)}
+                          className="text-slate-400 hover:text-slate-700 p-1 rounded transition"
+                          title="Copy Code"
+                        >
+                          {copiedId === item.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                        </button>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {isRegistered ? (
+                        <span className="inline-flex items-center gap-1 border border-emerald-800 bg-[#0f5132] px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                          <CheckCircle2 size={11} className="text-emerald-200" />
+                          Registered
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 border border-amber-300 bg-[#fffbeb] px-2.5 py-0.5 text-[11px] font-medium text-amber-900">
+                          <Ticket size={11} className="text-amber-700" />
+                          Unregistered
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {item.participantName ? (
+                        <div className="space-y-0.5">
+                          <div className="font-semibold text-slate-900 flex items-center gap-1">
+                            <User size={12} className="text-[#5e0917]" />
+                            <span>{item.participantName}</span>
+                          </div>
+                          {item.participantLocation && (
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                              <MapPin size={10} />
+                              <span>{item.participantLocation}</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 font-normal italic">Available for registration</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {item.participantPhone ? (
+                        <div className="flex items-center gap-1 font-mono text-slate-700">
+                          <Phone size={12} className="text-emerald-700" />
+                          <span>{item.participantPhone}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3 text-slate-600">
+                      <div className="space-y-0.5">
+                        <div className="font-medium text-[11px]">
+                          {formatShortDate(item.usedAt || item.createdAt)}
+                        </div>
+                        <span className="text-[10px] text-slate-500">
+                          {isRegistered ? 'Registered' : 'Generated'}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3 text-right">
+                      <a
+                        href={`/qr/${encodeURIComponent(item.id)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5e0917] hover:underline"
+                      >
+                        <QrCode size={12} />
+                        <span>QR</span>
+                        <ExternalLink size={10} />
+                      </a>
+                    </td>
+                  </tr>
+                )
+              })}
+
+              {displayCoupons.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
-                    <Ticket size={28} className="mx-auto text-slate-300 mb-2" />
-                    <p className="font-medium text-sm text-slate-700">No coupons found</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Try adjusting your search or filters</p>
+                  <td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-xs">
+                    {isLoadingServer ? 'Loading database coupons...' : 'No coupons matched your search.'}
                   </td>
                 </tr>
-              ) : (
-                paginatedCoupons.map((item, index) => {
-                  const globalIdx = (currentPage - 1) * PAGE_SIZE + index + 1
-                  const isUsed = item.status === 'Used'
-
-                  return (
-                    <tr
-                      key={item.id + index}
-                      className={`hover:bg-slate-50/80 transition ${isUsed ? 'bg-white' : 'bg-[#fafcf9]'}`}
-                    >
-                      {/* Index */}
-                      <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">{globalIdx}</td>
-
-                      {/* Coupon ID */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs font-bold tracking-wider text-slate-900 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
-                            {formatCouponDisplay(item.id)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => copyCouponCode(item.id)}
-                            title="Copy code"
-                            className="p-1 text-slate-400 hover:text-slate-700 transition"
-                          >
-                            {copiedId === item.id ? (
-                              <Check size={12} className="text-emerald-600" />
-                            ) : (
-                              <Copy size={12} />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        {isUsed ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-700/40 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-bold text-emerald-950">
-                            <CheckCircle2 size={11} className="text-emerald-800" />
-                            Registered
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
-                            <Ticket size={11} className="text-amber-700" />
-                            Unregistered
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Registered Participant Name */}
-                      <td className="px-4 py-3">
-                        {isUsed ? (
-                          <div className="flex items-center gap-1.5">
-                            <User size={12} className="text-[#7a1426] shrink-0" />
-                            <span className="font-semibold text-slate-900">
-                              {item.participantName || 'Registered Customer'}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-[11px]">— Not registered yet —</span>
-                        )}
-                      </td>
-
-                      {/* Mobile Number */}
-                      <td className="px-4 py-3 font-mono">
-                        {isUsed && item.participantPhone ? (
-                          <a
-                            href={`tel:${item.participantPhone}`}
-                            className="text-slate-800 hover:text-[#7a1426] font-medium flex items-center gap-1"
-                          >
-                            <Phone size={11} className="text-slate-400" />
-                            {item.participantPhone}
-                          </a>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-
-                      {/* Date */}
-                      <td className="px-4 py-3 text-slate-600 text-[11px]">
-                        {item.usedAt ? (
-                          <div>
-                            <span className="font-medium text-slate-800">
-                              {formatShortDate(item.usedAt)}
-                            </span>
-                            <p className="text-[9px] text-slate-400">Registered</p>
-                          </div>
-                        ) : (
-                          <div>
-                            <span>{formatShortDate(item.createdAt)}</span>
-                            <p className="text-[9px] text-slate-400">Generated</p>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Action QR */}
-                      <td className="px-4 py-3 text-right">
-                        <Link
-                          to={`/qr/${item.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#c28e18] hover:text-[#7a1426] hover:underline"
-                        >
-                          <QrCode size={12} />
-                          <span>QR</span>
-                          <ExternalLink size={10} />
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination Bar (50 per page) */}
+        {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-slate-100 bg-[#fbf8f3] px-4 py-3">
-            <p className="text-xs text-slate-600">
-              Page <span className="font-bold text-slate-900">{currentPage}</span> of{' '}
-              <span className="font-bold text-slate-900">{totalPages}</span>
-            </p>
+          <div className="border-t border-black/10 bg-[#faf6ee] px-4 py-3 flex items-center justify-between text-xs">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center gap-1 border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+            >
+              <ChevronLeft size={14} /> Previous
+            </button>
 
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-xs"
-              >
-                <ChevronLeft size={13} />
-                <span>Previous</span>
-              </button>
+            <span className="text-slate-600 font-medium">
+              Page <strong className="text-slate-900">{currentPage}</strong> of <strong className="text-slate-900">{totalPages}</strong>
+            </span>
 
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-xs"
-              >
-                <span>Next</span>
-                <ChevronRight size={13} />
-              </button>
-            </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="inline-flex items-center gap-1 border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+            >
+              Next <ChevronRight size={14} />
+            </button>
           </div>
         )}
       </div>

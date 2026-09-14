@@ -93,7 +93,7 @@ export const api = {
         const ct = res.headers.get('content-type') || ''
         if (ct.includes('application/json')) {
           const d = await res.json()
-          if (d.ok || d.prizes || d.participants || d.coupons) {
+          if (d.ok || d.prizes || d.participants || d.coupons || d.totalCouponsCount) {
             return {
               prizes: d.prizes || [],
               draws: d.draws || [],
@@ -101,6 +101,8 @@ export const api = {
               winners: d.winners || [],
               coupons: d.coupons || [],
               batches: d.batches || [],
+              totalCouponsCount: d.totalCouponsCount || d.coupons?.length || 0,
+              usedCouponsCount: d.usedCouponsCount || d.participants?.length || 0,
             }
           }
         }
@@ -115,7 +117,7 @@ export const api = {
         fetchWithTimeout(`${API_BASE}/draws`, {}, 10000),
         fetchWithTimeout(`${API_BASE}/participants`, {}, 12000),
         fetchWithTimeout(`${API_BASE}/winners`, {}, 10000),
-        fetchWithTimeout(`${API_BASE}/coupons?limit=2000`, {}, 12000),
+        fetchWithTimeout(`${API_BASE}/coupons?limit=100`, {}, 12000),
       ])
 
       const parse = async (p: PromiseSettledResult<Response>) => {
@@ -147,6 +149,8 @@ export const api = {
         winners: winnersData.winners || [],
         coupons: couponsData.coupons || [],
         batches: couponsData.batches || [],
+        totalCouponsCount: couponsData.totalCoupons || couponsData.coupons?.length || 0,
+        usedCouponsCount: participantsData.participants?.length || 0,
       }
     } catch {
       return {
@@ -158,6 +162,15 @@ export const api = {
         batches: [],
       }
     }
+  },
+
+  async bulkInsertCoupons(payload: { batch: CouponBatch; coupons: Coupon[] }): Promise<{ ok: boolean; insertedCount?: number; error?: string }> {
+    const res = await fetchWithTimeout(`${API_BASE}/coupons/bulk-insert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 30000)
+    return res.json()
   },
 
   // Coupons

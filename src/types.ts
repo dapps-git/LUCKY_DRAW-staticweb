@@ -74,5 +74,7 @@ export interface AppData {
   winners: Winner[]
   coupons?: Coupon[]
   batches?: CouponBatch[]
+  totalCouponsCount?: number
+  usedCouponsCount?: number
 }
 
