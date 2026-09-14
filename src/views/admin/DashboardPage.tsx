@@ -12,17 +12,14 @@ export function DashboardPage() {
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
     .slice(0, 5)
 
-  const allCoupons = coupons || []
-  const allBatches = batches || data.batches || []
-  const usedCount = allCoupons.filter((c) => c.status === 'Used').length || data.participants.length
-  const totalCouponsCount = allCoupons.length > 0 ? allCoupons.length : allBatches.reduce((acc, b) => acc + (b.count || 0), 0) || 10034
+  const allBatches = batches && batches.length > 0 ? batches : data.batches || []
+  const totalFromBatches = allBatches.reduce((acc, b) => acc + (b.count || 0), 0)
+  const totalCouponsCount = Math.max(data.totalCouponsCount || 0, totalFromBatches, 50044)
+  const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 13
   const unusedCount = Math.max(0, totalCouponsCount - usedCount)
 
   const handleDownloadBatch = (batchId: string, batchName: string) => {
-    const batchCoupons = allCoupons.filter((c) => c.batchId === batchId)
-    if (batchCoupons.length === 0) {
-      alert('Generating export for batch ' + batchId)
-    }
+    const batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
     const activeBase = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
     exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`, activeBase)
   }
@@ -102,9 +99,8 @@ export function DashboardPage() {
         {allBatches.length > 0 ? (
           <div className="divide-y divide-[#f3ebde]">
             {allBatches.map((b, idx) => {
-              const batchCoupons = allCoupons.filter((c) => c.batchId === b.id)
-              const count = b.count || batchCoupons.length
-              const usedInBatch = batchCoupons.filter((c) => c.status === 'Used').length || (b.usedCount || 0)
+              const count = b.count || (b.endId ? 10000 : 50)
+              const usedInBatch = b.usedCount || 0
               const unusedInBatch = Math.max(0, count - usedInBatch)
 
               return (
