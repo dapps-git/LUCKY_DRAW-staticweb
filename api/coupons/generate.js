@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const count = Math.min(Math.max(1, Number(req.body?.count) || 10), 10000)
+    const count = Math.min(Math.max(1, Number(req.body?.count) || 10), 500000)
     const name = req.body?.name || `Batch ${new Date().toLocaleDateString('en-GB')} (${count} coupons)`
     const batchId = `BATCH-${Date.now()}`
     const now = new Date().toISOString()
@@ -50,7 +50,12 @@ export default async function handler(req, res) {
       })
     }
 
-    await couponsCol.insertMany(newCoupons)
+    // Insert in safe high-speed chunks of 5,000 for large batches (up to 1 Lakh+)
+    const CHUNK_SIZE = 5000
+    for (let i = 0; i < newCoupons.length; i += CHUNK_SIZE) {
+      const slice = newCoupons.slice(i, i + CHUNK_SIZE)
+      await couponsCol.insertMany(slice, { ordered: false })
+    }
 
     const batch = {
       id: batchId,

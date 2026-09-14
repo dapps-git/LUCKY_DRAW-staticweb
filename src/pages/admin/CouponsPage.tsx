@@ -89,19 +89,19 @@ export function CouponsPage() {
           </label>
 
           {/* Quick Preset Buttons */}
-          <div className="grid grid-cols-5 gap-2">
-            {[10, 50, 100, 500, 1000].map((num) => (
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+            {[100, 500, 1000, 5000, 10000, 50000, 100000].map((num) => (
               <button
                 key={num}
                 type="button"
                 onClick={() => setCount(num)}
-                className={`py-2.5 text-xs font-medium transition ${
+                className={`py-2 text-xs font-semibold transition ${
                   count === num
                     ? 'border border-emerald-700 bg-emerald-700 text-white shadow-sm'
                     : 'border border-black/15 bg-[#fbf8f3] text-black/70 hover:border-black/30'
                 }`}
               >
-                {num}
+                {num >= 100000 ? '1 Lakh' : num >= 1000 ? `${num / 1000}k` : num}
               </button>
             ))}
           </div>
@@ -111,11 +111,11 @@ export function CouponsPage() {
             <input
               type="number"
               min={1}
-              max={10000}
+              max={500000}
               value={count}
               onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full border border-black/20 bg-[#fbf8f3] px-4 py-2.5 text-sm font-medium text-black outline-none focus:border-emerald-600"
-              placeholder="Or enter custom number..."
+              placeholder="Or enter custom number (e.g. 100000)..."
             />
             <span className="text-xs font-medium text-black/50">coupons</span>
           </div>

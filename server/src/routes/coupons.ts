@@ -121,7 +121,7 @@ router.get('/validate/:id', async (req, res) => {
 // 2. Generate a new batch of unique coupons
 router.post('/generate', async (req, res) => {
   try {
-    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 10000)
+    const count = Math.min(Math.max(1, Number(req.body.count) || 10), 500000)
     const name = req.body.name || `Batch ${new Date().toLocaleDateString('en-GB')} (${count} coupons)`
     const batchId = `BATCH-${Date.now()}`
     const now = new Date().toISOString()
@@ -145,8 +145,12 @@ router.post('/generate', async (req, res) => {
       })
     }
 
-    // Batch insert into MongoDB
-    await Coupon.insertMany(newCoupons)
+    // High-speed chunked insert for large volumes (1 Lakh+)
+    const CHUNK_SIZE = 5000
+    for (let i = 0; i < newCoupons.length; i += CHUNK_SIZE) {
+      const slice = newCoupons.slice(i, i + CHUNK_SIZE)
+      await Coupon.insertMany(slice, { ordered: false })
+    }
 
     const batch = await CouponBatch.create({
       id: batchId,
@@ -166,11 +170,10 @@ router.post('/generate', async (req, res) => {
 })
 
 // 3. Get coupons & batches
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
-    const limit = Math.min(Math.max(1, Number(req.query.limit) || 2000), 10000)
     const [coupons, batches] = await Promise.all([
-      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1 }).sort({ createdAt: -1 }).limit(limit).lean(),
+      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ createdAt: -1 }).lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
     ])
     res.json({ ok: true, coupons, batches })
