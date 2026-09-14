@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ADMIN_EMAIL, ADMIN_PASSWORD, seedData } from '../data/mockData'
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
 import { api } from '../lib/api'
@@ -59,35 +59,25 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 function loadLocalData(): AppData {
+  // Always start empty — real data comes from MongoDB only
+  // Clear ALL legacy localStorage keys
   try {
-    // Clear out old legacy cache keys
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('vf2026_app_data_v1')
-      localStorage.removeItem('vf2026_app_data_v2')
-      localStorage.removeItem('vf2026_app_data_v3')
-      localStorage.removeItem('vf2026_app_data_v4')
-      localStorage.removeItem('vf2026_app_data_v5')
+      for (const key of ['vf2026_app_data_v1','vf2026_app_data_v2','vf2026_app_data_v3',
+        'vf2026_app_data_v4','vf2026_app_data_v5','vf2026_app_data_v6']) {
+        localStorage.removeItem(key)
+      }
     }
-
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(DATA_KEY) : null
-    if (!raw) return seedData
-    const parsed = JSON.parse(raw) as AppData
-
-    const participants = parsed.participants || []
-    const winners = parsed.winners || []
-    const coupons = parsed.coupons || []
-    const batches = parsed.batches || []
-
-    return {
-      ...seedData,
-      ...parsed,
-      participants,
-      winners,
-      coupons,
-      batches,
-    }
-  } catch {
-    return seedData
+  } catch {}
+  return {
+    prizes: [],
+    draws: [],
+    participants: [],
+    winners: [],
+    batches: [],
+    coupons: [],
+    totalCouponsCount: 0,
+    usedCouponsCount: 0,
   }
 }
 
@@ -103,45 +93,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isRefreshingRef.current = true
     try {
       const serverData = await api.getAllData()
-      const participants = serverData.participants || []
-      const winners = serverData.winners || []
-      if (
-        participants.length > 0 ||
-        winners.length > 0 ||
-        (serverData.prizes && serverData.prizes.length > 0) ||
-        (serverData.coupons && serverData.coupons.length > 0) ||
-        (serverData.batches && serverData.batches.length > 0) ||
-        (serverData.totalCouponsCount && serverData.totalCouponsCount > 0)
-      ) {
-        setData((prev) => {
-          const newTotalCount =
-            serverData.totalCouponsCount && serverData.totalCouponsCount > 0
-              ? serverData.totalCouponsCount
-              : Math.max(prev.totalCouponsCount || 0, 50034)
-          const newUsedCount =
-            serverData.usedCouponsCount !== undefined
-              ? serverData.usedCouponsCount
-              : (participants.length || prev.usedCouponsCount || 13)
-          const newBatches =
-            serverData.batches && serverData.batches.length > 0
-              ? serverData.batches
-              : (prev.batches || [])
-
-          return {
-            ...prev,
-            ...serverData,
-            participants: participants.length > 0 ? participants : prev.participants,
-            winners: winners.length > 0 ? winners : prev.winners,
-            prizes: serverData.prizes && serverData.prizes.length > 0 ? serverData.prizes : prev.prizes,
-            draws: serverData.draws && serverData.draws.length > 0 ? serverData.draws : prev.draws,
-            batches: newBatches,
-            totalCouponsCount: newTotalCount,
-            usedCouponsCount: newUsedCount,
-            coupons: serverData.coupons && serverData.coupons.length > 0 ? serverData.coupons : prev.coupons,
-          }
-        })
-        setIsOnline(true)
-      }
+      // Always overwrite with real server data — no fallbacks, no merges with old state
+      setData({
+        prizes: serverData.prizes || [],
+        draws: serverData.draws || [],
+        participants: serverData.participants || [],
+        winners: serverData.winners || [],
+        batches: serverData.batches || [],
+        coupons: serverData.coupons || [],
+        totalCouponsCount: serverData.totalCouponsCount || 0,
+        usedCouponsCount: serverData.usedCouponsCount || 0,
+      })
+      setIsOnline(true)
     } catch {
       setIsOnline(false)
     } finally {

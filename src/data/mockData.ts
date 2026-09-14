@@ -80,6 +80,21 @@ export const PRIZE_IMAGES = {
 }
 
 export const seedData: AppData = {
+  prizes: [],
+  draws: [],
+  participants: [],
+  winners: [],
+  batches: [],
+  coupons: [],
+  totalCouponsCount: 0,
+  usedCouponsCount: 0,
+}
+
+// Legacy — not used:
+// prizes, draws, participants, winners, batches, coupons were seeded here
+// all cleared on 2026-09-14 — data now comes 100% from MongoDB
+
+export const _UNUSED_seedData_ref = {
   prizes: [
   {
     "id": "prize-tv",
