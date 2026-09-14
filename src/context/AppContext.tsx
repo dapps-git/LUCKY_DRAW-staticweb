@@ -101,12 +101,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const serverData = await api.getAllData()
       const participants = serverData.participants || []
       const winners = serverData.winners || []
-      if (participants.length > 0 || winners.length > 0 || (serverData.prizes && serverData.prizes.length > 0)) {
+      if (
+        participants.length > 0 ||
+        winners.length > 0 ||
+        (serverData.prizes && serverData.prizes.length > 0) ||
+        (serverData.coupons && serverData.coupons.length > 0) ||
+        (serverData.batches && serverData.batches.length > 0)
+      ) {
         setData((prev) => {
           if (
             prev.participants?.length === participants.length &&
             (prev.winners?.length || 0) === winners.length &&
             (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
+            (prev.batches?.length || 0) === (serverData.batches?.length || 0) &&
             (prev.draws?.length || 0) === (serverData.draws?.length || 0)
           ) {
             return prev
@@ -115,6 +122,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...serverData,
             participants,
             winners,
+            coupons: serverData.coupons || [],
+            batches: serverData.batches || [],
           }
         })
         setIsOnline(true)
@@ -259,11 +268,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       generateCouponBatch: async (count: number, name?: string) => {
         try {
           const res = await api.generateBatch(count, name)
-          if (res.ok) {
+          if (res.ok && res.batch && res.coupons) {
             setData((prev) => ({
               ...prev,
-              batches: [res.batch, ...(prev.batches || [])],
-              coupons: [...(prev.coupons || []), ...res.coupons],
+              batches: [res.batch, ...(prev.batches || []).filter((b) => b.id !== res.batch.id)],
+              coupons: [...res.coupons, ...(prev.coupons || [])],
             }))
             return { batch: res.batch, coupons: res.coupons }
           }
@@ -276,7 +285,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setData((prev) => ({
           ...prev,
           batches: [batch, ...(prev.batches || [])],
-          coupons: [...(prev.coupons || []), ...newCoupons],
+          coupons: [...newCoupons, ...(prev.coupons || [])],
         }))
         return { batch, coupons: newCoupons }
       },

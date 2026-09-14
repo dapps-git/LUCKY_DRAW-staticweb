@@ -26,7 +26,7 @@ const MONGODB_URI =
   process.env.MONGODB_URI ||
   'mongodb+srv://dappstech2025_db_user:dapps1234@cluster0.ecrnbjn.mongodb.net/FESTIVAL?retryWrites=true&w=majority&appName=Cluster0'
 
-// Middleware
+
 app.use(
   cors({
     origin: '*',
@@ -45,7 +45,7 @@ app.get(['/api/all', '/all'], async (_req, res) => {
       Draw.find().sort({ number: 1 }).lean(),
       Participant.find().sort({ registeredAt: -1, createdAt: -1 }).lean(),
       Winner.find().sort({ date: -1, drawnAt: -1 }).lean(),
-      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1 }).sort({ createdAt: -1 }).limit(1000).lean(),
+      Coupon.find({}, { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 }).sort({ createdAt: -1 }).lean(),
       CouponBatch.find().sort({ createdAt: -1 }).lean(),
     ])
     res.json({

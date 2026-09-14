@@ -17,7 +17,7 @@ export default async function handler(_req, res) {
       db.collection('draws').find({}).sort({ number: 1 }).toArray(),
       db.collection('participants').find({}).sort({ registeredAt: -1, createdAt: -1 }).toArray(),
       db.collection('winners').find({}).sort({ date: -1, drawnAt: -1 }).toArray(),
-      db.collection('coupons').find({}, { projection: { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 } }).sort({ createdAt: -1 }).limit(3000).toArray(),
+      db.collection('coupons').find({}, { projection: { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 } }).sort({ createdAt: -1 }).toArray(),
       db.collection('couponbatches').find({}).sort({ createdAt: -1 }).toArray(),
     ])
 
