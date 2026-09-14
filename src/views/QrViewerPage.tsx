@@ -1,29 +1,39 @@
 import { useEffect, useState } from 'react'
 import { Link } from '../components/Link'
 import QRCode from 'qrcode'
-import { Download, ArrowRight, Ticket, CheckCircle2 } from 'lucide-react'
+import { Download, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
 import { formatCouponDisplay } from '../lib/tokenHelper'
 
+function getInitialCouponId(initialId?: string): string {
+  if (initialId) return initialId
+  if (typeof window !== 'undefined') {
+    const searchParams = new URLSearchParams(window.location.search)
+    const qParam = searchParams.get('coupon') || searchParams.get('id')
+    if (qParam) return qParam
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    const lastPart = parts[parts.length - 1]
+    if (lastPart && lastPart !== 'qr') {
+      return decodeURIComponent(lastPart)
+    }
+  }
+  return ''
+}
+
 export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string }) {
-  const [couponId, setCouponId] = useState(initialCouponId || '')
+  const [couponId, setCouponId] = useState(() => getInitialCouponId(initialCouponId))
+  const [isMounted, setIsMounted] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState<string>('')
 
   useEffect(() => {
-    if (initialCouponId) {
-      setCouponId(initialCouponId)
-      return
-    }
-    if (typeof window !== 'undefined') {
-      const parts = window.location.pathname.split('/')
-      const lastPart = parts[parts.length - 1]
-      if (lastPart && lastPart !== 'qr') {
-        setCouponId(lastPart)
-      }
+    setIsMounted(true)
+    const detected = getInitialCouponId(initialCouponId)
+    if (detected) {
+      setCouponId(detected)
     }
   }, [initialCouponId])
 
   const cleanId = (couponId || '').trim().toUpperCase()
 
-  const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
   const registerUrl = `${baseUrl}/register?coupon=${cleanId}`
 
@@ -41,6 +51,16 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
       .catch(console.error)
   }, [cleanId, registerUrl])
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined') {
+      if (window.history.length > 1) {
+        window.history.back()
+      } else {
+        window.location.href = '/admin/coupons-directory'
+      }
+    }
+  }
+
   const downloadQrPng = () => {
     if (!qrDataUrl) return
     const a = document.createElement('a')
@@ -51,14 +71,35 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
     document.body.removeChild(a)
   }
 
-  if (!cleanId) {
+  // Prevent flash of "No coupon ID" during client hydration or initial load
+  if (!cleanId && !isMounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f6f0] p-4 text-center">
-        <div className="rounded-2xl border border-black/10 bg-white p-6 max-w-sm shadow-lg">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin text-[#7a1426]" size={32} />
+          <p className="text-xs font-semibold text-slate-600">Loading coupon QR...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!cleanId) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8f6f0] p-4 text-center">
+        <div className="rounded-2xl border border-black/10 bg-white p-6 max-w-sm w-full shadow-lg space-y-4">
           <p className="text-sm font-semibold text-red-600">No coupon ID provided.</p>
-          <Link to="/register" className="mt-4 inline-block text-xs font-bold text-[#7a1426] underline">
-            Go to Registration
-          </Link>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              <ArrowLeft size={14} />
+              <span>Go Back</span>
+            </button>
+            <Link to="/admin/coupons-directory" className="text-xs font-bold text-[#7a1426] underline">
+              Coupons Directory
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -67,9 +108,18 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
   return (
     <div className="min-h-screen bg-[#f8f6f0] text-slate-900 flex flex-col justify-between p-4 sm:p-6">
       <header className="mx-auto max-w-md w-full flex items-center justify-between pb-4">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300/80 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100 hover:text-slate-900 transition"
+        >
+          <ArrowLeft size={14} />
+          <span>Back</span>
+        </button>
+
         <Link to="/home" className="font-display text-sm font-bold tracking-wide text-[#7a1426]">
           Valanchery <span className="text-[#c28e18]">Festival 2026</span>
         </Link>
+
         <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 flex items-center gap-1">
           <CheckCircle2 size={12} /> Official Ticket QR
         </span>
@@ -87,8 +137,9 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
             {qrDataUrl ? (
               <img src={qrDataUrl} alt={`QR Code for ${cleanId}`} className="w-full h-auto object-contain rounded-lg" />
             ) : (
-              <div className="w-[250px] h-[250px] flex items-center justify-center text-xs text-slate-400">
-                Generating QR...
+              <div className="w-[250px] h-[250px] flex items-center justify-center text-xs text-slate-400 gap-2">
+                <Loader2 className="animate-spin" size={16} />
+                <span>Generating QR...</span>
               </div>
             )}
           </div>
@@ -117,6 +168,14 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
             >
               <Download size={14} />
               <span>DOWNLOAD HIGH-RES QR (PNG)</span>
+            </button>
+
+            <button
+              onClick={handleBack}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-transparent bg-slate-100 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200 hover:text-slate-900"
+            >
+              <ArrowLeft size={14} />
+              <span>BACK TO COUPONS DIRECTORY</span>
             </button>
           </div>
         </div>
