@@ -1,14 +1,50 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '')
-const API_BASE = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`
+const rawEnvUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const PRIMARY_BASE = rawEnvUrl ? (rawEnvUrl.endsWith('/api') ? rawEnvUrl : `${rawEnvUrl}/api`) : '/api'
+const LOCAL_FALLBACK_BASE = '/api'
+const API_BASE = PRIMARY_BASE
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
+async function fetchWithTimeout(urlOrPath: string, options: RequestInit = {}, timeoutMs = 15000): Promise<Response> {
+  const isFullPath = urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')
+  let primaryUrl = urlOrPath
+  let fallbackPath = ''
+
+  if (!isFullPath) {
+    const cleanPath = urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`
+    const relativeSubPath = cleanPath.startsWith('/api') ? cleanPath.slice(4) : cleanPath
+    primaryUrl = `${PRIMARY_BASE}${relativeSubPath}`
+    fallbackPath = `${LOCAL_FALLBACK_BASE}${relativeSubPath}`
+  } else {
+    try {
+      const u = new URL(urlOrPath)
+      const relativeSubPath = u.pathname.startsWith('/api') ? u.pathname.slice(4) : u.pathname
+      primaryUrl = urlOrPath
+      fallbackPath = `${LOCAL_FALLBACK_BASE}${relativeSubPath}${u.search}`
+    } catch {
+      fallbackPath = ''
+    }
+  }
+
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal })
+    const res = await fetch(primaryUrl, { ...options, signal: controller.signal })
+    if (!res.ok && (res.status === 404 || res.status >= 500) && fallbackPath && primaryUrl !== fallbackPath) {
+      // Auto-fallback to same-domain Vercel serverless /api
+      const fallbackRes = await fetch(fallbackPath, { ...options, signal: controller.signal })
+      return fallbackRes
+    }
     return res
+  } catch (err) {
+    if (fallbackPath && primaryUrl !== fallbackPath) {
+      try {
+        return await fetch(fallbackPath, { ...options, signal: controller.signal })
+      } catch {
+        // fallback failed, throw original
+      }
+    }
+    throw err
   } finally {
     clearTimeout(timer)
   }
