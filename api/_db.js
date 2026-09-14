@@ -7,12 +7,13 @@ const MONGODB_URI =
 let isConnected = false
 
 export async function connectDB() {
-  if (isConnected && mongoose.connection.readyState === 1) {
-    return mongoose.connection
+  if (isConnected && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    return mongoose.connection.db
   }
-  await mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 8000,
+  const conn = await mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+    bufferCommands: false,
   })
   isConnected = true
-  return mongoose.connection
+  return conn.connection.db || mongoose.connection.db
 }

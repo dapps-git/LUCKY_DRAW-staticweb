@@ -1,6 +1,7 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const rawEnvUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const envUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const rawEnvUrl = envUrl.includes('onrender.com') ? '' : envUrl
 const PRIMARY_BASE = rawEnvUrl ? (rawEnvUrl.endsWith('/api') ? rawEnvUrl : `${rawEnvUrl}/api`) : '/api'
 const LOCAL_FALLBACK_BASE = '/api'
 const API_BASE = PRIMARY_BASE
