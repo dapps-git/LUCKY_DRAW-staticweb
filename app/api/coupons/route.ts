@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '../../../src/lib/db'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 15
+export const maxDuration = 30
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page')) || 1)
-    const limit = Math.min(200, Number(searchParams.get('limit')) || 50)
+    // Hard cap at 100 to avoid memory/timeout issues with 50k docs
+    const limit = Math.min(100, Number(searchParams.get('limit')) || 50)
     const skip = (page - 1) * limit
     const search = (searchParams.get('search') || '').trim()
     const status = searchParams.get('status') || ''
@@ -32,6 +33,8 @@ export async function GET(request: Request) {
 
     const hasFilter = Boolean(search || (status && status !== 'all'))
 
+    // Use estimatedDocumentCount for total — instant, no scan
+    // Use countDocuments only when filtering (much smaller result set)
     const [totalCoupons, filteredCount, coupons, batches] = await Promise.all([
       couponsCol.estimatedDocumentCount(),
       hasFilter ? couponsCol.countDocuments(query) : couponsCol.estimatedDocumentCount(),

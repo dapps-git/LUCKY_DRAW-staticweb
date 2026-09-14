@@ -2,30 +2,48 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '../../../src/lib/db'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 15
+export const maxDuration = 30
 
 export async function GET() {
   try {
     const db = await connectDB()
-    const couponsCol = db.collection('coupons')
 
-    const [prizes, draws, participants, winners, batches, estimatedTotal, usedCount, sampleCoupons] = await Promise.all([
-      db.collection('prizes').find({}).toArray(),
-      db.collection('draws').find({}).sort({ number: 1 }).toArray(),
-      db.collection('participants').find({}).sort({ registeredAt: -1, createdAt: -1 }).toArray(),
-      db.collection('winners').find({}).sort({ date: -1, drawnAt: -1 }).toArray(),
-      db.collection('couponbatches').find({}).sort({ createdAt: -1 }).toArray(),
-      couponsCol.estimatedDocumentCount(),
-      couponsCol.countDocuments({ status: 'Used' }),
-      couponsCol
-        .find({}, { projection: { id: 1, batchId: 1, status: 1, createdAt: 1, usedAt: 1, usedByParticipantName: 1, usedByParticipantPhone: 1, usedByParticipantId: 1 } })
-        .sort({ _id: -1 })
-        .limit(200)
-        .toArray(),
-    ])
+    // Run all lightweight queries in parallel — NO full collection scan on coupons
+    const [prizes, draws, participants, winners, batches, estimatedTotal, sampleCoupons] =
+      await Promise.all([
+        db.collection('prizes').find({}).toArray(),
+        db.collection('draws').find({}).sort({ number: 1 }).toArray(),
+        db.collection('participants').find({}).sort({ registeredAt: -1, createdAt: -1 }).toArray(),
+        db.collection('winners').find({}).sort({ date: -1, drawnAt: -1 }).toArray(),
+        db.collection('couponbatches').find({}).sort({ createdAt: -1 }).toArray(),
+        // estimatedDocumentCount is instant — no table scan
+        db.collection('coupons').estimatedDocumentCount(),
+        // Only fetch first 50 coupons for the dashboard preview
+        db
+          .collection('coupons')
+          .find(
+            {},
+            {
+              projection: {
+                id: 1,
+                batchId: 1,
+                status: 1,
+                createdAt: 1,
+                usedAt: 1,
+                usedByParticipantName: 1,
+                usedByParticipantPhone: 1,
+                usedByParticipantId: 1,
+              },
+            }
+          )
+          .sort({ _id: -1 })
+          .limit(50)
+          .toArray(),
+      ])
 
     const totalCouponsCount = Math.max(estimatedTotal || 0, 50034)
-    const usedCouponsCount = usedCount || (participants ? participants.length : 13)
+    // Derive usedCount from participants instead of a slow countDocuments on 50k docs
+    const usedCouponsCount = participants ? participants.length : 0
 
     return NextResponse.json(
       {
