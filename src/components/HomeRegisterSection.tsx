@@ -389,7 +389,7 @@ export function HomeRegisterSection() {
                             value={form.couponId}
                             onChange={(e) => handleCouponChange(e.target.value)}
                             placeholder="e.g. 7492018401"
-                            className="w-full rounded-none border border-red-300 bg-white px-2.5 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:border-red-500"
+                            className="w-full rounded-none border border-red-300 bg-white px-2.5 py-2 font-mono text-base sm:text-sm font-semibold text-slate-900 outline-none focus:border-red-500"
                           />
                           <button
                             type="button"
@@ -410,7 +410,7 @@ export function HomeRegisterSection() {
                         value={form.couponId}
                         onChange={(e) => handleCouponChange(e.target.value)}
                         placeholder="Enter coupon ID (e.g. 7492018401)"
-                        className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 outline-none focus:border-[#c28e18]"
+                        className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-base sm:text-sm font-semibold text-slate-900 outline-none focus:border-[#c28e18]"
                       />
                     )}
                   </div>
@@ -421,7 +421,7 @@ export function HomeRegisterSection() {
                       value={form.couponId}
                       onChange={(e) => handleCouponChange(e.target.value)}
                       placeholder="Enter 13-character coupon code"
-                      className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#c28e18]"
+                      className="w-full rounded-none border border-[#d4a017]/35 bg-white px-3 py-2 font-mono text-base sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#c28e18]"
                     />
                     {isValidatingToken && (
                       <Loader2 size={13} className="animate-spin text-slate-400 absolute right-2.5 top-2.5" />
@@ -445,7 +445,7 @@ export function HomeRegisterSection() {
                     value={form.name}
                     onChange={(e) => set('name', e.target.value)}
                     placeholder="Enter your full name"
-                    className="w-full rounded-none bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
+                    className="w-full rounded-none bg-white px-3 py-2 text-base sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
                   />
                 </div>
                 {errors.name && (
@@ -469,7 +469,7 @@ export function HomeRegisterSection() {
                     value={form.phone}
                     onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
                     placeholder="10-digit mobile number"
-                    className="w-full rounded-none bg-white px-3 py-2 font-mono text-xs sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
+                    className="w-full rounded-none bg-white px-3 py-2 font-mono text-base sm:text-sm text-slate-900 outline-none transition placeholder:text-slate-400"
                   />
                 </div>
                 {errors.phone && (

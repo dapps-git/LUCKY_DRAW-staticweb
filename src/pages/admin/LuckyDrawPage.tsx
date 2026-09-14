@@ -14,6 +14,7 @@ import {
   Plus,
   ChevronDown,
   Check,
+  CheckCircle2,
   ShieldCheck,
   X,
   Sparkle,
@@ -66,6 +67,11 @@ export function LuckyDrawPage() {
   const [phase, setPhase] = useState<Phase>('ready')
   const [display, setDisplay] = useState<Participant | null>(pool[0] ?? null)
   const [winner, setWinner] = useState<Participant | null>(null)
+  const [confirmedWinnerInfo, setConfirmedWinnerInfo] = useState<{
+    winner: Participant
+    prize: Prize
+    drawNumber: number
+  } | null>(null)
   const [progress, setProgress] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [confirmAgain, setConfirmAgain] = useState(false)
@@ -73,6 +79,27 @@ export function LuckyDrawPage() {
   const [toast, setToast] = useState('')
   const [flash, setFlash] = useState(false)
   const timers = useRef<number[]>([])
+
+  const handleConfirmWinner = async () => {
+    if (!winner || !nextDraw || !activePrize) return
+    setIsConfirming(true)
+    try {
+      const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
+      if (res.ok) {
+        setConfirmedWinnerInfo({
+          winner,
+          prize: activePrize,
+          drawNumber: nextDraw.number,
+        })
+        setShowModal(false)
+        setToast(`Winner "${winner.name}" officially confirmed and recorded!`)
+      } else {
+        setToast(res.error || 'Failed to record winner')
+      }
+    } finally {
+      setIsConfirming(false)
+    }
+  }
 
   // New Gift Form State
   const [newGift, setNewGift] = useState({
@@ -427,39 +454,87 @@ export function LuckyDrawPage() {
           </div>
         )}
 
-        {/* Reveal / Done Phase in Card */}
-        {(phase === 'reveal' || phase === 'done') && winner && (
+        {/* Confirmed Phase in Card */}
+        {confirmedWinnerInfo ? (
           <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
-            <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-0.5 rounded-none uppercase tracking-wider">
-              Winner Selected
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 bg-emerald-100/90 border border-emerald-600/40 px-3 py-1 rounded-none uppercase tracking-wider">
+              <CheckCircle2 size={13} className="text-emerald-700" />
+              Winner Confirmed & Saved to DB
             </span>
             <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight">
-              {winner.name}
+              {confirmedWinnerInfo.winner.name}
             </p>
-            {winner.couponId && (
+            {confirmedWinnerInfo.winner.couponId && (
               <p className="font-mono text-xs sm:text-sm font-bold text-[#8b1e2e]">
-                🎫 Coupon: {winner.couponId}
+                🎫 Coupon: {confirmedWinnerInfo.winner.couponId}
               </p>
             )}
             <p className="font-mono text-xs font-bold text-slate-800">
-              Phone: +91 {winner.phone}
+              Phone: +91 {confirmedWinnerInfo.winner.phone}
             </p>
 
-            <div className="pt-2 flex flex-col gap-2 sm:flex-row">
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition active:scale-95 cursor-pointer"
+            <div className="pt-3 flex flex-col gap-2">
+              <Link
+                to="/admin/winners"
+                className="w-full rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition text-center"
               >
-                Confirm Winner
-              </button>
-              <button
-                onClick={() => setConfirmAgain(true)}
-                className="rounded-none border border-slate-300 py-3 px-4 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-              >
-                Re-spin
-              </button>
+                View in Winners List →
+              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to="/admin/dashboard"
+                  className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition text-center"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setConfirmedWinnerInfo(null)
+                    setWinner(null)
+                    setPhase('ready')
+                  }}
+                  className="flex-1 rounded-none border border-[#e8decb] bg-[#faf6ee] hover:bg-[#f6ebd8] py-2.5 text-xs font-bold tracking-wider text-[#5e0917] transition cursor-pointer"
+                >
+                  Next Draw
+                </button>
+              </div>
             </div>
           </div>
+        ) : (
+          /* Reveal / Done Phase in Card */
+          (phase === 'reveal' || phase === 'done') && winner && (
+            <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
+              <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-0.5 rounded-none uppercase tracking-wider">
+                Winner Selected
+              </span>
+              <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight">
+                {winner.name}
+              </p>
+              {winner.couponId && (
+                <p className="font-mono text-xs sm:text-sm font-bold text-[#8b1e2e]">
+                  🎫 Coupon: {winner.couponId}
+                </p>
+              )}
+              <p className="font-mono text-xs font-bold text-slate-800">
+                Phone: +91 {winner.phone}
+              </p>
+
+              <div className="pt-2 flex flex-col gap-2 sm:flex-row">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition active:scale-95 cursor-pointer"
+                >
+                  Confirm Winner
+                </button>
+                <button
+                  onClick={() => setConfirmAgain(true)}
+                  className="rounded-none border border-slate-300 py-3 px-4 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Re-spin
+                </button>
+              </div>
+            </div>
+          )
         )}
       </div>
 
@@ -475,7 +550,7 @@ export function LuckyDrawPage() {
               <div className="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-[#faecd6] blur-2xl" />
             </div>
 
-            {/* Top Bar: Brand & Festive Note */}
+            {/* Top Bar: Brand & Back/Close Button */}
             <div className="relative z-10 flex items-center justify-between border-b border-[#f3e5d7] pb-3 text-left">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center bg-[#5e0917] text-white font-bold text-xs shadow-xs">
@@ -491,10 +566,23 @@ export function LuckyDrawPage() {
                 </div>
               </div>
 
-              <div className="hidden sm:block text-right">
-                <p className="font-serif italic text-xs text-[#720e1e] font-medium">
-                  Thank you for being a part of our festival! ♡
-                </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-[#5e0917] bg-[#fbf4ea] hover:bg-[#f6ebd8] border border-[#e8decb] px-3 py-1.5 transition cursor-pointer"
+                >
+                  <ArrowLeft size={13} />
+                  <span>Back to Stage</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition cursor-pointer"
+                  title="Close"
+                >
+                  <X size={18} />
+                </button>
               </div>
             </div>
 
@@ -617,20 +705,7 @@ export function LuckyDrawPage() {
             <div className="relative z-10 mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 disabled={isConfirming}
-                onClick={async () => {
-                  setIsConfirming(true)
-                  try {
-                    const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
-                    if (res.ok) {
-                      setShowModal(false)
-                      setToast(`Winner "${winner.name}" officially confirmed with ${activePrize.name}!`)
-                    } else {
-                      setToast(res.error)
-                    }
-                  } finally {
-                    setIsConfirming(false)
-                  }
-                }}
+                onClick={handleConfirmWinner}
                 className="w-full sm:w-auto min-w-[200px] rounded-full bg-[#5e0917] hover:bg-[#720e1e] py-3 px-6 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-white transition duration-150 active:scale-95 cursor-pointer shadow-lg shadow-[#5e0917]/30 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isConfirming ? (

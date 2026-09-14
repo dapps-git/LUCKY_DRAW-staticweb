@@ -371,7 +371,7 @@ export function RegisterPage() {
                     value={form.couponId}
                     onChange={(e) => handleCouponChange(e.target.value)}
                     placeholder="Enter coupon code (e.g. A1D3S123F89K2)"
-                    className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
+                    className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-base sm:text-xs font-mono tracking-wider text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
                   />
                   {isValidatingToken && (
                     <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -394,7 +394,7 @@ export function RegisterPage() {
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 placeholder="Enter your full name"
-                className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
+                className="w-full rounded-none border border-slate-300 bg-white px-2.5 py-1.5 text-base sm:text-xs text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
               />
               {errors.name && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.name}</p>}
             </div>
@@ -414,7 +414,7 @@ export function RegisterPage() {
                   value={form.phone}
                   onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))}
                   placeholder="Phone number"
-                  className="w-full rounded-none border border-slate-300 bg-white pl-10 pr-2.5 py-1.5 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
+                  className="w-full rounded-none border border-slate-300 bg-white pl-10 pr-2.5 py-1.5 text-base sm:text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition focus:border-[#c28e18]"
                 />
               </div>
               {errors.phone && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.phone}</p>}
