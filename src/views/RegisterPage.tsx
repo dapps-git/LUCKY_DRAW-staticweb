@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link } from '../components/Link'
 import {
   Check,
   CheckCircle2,
@@ -22,8 +22,6 @@ import mobileWebp from '../assets/mobile.webp'
 
 export function RegisterPage() {
   const { registerParticipant, validateCouponAsync } = useApp()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const navigate = useNavigate()
 
   const [form, setForm] = useState({
     name: '',
@@ -48,12 +46,14 @@ export function RegisterPage() {
 
   // Auto-fill and validate coupon from URL query params (e.g. ?coupon=7492018401)
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
     const rawParam =
-      searchParams.get('coupon') ||
-      searchParams.get('token') ||
-      searchParams.get('id') ||
-      searchParams.get('c') ||
-      searchParams.get('code') ||
+      params.get('coupon') ||
+      params.get('token') ||
+      params.get('id') ||
+      params.get('c') ||
+      params.get('code') ||
       window.location.search
 
     const extracted = extractCouponId(rawParam)
@@ -61,7 +61,7 @@ export function RegisterPage() {
       setForm((f) => ({ ...f, couponId: extracted }))
       checkToken(extracted)
     }
-  }, [searchParams])
+  }, [])
 
   // Live Token Validator function (Async server + local check)
   const checkToken = async (tokenInput: string) => {
@@ -114,13 +114,17 @@ export function RegisterPage() {
   const handleScanSuccess = (scannedToken: string) => {
     setForm((f) => ({ ...f, couponId: scannedToken }))
     checkToken(scannedToken)
-    setSearchParams({ coupon: scannedToken }, { replace: true })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `?coupon=${encodeURIComponent(scannedToken)}`)
+    }
   }
 
   const clearCoupon = () => {
     setForm((f) => ({ ...f, couponId: '' }))
     setTokenStatus({ status: 'Idle', message: '' })
-    setSearchParams({}, { replace: true })
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
   }
 
   const [formError, setFormError] = useState('')
@@ -480,12 +484,12 @@ export function RegisterPage() {
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={() => navigate('/')}
+              <Link
+                to="/"
                 className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-[#720e1e] bg-[#720e1e] py-2 text-xs font-bold text-white transition hover:bg-[#891326]"
               >
                 <Home size={13} /> GO TO HOME
-              </button>
+              </Link>
               <button
                 onClick={resetForm}
                 className="flex-1 flex items-center justify-center gap-1 rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"

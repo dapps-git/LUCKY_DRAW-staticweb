@@ -1,6 +1,23 @@
 import type { AppData, Coupon, CouponBatch, Draw, Participant, Prize, Winner } from '../types'
 
-const envUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+const getEnvApiUrl = () => {
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL
+      if (process.env.VITE_API_URL) return process.env.VITE_API_URL
+    }
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      return import.meta.env.VITE_API_URL || ''
+    }
+  } catch {
+    // ignore
+  }
+  return ''
+}
+
+const envUrl = (getEnvApiUrl() || '').replace(/\/+$/, '')
 const rawEnvUrl = envUrl.includes('onrender.com') ? '' : envUrl
 const PRIMARY_BASE = rawEnvUrl ? (rawEnvUrl.endsWith('/api') ? rawEnvUrl : `${rawEnvUrl}/api`) : '/api'
 const LOCAL_FALLBACK_BASE = '/api'

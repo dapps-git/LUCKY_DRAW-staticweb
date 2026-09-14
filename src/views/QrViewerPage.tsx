@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { Link } from '../components/Link'
 import QRCode from 'qrcode'
 import { Download, ArrowRight, Ticket, CheckCircle2 } from 'lucide-react'
 import { formatCouponDisplay } from '../lib/tokenHelper'
 
-export function QrViewerPage() {
-  const { couponId } = useParams<{ couponId: string }>()
+export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string }) {
+  const [couponId, setCouponId] = useState(initialCouponId || '')
+
+  useEffect(() => {
+    if (initialCouponId) {
+      setCouponId(initialCouponId)
+      return
+    }
+    if (typeof window !== 'undefined') {
+      const parts = window.location.pathname.split('/')
+      const lastPart = parts[parts.length - 1]
+      if (lastPart && lastPart !== 'qr') {
+        setCouponId(lastPart)
+      }
+    }
+  }, [initialCouponId])
+
   const cleanId = (couponId || '').trim().toUpperCase()
 
   const [qrDataUrl, setQrDataUrl] = useState<string>('')

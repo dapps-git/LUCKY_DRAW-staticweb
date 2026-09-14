@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from '../components/Link'
 import {
   ArrowRight,
   ChevronDown,
@@ -177,7 +177,7 @@ export function HomePage() {
             <div className="p-[2.5px] sm:p-[3px] rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#00d2ff] via-[#ea00d9] via-[#fa709a] via-[#fee140] to-[#38ef7d] shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
               <div className="rounded-[9.5px] sm:rounded-[13px] overflow-hidden leading-none bg-white">
                 <img
-                  src={couponBannerImg}
+                  src={typeof couponBannerImg === 'string' ? couponBannerImg : (couponBannerImg as any)?.src || ''}
                   alt="Kerala Vyapari Vyavasayi Ekopana Samithi - Valanchery Shopping Festival Season 2 Official Coupon"
                   className="w-full h-[180px] xs:h-[205px] sm:h-[260px] md:h-[295px] lg:h-[315px] object-fill block"
                   loading="eager"

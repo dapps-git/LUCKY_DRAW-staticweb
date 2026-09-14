@@ -4,15 +4,17 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:all": "concurrently -n \"frontend,backend\" -c \"blue,green\" \"vite\" \"npm run server:dev\"",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "dev:vite": "vite",
+    "build:vite": "tsc && vite build",
     "server:dev": "npm run dev --prefix server",
-    "server:start": "npm start --prefix server",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "server:start": "npm start --prefix server"
   },
   "dependencies": {
     "@types/jsbarcode": "^3.11.4",
+    "@types/node": "^26.5.1",
     "@types/qrcode": "^1.5.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -22,6 +24,7 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^0.544.0",
     "mongoose": "^8.9.5",
+    "next": "^15.2.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

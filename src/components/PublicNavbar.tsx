@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link } from './Link'
 
 interface PublicNavbarProps {
   active?: 'home' | 'register' | 'winners'

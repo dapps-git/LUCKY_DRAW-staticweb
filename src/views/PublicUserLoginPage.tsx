@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from '../components/Link'
 import { QrCode, Search, Sparkles, Trophy, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { formatDate, maskPhone } from '../lib/format'
