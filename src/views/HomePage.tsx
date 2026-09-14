@@ -139,9 +139,9 @@ export function HomePage() {
         <PublicNavbar active="home" />
 
         {/* 2. Hero Body: Title & Action + Coupon Banner + Feature Bar (Snug Flow) */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-1.5 sm:gap-2.5">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-[68px] sm:pt-20 lg:pt-22 flex-1 flex flex-col justify-start gap-1 sm:gap-2">
           {/* Sliding Promotional Banners Above Valanchery Text */}
-          <div className="pt-[130px] xs:pt-[150px] sm:pt-2 lg:pt-3 w-full">
+          <div className="w-full">
             <HeroBannerSlider />
           </div>
 

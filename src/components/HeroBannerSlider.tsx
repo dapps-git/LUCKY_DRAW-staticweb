@@ -41,7 +41,7 @@ export function HeroBannerSlider() {
 
   return (
     <div
-      className="w-full max-w-[960px] mx-auto my-2 sm:my-3.5 relative group"
+      className="w-full max-w-[960px] mx-auto mt-1 mb-2.5 sm:my-3 relative group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
