@@ -14,6 +14,7 @@ import bgWebp from '../assets/bg.webp'
 import mobileWebp from '../assets/mobile.webp'
 import couponBannerImg from '../assets/festival-coupon-banner.png'
 import { PublicNavbar } from '../components/PublicNavbar'
+import { HeroBannerSlider } from '../components/HeroBannerSlider'
 import { HomeRegisterSection } from '../components/HomeRegisterSection'
 
 // Festival Pagoda / Temple Umbrella Crest Icon
@@ -139,8 +140,13 @@ export function HomePage() {
 
         {/* 2. Hero Body: Title & Action + Coupon Banner + Feature Bar (Snug Flow) */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-14 sm:pt-16 lg:pt-18 flex-1 flex flex-col justify-start gap-1.5 sm:gap-2.5">
-          {/* Title & CTA: Positioned cleanly below top tree leaves on mobile */}
-          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-[145px] xs:pt-[165px] sm:pt-4 lg:pt-6">
+          {/* Sliding Promotional Banners Above Valanchery Text */}
+          <div className="pt-[130px] xs:pt-[150px] sm:pt-2 lg:pt-3 w-full">
+            <HeroBannerSlider />
+          </div>
+
+          {/* Title & CTA */}
+          <div className="max-w-xl space-y-1.5 sm:space-y-2.5 pt-1 sm:pt-2">
             {/* Grand Shopping Festival Tag */}
             <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold tracking-[0.25em] text-[#3e342f] uppercase">
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
