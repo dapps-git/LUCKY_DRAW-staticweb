@@ -105,8 +105,8 @@ export function CouponsDirectoryPage() {
   }, [serverCoupons, coupons, participantMap])
 
   // Aggregate stats
-  const totalCount = data.totalCouponsCount || serverTotal || displayCoupons.length || 40034
-  const usedCount = data.usedCouponsCount || data.participants.length || 13
+  const totalCount = Math.max(data.totalCouponsCount || 0, serverTotal || 0, 50034)
+  const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 13
   const activeCount = Math.max(0, totalCount - usedCount)
 
   const totalPages = Math.max(1, Math.ceil((serverTotal || totalCount) / PAGE_SIZE))

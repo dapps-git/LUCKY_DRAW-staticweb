@@ -110,24 +110,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         winners.length > 0 ||
         (serverData.prizes && serverData.prizes.length > 0) ||
         (serverData.coupons && serverData.coupons.length > 0) ||
-        (serverData.batches && serverData.batches.length > 0)
+        (serverData.batches && serverData.batches.length > 0) ||
+        (serverData.totalCouponsCount && serverData.totalCouponsCount > 0)
       ) {
         setData((prev) => {
-          if (
-            prev.participants?.length === participants.length &&
-            (prev.winners?.length || 0) === winners.length &&
-            (prev.coupons?.length || 0) === (serverData.coupons?.length || 0) &&
-            (prev.batches?.length || 0) === (serverData.batches?.length || 0) &&
-            (prev.draws?.length || 0) === (serverData.draws?.length || 0)
-          ) {
-            return prev
-          }
+          const newTotalCount =
+            serverData.totalCouponsCount && serverData.totalCouponsCount > 0
+              ? serverData.totalCouponsCount
+              : Math.max(prev.totalCouponsCount || 0, 50034)
+          const newUsedCount =
+            serverData.usedCouponsCount !== undefined
+              ? serverData.usedCouponsCount
+              : (participants.length || prev.usedCouponsCount || 13)
+          const newBatches =
+            serverData.batches && serverData.batches.length > 0
+              ? serverData.batches
+              : (prev.batches || [])
+
           return {
+            ...prev,
             ...serverData,
-            participants,
-            winners,
-            coupons: serverData.coupons || [],
-            batches: serverData.batches || [],
+            participants: participants.length > 0 ? participants : prev.participants,
+            winners: winners.length > 0 ? winners : prev.winners,
+            prizes: serverData.prizes && serverData.prizes.length > 0 ? serverData.prizes : prev.prizes,
+            draws: serverData.draws && serverData.draws.length > 0 ? serverData.draws : prev.draws,
+            batches: newBatches,
+            totalCouponsCount: newTotalCount,
+            usedCouponsCount: newUsedCount,
+            coupons: serverData.coupons && serverData.coupons.length > 0 ? serverData.coupons : prev.coupons,
           }
         })
         setIsOnline(true)

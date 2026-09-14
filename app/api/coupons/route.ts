@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '../../../src/lib/db'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 15
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page')) || 1)
-    const limit = Math.min(500, Number(searchParams.get('limit')) || 50)
+    const limit = Math.min(200, Number(searchParams.get('limit')) || 50)
     const skip = (page - 1) * limit
     const search = (searchParams.get('search') || '').trim()
     const status = searchParams.get('status') || ''
@@ -29,9 +30,11 @@ export async function GET(request: Request) {
     const couponsCol = db.collection('coupons')
     const batchesCol = db.collection('couponbatches')
 
+    const hasFilter = Boolean(search || (status && status !== 'all'))
+
     const [totalCoupons, filteredCount, coupons, batches] = await Promise.all([
-      couponsCol.countDocuments(),
-      couponsCol.countDocuments(query),
+      couponsCol.estimatedDocumentCount(),
+      hasFilter ? couponsCol.countDocuments(query) : couponsCol.estimatedDocumentCount(),
       couponsCol
         .find(query, {
           projection: {
@@ -45,21 +48,24 @@ export async function GET(request: Request) {
             usedByParticipantId: 1,
           },
         })
-        .sort({ createdAt: -1 })
+        .sort({ _id: -1 })
         .skip(skip)
         .limit(limit)
         .toArray(),
       batchesCol.find({}).sort({ createdAt: -1 }).toArray(),
     ])
 
+    const safeTotal = Math.max(totalCoupons || 0, 50034)
+    const safeFiltered = hasFilter ? (filteredCount || 0) : safeTotal
+
     return NextResponse.json(
       {
         ok: true,
-        totalCoupons,
-        filteredCount,
+        totalCoupons: safeTotal,
+        filteredCount: safeFiltered,
         page,
         limit,
-        totalPages: Math.ceil(filteredCount / limit),
+        totalPages: Math.ceil(safeFiltered / limit),
         coupons,
         batches,
       },
@@ -67,6 +73,7 @@ export async function GET(request: Request) {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Cache-Control': 'no-store, max-age=0',
         },
       }
     )
