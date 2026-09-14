@@ -13,6 +13,7 @@
     "server:start": "npm start --prefix server"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.1.13",
     "@types/express": "^5.0.6",
     "@types/jsbarcode": "^3.11.4",
