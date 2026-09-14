@@ -23,6 +23,7 @@
     "jsbarcode": "^3.12.3",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.544.0",
+    "mongodb": "^7.6.0",
     "mongoose": "^8.9.5",
     "next": "^15.2.0",
     "qrcode": "^1.5.4",
