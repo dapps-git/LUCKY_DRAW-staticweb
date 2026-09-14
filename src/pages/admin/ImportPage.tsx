@@ -79,7 +79,7 @@ export function ImportPage() {
           <Upload size={22} />
         </div>
         <p className="mt-3 text-sm font-medium text-[#140d10]">Click or Drag & Drop CSV / Excel Spreadsheet</p>
-        <p className="mt-1 text-xs font-light text-black/50">Supports .csv, .txt files with Name, Phone, Address, Location</p>
+        <p className="mt-1 text-xs font-light text-black/50">Supports .csv, .txt files with Name, Phone</p>
         <input
           type="file"
           accept=".csv,.txt,.xlsx,.xls"

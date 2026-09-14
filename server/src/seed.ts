@@ -15,6 +15,7 @@ export const seedPrizes = [
     assignedDrawId: 'draw-01',
     status: 'Assigned' as const,
   },
+
   {
     id: 'prize-voucher',
     name: 'Gift Voucher',

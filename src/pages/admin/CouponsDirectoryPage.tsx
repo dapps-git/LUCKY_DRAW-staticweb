@@ -208,12 +208,12 @@ export function CouponsDirectoryPage() {
           }}
           className={`cursor-pointer rounded-xl border p-3 sm:p-4 transition ${
             statusFilter === 'Unused'
-              ? 'border-emerald-600 bg-emerald-50 shadow-sm'
-              : 'border-black/10 bg-white hover:border-emerald-300'
+              ? 'border-amber-400 bg-amber-50 shadow-sm'
+              : 'border-black/10 bg-white hover:border-amber-300'
           }`}
         >
-          <p className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">Active (Unused)</p>
-          <p className="text-xl sm:text-2xl font-bold text-emerald-800 mt-0.5">{activeCount}</p>
+          <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Unregistered (Available)</p>
+          <p className="text-xl sm:text-2xl font-bold text-amber-900 mt-0.5">{activeCount}</p>
         </div>
 
         <div
@@ -223,12 +223,12 @@ export function CouponsDirectoryPage() {
           }}
           className={`cursor-pointer rounded-xl border p-3 sm:p-4 transition ${
             statusFilter === 'Used'
-              ? 'border-red-500 bg-red-50 shadow-sm'
-              : 'border-black/10 bg-white hover:border-red-300'
+              ? 'border-emerald-700 bg-emerald-50 shadow-sm'
+              : 'border-black/10 bg-white hover:border-emerald-400'
           }`}
         >
-          <p className="text-[11px] font-semibold text-red-700 uppercase tracking-wider">Inactive (Used / Registered)</p>
-          <p className="text-xl sm:text-2xl font-bold text-red-800 mt-0.5">{usedCount}</p>
+          <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Registered</p>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-900 mt-0.5">{usedCount}</p>
         </div>
       </div>
 
@@ -261,8 +261,8 @@ export function CouponsDirectoryPage() {
               className="w-full rounded-lg border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-800 outline-none focus:border-[#c28e18]"
             >
               <option value="all">All Statuses ({totalCount})</option>
-              <option value="Unused">Active / Unused ({activeCount})</option>
-              <option value="Used">Inactive / Used ({usedCount})</option>
+              <option value="Used">Registered ({usedCount})</option>
+              <option value="Unused">Unregistered ({activeCount})</option>
             </select>
           </div>
 
@@ -318,7 +318,6 @@ export function CouponsDirectoryPage() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Registered Participant</th>
                 <th className="px-4 py-3">Mobile (WhatsApp)</th>
-                <th className="px-4 py-3">Address</th>
                 <th className="px-4 py-3">Date</th>
                 <th className="px-4 py-3 text-right">QR Link</th>
               </tr>
@@ -326,7 +325,7 @@ export function CouponsDirectoryPage() {
             <tbody className="divide-y divide-slate-100 font-normal">
               {paginatedCoupons.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
                     <Ticket size={28} className="mx-auto text-slate-300 mb-2" />
                     <p className="font-medium text-sm text-slate-700">No coupons found</p>
                     <p className="text-xs text-slate-400 mt-0.5">Try adjusting your search or filters</p>
@@ -369,31 +368,26 @@ export function CouponsDirectoryPage() {
                       {/* Status */}
                       <td className="px-4 py-3">
                         {isUsed ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-50 px-2.5 py-0.5 text-[10px] font-semibold text-red-700">
-                            <XCircle size={11} className="text-red-600" />
-                            Inactive • Used
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-700/40 bg-emerald-100/70 px-2.5 py-0.5 text-[10px] font-bold text-emerald-950">
+                            <CheckCircle2 size={11} className="text-emerald-800" />
+                            Registered
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-600/30 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                            <CheckCircle2 size={11} className="text-emerald-600" />
-                            Active • Unused
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+                            <Ticket size={11} className="text-amber-700" />
+                            Unregistered
                           </span>
                         )}
                       </td>
 
-                      {/* Registered Participant Name & Ticket ID */}
+                      {/* Registered Participant Name */}
                       <td className="px-4 py-3">
                         {isUsed ? (
-                          <div>
-                            <p className="font-semibold text-slate-900 flex items-center gap-1">
-                              <User size={12} className="text-[#7a1426]" />
+                          <div className="flex items-center gap-1.5">
+                            <User size={12} className="text-[#7a1426] shrink-0" />
+                            <span className="font-semibold text-slate-900">
                               {item.participantName || 'Registered Customer'}
-                            </p>
-                            {item.participantTicketId && (
-                              <p className="font-mono text-[10px] font-medium text-[#7a1426] mt-0.5">
-                                Ticket: {item.participantTicketId}
-                              </p>
-                            )}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-slate-400 text-[11px]">— Not registered yet —</span>
@@ -410,19 +404,6 @@ export function CouponsDirectoryPage() {
                             <Phone size={11} className="text-slate-400" />
                             {item.participantPhone}
                           </a>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-
-                      {/* Address */}
-                      <td className="px-4 py-3">
-                        {isUsed ? (
-                          <div className="max-w-xs text-slate-700">
-                            <p className="text-xs font-medium text-slate-700 truncate">
-                              {item.participantAddress || '—'}
-                            </p>
-                          </div>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}

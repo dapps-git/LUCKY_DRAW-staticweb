@@ -59,11 +59,7 @@ export function extractCouponId(input?: string | null): string | null {
   return cleanAlphanumeric.length >= 8 ? cleanAlphanumeric : null
 }
 
-/**
- * Format coupon token into readable groups:
- * 13-char (5 letters + 8 numbers): "VFKLM 7492 0184"
- * 10-digit: "7492 018 403"
- */
+
 export function formatCouponDisplay(couponId: string): string {
   if (!couponId) return ''
   const clean = couponId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()

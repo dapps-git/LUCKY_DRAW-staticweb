@@ -8,16 +8,15 @@ import type { Participant } from '../types'
  * into scientific exponential notation (e.g. 9.88E+09).
  */
 export function formatParticipantsForExcelCsv(
-  participants: Array<{ name: string; phone: string; address?: string }>,
+  participants: Array<{ name: string; phone: string }>,
 ): string {
-  const header = 'Full Name,Phone Number,Address\r\n'
+  const header = 'Full Name,Phone Number\r\n'
   const rows = participants.map((p) => {
     const cleanPhone = p.phone.replace(/\D/g, '').slice(-10)
     const escapedName = `"${(p.name || '').replace(/"/g, '""')}"`
     // Excel formula format `="9876543210"` guarantees Excel treats it as literal string without scientific notation (E+09)
     const excelPhone = `="""${cleanPhone}"""`
-    const escapedAddress = `"${(p.address || '').replace(/"/g, '""')}"`
-    return `${escapedName},${excelPhone},${escapedAddress}`
+    return `${escapedName},${excelPhone}`
   })
 
   return '\uFEFF' + header + rows.join('\r\n')

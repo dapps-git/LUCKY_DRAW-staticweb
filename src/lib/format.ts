@@ -10,13 +10,23 @@ export function isValidIndianPhone(value: string): boolean {
   return /^[6-9]\d{9}$/.test(national)
 }
 
-export function formatDate(iso: string): string {
-  const d = new Date(`${iso}T12:00:00`)
+export function formatDate(iso?: string): string {
+  if (!iso) return ''
+  const d = iso.includes('T') ? new Date(iso) : new Date(`${iso}T12:00:00`)
+  if (isNaN(d.getTime())) {
+    const fallback = new Date(iso)
+    return isNaN(fallback.getTime()) ? iso : fallback.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  }
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export function formatShortDate(iso: string): string {
-  const d = new Date(`${iso}T12:00:00`)
+export function formatShortDate(iso?: string): string {
+  if (!iso) return ''
+  const d = iso.includes('T') ? new Date(iso) : new Date(`${iso}T12:00:00`)
+  if (isNaN(d.getTime())) {
+    const fallback = new Date(iso)
+    return isNaN(fallback.getTime()) ? iso : fallback.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
@@ -28,8 +38,13 @@ export function nextParticipantId(existingIds: string[]): string {
   return `VF2026-${String(next).padStart(5, '0')}`
 }
 
-export function monthLabel(iso: string): string {
-  const d = new Date(`${iso}T12:00:00`)
+export function monthLabel(iso?: string): string {
+  if (!iso) return ''
+  const d = iso.includes('T') ? new Date(iso) : new Date(`${iso}T12:00:00`)
+  if (isNaN(d.getTime())) {
+    const fallback = new Date(iso)
+    return isNaN(fallback.getTime()) ? iso : fallback.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+  }
   return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 }
 

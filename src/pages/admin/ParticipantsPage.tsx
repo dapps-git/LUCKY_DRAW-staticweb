@@ -414,15 +414,6 @@ export function ParticipantsPage() {
                 onChange={(e) => setNewParticipant({ ...newParticipant, phone: e.target.value })}
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Address</label>
-              <input
-                className="mt-1 w-full border border-[#e8decb] bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                placeholder="House / Street"
-                value={newParticipant.address}
-                onChange={(e) => setNewParticipant({ ...newParticipant, address: e.target.value })}
-              />
-            </div>
             <div className="pt-2">
               <button
                 type="submit"
@@ -467,10 +458,6 @@ export function ParticipantsPage() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phone</p>
                 <p className="font-mono text-sm font-semibold text-[#140d10] mt-0.5">{view.phone}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Address</p>
-                <p className="text-xs font-medium text-slate-700 mt-0.5">{view.address || '—'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Registered On</p>

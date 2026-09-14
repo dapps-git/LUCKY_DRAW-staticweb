@@ -205,14 +205,10 @@ export function PublicUserLoginPage() {
               )}
 
               {/* Ticket Body Grid */}
-              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="mt-6">
                 <div className="border border-white/10 bg-black/30 p-4">
                   <p className="text-[10px] tracking-widest text-white/40 uppercase">Mobile Number</p>
                   <p className="mt-1 text-sm font-light text-white font-mono">{participant.phone}</p>
-                </div>
-                <div className="border border-white/10 bg-black/30 p-4">
-                  <p className="text-[10px] tracking-widest text-white/40 uppercase">Registered Address</p>
-                  <p className="mt-1 text-sm font-light text-white/80">{participant.address || 'Valanchery'}</p>
                 </div>
               </div>
 

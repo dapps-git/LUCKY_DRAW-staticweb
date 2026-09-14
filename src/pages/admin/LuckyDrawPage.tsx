@@ -711,11 +711,10 @@ export function LuckyDrawPage() {
                   <div
                     key={p.id}
                     onClick={() => handleSelectPrize(p.id)}
-                    className={`cursor-pointer border p-3.5 transition flex items-center gap-3 rounded-none ${
-                      isSelected
+                    className={`cursor-pointer border p-3.5 transition flex items-center gap-3 rounded-none ${isSelected
                         ? 'border-[#5e0917] bg-[#fbf3f4] ring-2 ring-[#5e0917]'
                         : 'border-[#e8decb] hover:border-[#5e0917] hover:bg-[#fbf3f4]/40 bg-[#faf7f0]'
-                    }`}
+                      }`}
                   >
                     <img src={p.image} alt={p.name} className="h-14 w-14 object-cover rounded-none border border-[#e8decb] shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -886,9 +885,8 @@ export function LuckyDrawPage() {
                             description: newGift.description || preset.description,
                           })
                         }}
-                        className={`relative border p-1 text-left transition cursor-pointer ${
-                          newGift.image === preset.image ? 'border-[#5e0917] bg-[#fffbf2] ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
-                        }`}
+                        className={`relative border p-1 text-left transition cursor-pointer ${newGift.image === preset.image ? 'border-[#5e0917] bg-[#fffbf2] ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
+                          }`}
                       >
                         <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover" />
                         <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
