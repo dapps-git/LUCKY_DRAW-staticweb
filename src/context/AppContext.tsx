@@ -71,8 +71,8 @@ function loadLocalData(): AppData {
 
     const participants = parsed.participants || []
     const winners = parsed.winners || []
-    const coupons = (parsed.coupons || []).filter((c) => c.batchId !== 'BATCH-SEED-01')
-    const batches = (parsed.batches || []).filter((b) => b.id !== 'BATCH-SEED-01')
+    const coupons = parsed.coupons || []
+    const batches = parsed.batches || []
 
     return {
       ...seedData,
