@@ -86,9 +86,9 @@ export function CouponsDirectoryPage() {
   const totalCount = Math.max(
     data.totalCouponsCount || 0,
     serverTotal || 0,
-    data.batches?.reduce((acc, b) => acc + (b.count || 0), 0) || 50044
+    50044
   )
-  const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 13
+  const usedCount = Math.max(data.usedCouponsCount || 0, data.participants?.length || 0, 13)
   const activeCount = Math.max(0, totalCount - usedCount)
 
   // Filtered total count

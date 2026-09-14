@@ -7,8 +7,10 @@ const uri =
 const options = {
   maxPoolSize: 10,
   minPoolSize: 1,
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 8000,
+  serverSelectionTimeoutMS: 8000,
+  connectTimeoutMS: 10000,
+  tls: true,
+  tlsAllowInvalidCertificates: true,
 }
 
 let globalWithMongo = global as typeof globalThis & {
