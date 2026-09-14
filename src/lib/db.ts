@@ -7,20 +7,20 @@ const uri =
 const options = {
   maxPoolSize: 10,
   minPoolSize: 1,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 8000,
 }
-
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
 
 let globalWithMongo = global as typeof globalThis & {
   _mongoClientPromise?: Promise<MongoClient>
 }
 
 if (!globalWithMongo._mongoClientPromise) {
-  client = new MongoClient(uri, options)
+  const client = new MongoClient(uri, options)
   globalWithMongo._mongoClientPromise = client.connect()
 }
-clientPromise = globalWithMongo._mongoClientPromise
+
+const clientPromise = globalWithMongo._mongoClientPromise
 
 export async function connectDB(): Promise<Db> {
   const client = await clientPromise
