@@ -71,12 +71,12 @@ export const api = {
   // Fetch full Initial App Data from MongoDB
   async getAllData(): Promise<AppData> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/all`, {}, 8000)
+      const res = await fetchWithTimeout(`${API_BASE}/all`, {}, 20000)
       if (res.ok) {
         const ct = res.headers.get('content-type') || ''
         if (ct.includes('application/json')) {
           const d = await res.json()
-          if (d.ok || d.prizes || d.participants) {
+          if (d.ok || d.prizes || d.participants || d.coupons) {
             return {
               prizes: d.prizes || [],
               draws: d.draws || [],

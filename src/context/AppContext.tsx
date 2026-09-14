@@ -150,9 +150,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Keep local backup
+  // Keep local backup (safely capped to avoid localStorage 5MB quota errors)
   useEffect(() => {
-    localStorage.setItem(DATA_KEY, JSON.stringify(data))
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const backup = {
+          ...data,
+          coupons: (data.coupons || []).slice(0, 100),
+        }
+        localStorage.setItem(DATA_KEY, JSON.stringify(backup))
+      }
+    } catch {
+      // Ignore quota exceeded or storage errors
+    }
   }, [data])
 
   const value = useMemo<AppContextValue>(() => {
