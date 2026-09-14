@@ -41,7 +41,7 @@ export async function GET() {
           .toArray(),
       ])
 
-    const totalCouponsCount = Math.max(estimatedTotal || 0, 50034)
+    const totalCouponsCount = estimatedTotal || 0
     // Derive usedCount from participants instead of a slow countDocuments on 50k docs
     const usedCouponsCount = participants ? participants.length : 0
 

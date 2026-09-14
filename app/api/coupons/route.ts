@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       batchesCol.find({}).sort({ createdAt: -1 }).toArray(),
     ])
 
-    const safeTotal = Math.max(totalCoupons || 0, 50034)
+    const safeTotal = totalCoupons || 0
     const safeFiltered = hasFilter ? (filteredCount || 0) : safeTotal
 
     return NextResponse.json(
