@@ -4,23 +4,5 @@
       "memory": 1024,
       "maxDuration": 60
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/coupons/validate/(.*)",
-      "destination": "/api/coupons/validate?id=$1"
-    },
-    {
-      "source": "/api/participants/lookup/(.*)",
-      "destination": "/api/participants/lookup?query=$1"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  }
 }
