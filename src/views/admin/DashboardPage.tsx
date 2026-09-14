@@ -14,8 +14,8 @@ export function DashboardPage() {
 
   const allBatches = batches && batches.length > 0 ? batches : data.batches || []
   const totalFromBatches = allBatches.reduce((acc, b) => acc + (b.count || 0), 0)
-  const totalCouponsCount = Math.max(data.totalCouponsCount || 0, totalFromBatches, 50044)
-  const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 13
+  const totalCouponsCount = data.totalCouponsCount || totalFromBatches
+  const usedCount = data.usedCouponsCount || data.participants.length
   const unusedCount = Math.max(0, totalCouponsCount - usedCount)
 
   const handleDownloadBatch = (batchId: string, batchName: string) => {

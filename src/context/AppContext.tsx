@@ -566,9 +566,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       eligibleParticipants,
       winnerParticipantIds,
       resetToDefaultData: () => {
-        localStorage.removeItem(DATA_KEY)
-        localStorage.removeItem('vf2026_app_data_v2')
-        setData(seedData)
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(DATA_KEY)
+          localStorage.removeItem('vf2026_app_data_v2')
+        }
+        refreshData()
       },
     }
   }, [data, isAdmin, isOnline])
