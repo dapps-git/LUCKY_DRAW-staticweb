@@ -2,6 +2,7 @@ import jsPDF from 'jspdf'
 import QRCode from 'qrcode'
 import JsBarcode from 'jsbarcode'
 import type { Coupon, CouponBatch } from '../types'
+import { formatCouponDisplay } from './tokenHelper'
 
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const DIGITS = '0123456789'
@@ -240,3 +241,141 @@ export async function generateCouponsPdf(
 
   return pdf.output('blob')
 }
+
+export interface A4QrPdfOptions {
+  baseUrl?: string
+  layout?: 'left-offset' | 'center'
+  xOffsetMm?: number
+  qrSizeMm?: number
+  showCutGuides?: boolean
+  duplicateToFillPage?: boolean
+  onProgress?: (processed: number, total: number) => void
+}
+
+/**
+ * Generates an A4 portrait PDF with 4 QR codes per sheet,
+ * each with the coupon ID clearly printed beneath it.
+ * Designed for standard A4 white paper and pre-printed ticket sheets.
+ */
+export async function generateA4QrSheetsPdf(
+  inputCoupons: (string | Coupon)[],
+  options?: A4QrPdfOptions
+): Promise<Blob> {
+  const baseUrl = options?.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
+  const layout = options?.layout || 'left-offset'
+  const qrSize = options?.qrSizeMm ?? 22
+  const showCutGuides = options?.showCutGuides ?? false
+
+  // Extract coupon IDs
+  let couponIds = inputCoupons.map((c) => (typeof c === 'string' ? c : c.id)).filter(Boolean)
+
+  // If duplicateToFillPage is requested (e.g. single coupon view wanting 4 copies on 1 A4 sheet)
+  if (options?.duplicateToFillPage && couponIds.length === 1) {
+    couponIds = [couponIds[0], couponIds[0], couponIds[0], couponIds[0]]
+  }
+
+  if (couponIds.length === 0) {
+    throw new Error('No coupons provided for PDF generation')
+  }
+
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: true,
+  })
+
+  // Standard A4 dimensions in mm
+  const pageWidth = 210
+  const pageHeight = 297
+  const slotHeight = pageHeight / 4 // 74.25mm
+
+  // Determine QR X coordinate
+  // User's uploaded sample has QR positioned at X ≈ 36.4mm
+  const qrX =
+    layout === 'center'
+      ? (pageWidth - qrSize) / 2
+      : options?.xOffsetMm ?? 36.4
+
+  const total = couponIds.length
+
+  for (let i = 0; i < total; i++) {
+    const pageIndex = Math.floor(i / 4)
+    const slotIndex = i % 4
+
+    // Add new page when moving to the next group of 4
+    if (i > 0 && slotIndex === 0) {
+      pdf.addPage('a4', 'portrait')
+    }
+
+    const slotTop = slotIndex * slotHeight
+    const qrY = slotTop + (slotHeight - qrSize - 7) / 2
+
+    // Cut guide lines between slots if requested
+    if (showCutGuides && slotIndex > 0) {
+      pdf.setDrawColor(220, 220, 220)
+      pdf.setLineDashPattern([2, 3], 0)
+      pdf.line(5, slotTop, pageWidth - 5, slotTop)
+      pdf.setLineDashPattern([], 0) // reset dash pattern
+    }
+
+    const rawId = couponIds[i]
+    const cleanId = rawId.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+    const regUrl = `${baseUrl.replace(/\/$/, '')}/register?coupon=${cleanId}`
+
+    // High quality QR Code
+    const qrDataUrl = await QRCode.toDataURL(regUrl, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 320,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    })
+
+    pdf.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize, undefined, 'FAST')
+
+    // Print Coupon ID below the QR code
+    pdf.setFont('courier', 'bold')
+    pdf.setFontSize(8.5)
+    pdf.setTextColor(15, 23, 42)
+
+    const formattedId = formatCouponDisplay(cleanId)
+    const textX = qrX + qrSize / 2
+    const textY = qrY + qrSize + 3.8
+
+    pdf.text(formattedId, textX, textY, { align: 'center' })
+
+    if (options?.onProgress) {
+      options.onProgress(i + 1, total)
+    }
+
+    // Yield control periodically to keep browser UI smooth
+    if (i % 8 === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+  }
+
+  return pdf.output('blob')
+}
+
+/**
+ * Triggers instant browser download of the A4 QR Sheets PDF
+ */
+export async function downloadA4QrPdf(
+  coupons: (string | Coupon)[],
+  filename = 'coupons-a4-qr-sheet.pdf',
+  options?: A4QrPdfOptions
+): Promise<void> {
+  const blob = await generateA4QrSheetsPdf(coupons, options)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
+}
+

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from '../components/Link'
 import QRCode from 'qrcode'
-import { Download, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
+import { Download, ArrowRight, ArrowLeft, CheckCircle2, Loader2, FileText, Printer } from 'lucide-react'
 import { formatCouponDisplay } from '../lib/tokenHelper'
+import { downloadA4QrPdf } from '../lib/couponPdfGenerator'
 
 function getInitialCouponId(initialId?: string): string {
   if (initialId) return initialId
@@ -61,6 +62,8 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
     }
   }
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+
   const downloadQrPng = () => {
     if (!qrDataUrl) return
     const a = document.createElement('a')
@@ -69,6 +72,22 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
+  }
+
+  const handleDownloadA4Pdf = async () => {
+    if (!cleanId) return
+    setIsDownloadingPdf(true)
+    try {
+      await downloadA4QrPdf([cleanId], `coupon-a4-sheet-${cleanId}.pdf`, {
+        baseUrl,
+        duplicateToFillPage: true, // Print 4 QR codes of this coupon on the A4 sheet
+      })
+    } catch (e: any) {
+      console.error('Error generating A4 PDF:', e)
+      alert(`Failed to generate A4 PDF: ${e.message || e}`)
+    } finally {
+      setIsDownloadingPdf(false)
+    }
   }
 
   // Prevent flash of "No coupon ID" during client hydration or initial load
@@ -161,6 +180,24 @@ export function QrViewerPage({ couponId: initialCouponId }: { couponId?: string 
               <span>REGISTER WITH THIS COUPON</span>
               <ArrowRight size={14} />
             </Link>
+
+            <button
+              onClick={handleDownloadA4Pdf}
+              disabled={isDownloadingPdf}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-600/60 bg-amber-50/80 py-2.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100 disabled:opacity-50 cursor-pointer shadow-xs"
+            >
+              {isDownloadingPdf ? (
+                <>
+                  <Loader2 size={14} className="animate-spin text-amber-700" />
+                  <span>PREPARING WHITE A4 PDF SHEET...</span>
+                </>
+              ) : (
+                <>
+                  <FileText size={14} className="text-amber-700" />
+                  <span>DOWNLOAD A4 SHEET (4 QR CODES IN PDF)</span>
+                </>
+              )}
+            </button>
 
             <button
               onClick={downloadQrPng}

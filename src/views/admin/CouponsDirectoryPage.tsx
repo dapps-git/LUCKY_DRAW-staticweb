@@ -17,10 +17,12 @@ import {
   Filter,
   Check,
   Loader2,
+  FileText,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate } from '../../lib/format'
 import { formatCouponDisplay } from '../../lib/tokenHelper'
+import { downloadA4QrPdf } from '../../lib/couponPdfGenerator'
 
 const PAGE_SIZE = 50
 
@@ -35,6 +37,24 @@ export function CouponsDirectoryPage() {
   const [isLoadingServer, setIsLoadingServer] = useState(false)
   const [serverCoupons, setServerCoupons] = useState<any[]>([])
   const [serverTotal, setServerTotal] = useState<number>(0)
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
+
+  const handleDownloadPagePdf = async () => {
+    if (displayCoupons.length === 0) return
+    setIsExportingPdf(true)
+    try {
+      const activeBase = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
+      await downloadA4QrPdf(displayCoupons, `coupons-page-${currentPage}-a4.pdf`, {
+        baseUrl: activeBase,
+        layout: 'left-offset',
+      })
+    } catch (err: any) {
+      console.error('Export error:', err)
+      alert('Failed to generate A4 PDF: ' + (err.message || err))
+    } finally {
+      setIsExportingPdf(false)
+    }
+  }
 
   // Fetch paginated coupons from MongoDB API
   useEffect(() => {
@@ -201,14 +221,33 @@ export function CouponsDirectoryPage() {
           </p>
         </div>
 
-        {/* Link back to generator */}
+        {/* Actions */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadPagePdf}
+            disabled={isExportingPdf || displayCoupons.length === 0}
+            className="flex items-center gap-1.5 rounded-lg border border-[#7a1426]/50 bg-[#faf6ee] hover:bg-[#7a1426] hover:text-white px-3 py-2 text-xs font-semibold text-[#7a1426] transition shadow-sm disabled:opacity-50 cursor-pointer"
+            title="Download White A4 Sheets (4 QR codes per page) for currently visible coupons"
+          >
+            {isExportingPdf ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Rendering PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileText size={14} className="text-[#c28e18]" />
+                <span>Download A4 QR PDF ({displayCoupons.length})</span>
+              </>
+            )}
+          </button>
+
           <Link
             to="/admin/coupons"
             className="flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
           >
             <Ticket size={14} className="text-[#c28e18]" />
-            Generate New Batch
+            <span>Generate New Batch</span>
           </Link>
         </div>
       </div>
