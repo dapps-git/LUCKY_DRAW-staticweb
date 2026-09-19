@@ -189,15 +189,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { valid: true, status: 'Unused', coupon: found, message: 'Valid Festival Coupon! Ready for registration.' }
       }
 
-      // If local coupons list has records, reject unknown codes
-      if (coupons.length > 0) {
-        return {
-          valid: false,
-          status: 'Invalid',
-          message: 'This coupon was not found in the festival database.',
-        }
-      }
-
       return {
         valid: true,
         status: 'Unused',

@@ -26,15 +26,21 @@ export async function GET(request: Request) {
     }
 
     const coupon = await db.collection('coupons').findOne({ id: clean })
-    if (!coupon) {
-      return NextResponse.json({ valid: false, status: 'Invalid', message: 'This coupon was not found in the festival database.' }, { status: 404 })
+    if (coupon && coupon.status === 'Used') {
+      return NextResponse.json({
+        valid: false,
+        status: 'Used',
+        coupon,
+        message: 'This coupon has already been used and is no longer valid.',
+      })
     }
 
-    if (coupon.status === 'Used') {
-      return NextResponse.json({ valid: false, status: 'Used', coupon, message: 'This coupon has already been used and is no longer valid.' })
-    }
-
-    return NextResponse.json({ valid: true, status: 'Unused', coupon, message: 'Valid Festival Coupon! Ready for registration.' })
+    return NextResponse.json({
+      valid: true,
+      status: 'Unused',
+      coupon: coupon || { id: clean, status: 'Unused' },
+      message: 'Valid Festival Coupon! Ready for registration.',
+    })
   } catch (err: any) {
     return NextResponse.json({ valid: false, status: 'Invalid', message: err.message }, { status: 500 })
   }

@@ -111,20 +111,10 @@ router.get('/validate/:id', async (req, res) => {
       })
     }
 
-    // 3. If coupons collection has generated batches, enforce DB presence
-    const couponCount = await Coupon.estimatedDocumentCount()
-    if (couponCount > 0) {
-      return res.json({
-        valid: false,
-        status: 'Invalid',
-        message: 'This coupon code was not found in the festival database.',
-      })
-    }
-
-    // Fallback if DB has no coupons yet (bootstrap/dev mode)
     return res.json({
       valid: true,
       status: 'Unused',
+      coupon: { id: cleanId, status: 'Unused' },
       message: 'Valid Festival Coupon! Ready for registration.',
     })
   } catch (error: any) {

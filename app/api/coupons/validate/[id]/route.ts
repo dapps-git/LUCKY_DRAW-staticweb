@@ -46,16 +46,6 @@ export async function GET(
       })
     }
 
-    // 3. If coupons collection has records, reject unknown codes
-    const totalCoupons = await db.collection('coupons').estimatedDocumentCount()
-    if (totalCoupons > 0) {
-      return NextResponse.json({
-        valid: false,
-        status: 'Invalid',
-        message: 'This coupon was not found in the festival database.',
-      })
-    }
-
     return NextResponse.json({
       valid: true,
       status: 'Unused',
