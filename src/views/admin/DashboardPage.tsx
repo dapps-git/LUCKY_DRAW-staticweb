@@ -3,7 +3,7 @@ import { AnimatedNumber } from '../../components/AnimatedNumber'
 import { useApp } from '../../context/AppContext'
 import { formatDate, formatShortDate, maskPhone } from '../../lib/format'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
-import { Sparkles, ArrowRight, Trophy, Ticket, Layers, Download, CheckCircle2, ListFilter } from 'lucide-react'
+import { Sparkles, ArrowRight, Trophy, Ticket, Layers, Download, CheckCircle2, ListFilter, Users } from 'lucide-react'
 
 export function DashboardPage() {
   const { data, coupons, batches, nextDraw, getPrize, getParticipant, getDraw, eligibleParticipants } = useApp()
@@ -116,15 +116,19 @@ export function DashboardPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
                       <span>
                         Created: <strong className="font-semibold text-slate-800">{formatShortDate(b.createdAt)}</strong>
                       </span>
                       <span>
                         Total: <strong className="font-bold text-emerald-800">{count} pcs</strong>
                       </span>
-                      <span className="text-slate-500">
-                        ({usedInBatch} registered · {unusedInBatch} available)
+                      <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-900 font-semibold text-[11px]">
+                        <Users size={12} className="text-amber-700" />
+                        <span>{usedInBatch} Registered Persons</span>
+                      </span>
+                      <span className="text-slate-500 text-[11px]">
+                        ({unusedInBatch} available)
                       </span>
                     </div>
                   </div>

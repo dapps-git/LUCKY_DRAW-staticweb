@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft, Upload, CheckCircle2, FileText, QrCode } from 'lucide-react'
+import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft, Upload, CheckCircle2, FileText, QrCode, Users } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
 import { downloadA4QrPdf } from '../../lib/couponPdfGenerator'
@@ -494,8 +494,15 @@ export function CouponsPage() {
                         <span>Count: <strong className="font-bold text-emerald-800">{totalCount.toLocaleString()} pcs</strong></span>
                       </span>
 
-                      <span className="text-[11px] text-slate-500">
-                        ({usedInBatch} registered · {unusedInBatch} available)
+                      <span className="inline-flex items-center gap-1.5 text-xs">
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-900 font-semibold text-[11px]">
+                          <Users size={12} className="text-amber-700" />
+                          <span>{usedInBatch} Registered Persons</span>
+                        </span>
+                        <span className="text-slate-400">·</span>
+                        <span className="text-slate-500 text-[11px]">
+                          {unusedInBatch} available
+                        </span>
                       </span>
                     </div>
                   </div>

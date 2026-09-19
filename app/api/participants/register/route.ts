@@ -68,9 +68,9 @@ export async function POST(request: Request) {
 
     await participantsCol.insertOne(newParticipant)
 
-    // Mark coupon as used in MongoDB
+    // Mark coupon as used in MongoDB and update batch registered person count
     if (cleanCouponId) {
-      await couponsCol.updateOne(
+      const updatedCoupon = await couponsCol.findOneAndUpdate(
         { id: cleanCouponId },
         {
           $set: {
@@ -80,8 +80,17 @@ export async function POST(request: Request) {
             usedByParticipantName: name || 'Festival Participant',
             usedByParticipantPhone: cleanPhone,
           },
-        }
+        },
+        { returnDocument: 'after' }
       )
+
+      const batchesCol = db.collection('couponbatches')
+      if (updatedCoupon && updatedCoupon.batchId) {
+        await batchesCol.updateOne(
+          { id: updatedCoupon.batchId },
+          { $inc: { usedCount: 1, unusedCount: -1 } }
+        )
+      }
     }
 
     return NextResponse.json({

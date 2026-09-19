@@ -9,7 +9,7 @@ export async function GET() {
     const db = await connectDB()
 
     // Run all lightweight queries in parallel — NO full collection scan on coupons
-    const [prizes, draws, participants, winners, batches, estimatedTotal, sampleCoupons] =
+    const [prizes, draws, participants, winners, batches, estimatedTotal, sampleCoupons, usedByBatch] =
       await Promise.all([
         db.collection('prizes').find({}).toArray(),
         db.collection('draws').find({}).sort({ number: 1 }).toArray(),
@@ -39,7 +39,32 @@ export async function GET() {
           .sort({ _id: -1 })
           .limit(50)
           .toArray(),
+        // Aggregate used counts per batch
+        db
+          .collection('coupons')
+          .aggregate([
+            { $match: { status: 'Used', batchId: { $exists: true, $ne: '' } } },
+            { $group: { _id: '$batchId', count: { $sum: 1 } } },
+          ])
+          .toArray(),
       ])
+
+    const usedMap = new Map<string, number>()
+    if (usedByBatch && Array.isArray(usedByBatch)) {
+      for (const item of usedByBatch) {
+        if (item._id) usedMap.set(String(item._id), Number(item.count) || 0)
+      }
+    }
+
+    const calculatedBatches = (batches || []).map((b: any) => {
+      const realUsed = usedMap.has(b.id) ? usedMap.get(b.id)! : (b.usedCount || 0)
+      const count = b.count || 0
+      return {
+        ...b,
+        usedCount: realUsed,
+        unusedCount: Math.max(0, count - realUsed),
+      }
+    })
 
     const totalCouponsCount = estimatedTotal || 0
     // Derive usedCount from participants instead of a slow countDocuments on 50k docs
@@ -52,7 +77,7 @@ export async function GET() {
         draws: draws || [],
         participants: participants || [],
         winners: winners || [],
-        batches: batches || [],
+        batches: calculatedBatches || [],
         totalCouponsCount,
         usedCouponsCount,
         coupons: sampleCoupons || [],
