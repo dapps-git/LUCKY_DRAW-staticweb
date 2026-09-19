@@ -210,6 +210,10 @@ export function RegisterPage() {
       if (!result.ok) {
         if (result.error.toLowerCase().includes('coupon')) {
           setErrors({ couponId: result.error })
+          setTokenStatus({
+            status: result.error.toLowerCase().includes('already') ? 'Used' : 'Invalid',
+            message: result.error,
+          })
         } else {
           setFormError(result.error)
         }
@@ -385,7 +389,9 @@ export function RegisterPage() {
                 </div>
               )}
 
-              {errors.couponId && <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>}
+              {errors.couponId && !form.couponId && (
+                <p className="mt-1 text-[10px] font-medium text-red-600">{errors.couponId}</p>
+              )}
             </div>
 
             {/* 2. Full Name / Username Section */}

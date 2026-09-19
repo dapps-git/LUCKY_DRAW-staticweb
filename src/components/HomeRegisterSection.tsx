@@ -198,7 +198,10 @@ export function HomeRegisterSection() {
       if (!result.ok) {
         if (result.error.toLowerCase().includes('coupon')) {
           setErrors({ couponId: result.error })
-          setTokenStatus({ status: 'Used', message: result.error })
+          setTokenStatus({
+            status: result.error.toLowerCase().includes('already') ? 'Used' : 'Invalid',
+            message: result.error,
+          })
         } else if (result.error.toLowerCase().includes('phone') || result.error.toLowerCase().includes('mobile')) {
           setErrors({ phone: result.error })
         } else {
@@ -429,7 +432,7 @@ export function HomeRegisterSection() {
                   </div>
                 )}
 
-                {errors.couponId && (
+                {errors.couponId && !form.couponId && (
                   <p className="text-[10px] text-red-600 mt-1">{errors.couponId}</p>
                 )}
               </div>

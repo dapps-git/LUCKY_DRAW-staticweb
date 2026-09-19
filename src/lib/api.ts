@@ -185,11 +185,19 @@ export const api = {
       const res = await fetchWithTimeout(`${API_BASE}/coupons/validate?id=${encodeURIComponent(cleanId)}`, {}, 8000)
       if (res.ok) {
         return await res.json()
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        return {
+          valid: false,
+          status: errData.status === 'Used' ? 'Used' : 'Invalid',
+          coupon: errData.coupon,
+          message: errData.message || 'This coupon was not found in the festival database.',
+        }
       }
     } catch {
-      // fallback
+      // network error
     }
-    return { valid: true, status: 'Unused', message: 'Valid Festival Coupon! Ready for entry.' }
+    return { valid: false, status: 'Invalid', message: 'Could not verify coupon. Please try again.' }
   },
 
   async generateBatch(count: number, name?: string): Promise<{ ok: boolean; batch: CouponBatch; coupons: Coupon[] }> {
