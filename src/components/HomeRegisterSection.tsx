@@ -75,7 +75,7 @@ export function HomeRegisterSection() {
     setIsValidatingToken(true)
     try {
       const result = await validateCouponAsync(clean)
-      if (result.valid) {
+      if (result.valid && result.status === 'Unused') {
         setTokenStatus({
           status: 'Valid',
           message: 'Valid Festival Coupon! Ready for entry.',
@@ -83,16 +83,16 @@ export function HomeRegisterSection() {
       } else if (result.status === 'Used') {
         setTokenStatus({
           status: 'Used',
-          message: 'This coupon is already taken.',
+          message: result.message || 'This coupon has already been used and is no longer valid.',
         })
       } else {
         setTokenStatus({
           status: 'Invalid',
-          message: result.message || 'Invalid coupon token.',
+          message: result.message || 'Invalid coupon code.',
         })
       }
     } catch {
-      setTokenStatus({ status: 'Valid', message: 'Coupon ready for entry.' })
+      setTokenStatus({ status: 'Invalid', message: 'Could not verify coupon. Please try again.' })
     } finally {
       setIsValidatingToken(false)
     }
@@ -340,7 +340,7 @@ export function HomeRegisterSection() {
                             <p className="font-mono text-xs font-bold tracking-wider text-emerald-900">
                               {formatCouponDisplay(form.couponId)}
                             </p>
-                            <p className="text-[9px] font-medium text-emerald-700">Verified Festival Coupon</p>
+                            <p className="text-[9px] font-bold text-emerald-700">VALID COUPON · READY FOR ENTRY</p>
                           </div>
                         </div>
                         <button
@@ -363,9 +363,9 @@ export function HomeRegisterSection() {
                               <p className="font-mono text-xs font-bold tracking-wider text-red-900">
                                 {formatCouponDisplay(form.couponId)}
                               </p>
-                              <p className="text-[10px] font-bold text-red-700 mt-0.5">COUPON IS ALREADY TAKEN</p>
+                              <p className="text-[10px] font-bold text-red-700 mt-0.5">INVALID · COUPON ALREADY USED</p>
                               <p className="text-[10px] text-red-600 leading-tight mt-0.5">
-                                This coupon has already been redeemed.
+                                {tokenStatus.message || 'This coupon has already been redeemed and is no longer valid.'}
                               </p>
                             </div>
                           </div>

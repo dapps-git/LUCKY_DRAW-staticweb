@@ -13,17 +13,28 @@ export async function GET(request: Request) {
 
     const clean = id.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
     const db = await connectDB()
-    const coupon = await db.collection('coupons').findOne({ id: clean })
 
+    // 1. Check participants
+    const p = await db.collection('participants').findOne({ couponId: clean })
+    if (p) {
+      return NextResponse.json({
+        valid: false,
+        status: 'Used',
+        coupon: { id: clean, status: 'Used', usedByParticipantName: p.name },
+        message: 'This coupon has already been used and is no longer valid.',
+      })
+    }
+
+    const coupon = await db.collection('coupons').findOne({ id: clean })
     if (!coupon) {
-      return NextResponse.json({ valid: false, status: 'Invalid', message: 'Coupon not found' }, { status: 404 })
+      return NextResponse.json({ valid: false, status: 'Invalid', message: 'This coupon was not found in the festival database.' }, { status: 404 })
     }
 
     if (coupon.status === 'Used') {
-      return NextResponse.json({ valid: false, status: 'Used', coupon, message: 'Coupon already registered' })
+      return NextResponse.json({ valid: false, status: 'Used', coupon, message: 'This coupon has already been used and is no longer valid.' })
     }
 
-    return NextResponse.json({ valid: true, status: 'Unused', coupon, message: 'Coupon is valid' })
+    return NextResponse.json({ valid: true, status: 'Unused', coupon, message: 'Valid Festival Coupon! Ready for registration.' })
   } catch (err: any) {
     return NextResponse.json({ valid: false, status: 'Invalid', message: err.message }, { status: 500 })
   }

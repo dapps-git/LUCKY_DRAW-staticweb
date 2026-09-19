@@ -17,13 +17,35 @@ export async function POST(request: Request) {
     const participantsCol = db.collection('participants')
     const couponsCol = db.collection('coupons')
 
-    // Check if phone already registered with this coupon
-    const existing = await participantsCol.findOne({
+    // 1. Check if the exact same participant (same phone + coupon) already registered
+    const existingSameUser = await participantsCol.findOne({
       phone: cleanPhone,
       couponId: cleanCouponId,
     })
-    if (existing) {
-      return NextResponse.json({ ok: true, id: existing.id, participant: existing })
+    if (existingSameUser) {
+      return NextResponse.json({ ok: true, id: existingSameUser.id, participant: existingSameUser })
+    }
+
+    // 2. Check if this coupon has already been used by someone else
+    if (cleanCouponId) {
+      const couponAlreadyUsed = await participantsCol.findOne({
+        couponId: cleanCouponId,
+      })
+      if (couponAlreadyUsed) {
+        return NextResponse.json(
+          { ok: false, error: 'This coupon has already been used and is no longer valid.' },
+          { status: 400 }
+        )
+      }
+
+      // 3. Check if coupon is marked Used in coupons collection
+      const existingCouponDoc = await couponsCol.findOne({ id: cleanCouponId })
+      if (existingCouponDoc && existingCouponDoc.status === 'Used') {
+        return NextResponse.json(
+          { ok: false, error: 'This coupon has already been used and is no longer valid.' },
+          { status: 400 }
+        )
+      }
     }
 
     // Next ID

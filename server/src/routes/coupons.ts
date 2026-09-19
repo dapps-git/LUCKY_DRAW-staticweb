@@ -79,39 +79,53 @@ router.get('/validate/:id', async (req, res) => {
       })
     }
 
-    // Check if redeemed by any participant
+    // 1. Check if redeemed by any participant
     const registeredUser = await Participant.findOne({ couponId: cleanId })
     if (registeredUser) {
       return res.json({
         valid: false,
         status: 'Used',
-        message: 'This coupon is already taken.',
+        usedAt: registeredUser.registeredAt,
+        usedByName: registeredUser.name,
+        message: 'This coupon has already been used and is no longer valid.',
       })
     }
 
-    // Check in coupon collection
+    // 2. Check in coupon collection
     const existingCoupon = await Coupon.findOne({ id: cleanId })
     if (existingCoupon) {
       if (existingCoupon.status === 'Used') {
         return res.json({
           valid: false,
           status: 'Used',
-          message: 'This coupon is already taken.',
+          usedAt: existingCoupon.usedAt,
+          usedByName: existingCoupon.usedByParticipantName,
+          message: 'This coupon has already been used and is no longer valid.',
         })
       }
       return res.json({
         valid: true,
         status: 'Unused',
         coupon: existingCoupon,
-        message: 'Valid Festival Coupon! Ready for entry.',
+        message: 'Valid Festival Coupon! Ready for registration.',
       })
     }
 
-    // Accept valid coupon format as genuine festival coupon
+    // 3. If coupons collection has generated batches, enforce DB presence
+    const couponCount = await Coupon.estimatedDocumentCount()
+    if (couponCount > 0) {
+      return res.json({
+        valid: false,
+        status: 'Invalid',
+        message: 'This coupon code was not found in the festival database.',
+      })
+    }
+
+    // Fallback if DB has no coupons yet (bootstrap/dev mode)
     return res.json({
       valid: true,
       status: 'Unused',
-      message: 'Valid Festival Coupon! Ready for entry.',
+      message: 'Valid Festival Coupon! Ready for registration.',
     })
   } catch (error: any) {
     res.status(500).json({ valid: false, status: 'Invalid', message: error.message })

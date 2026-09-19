@@ -162,7 +162,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const validateCoupon = (couponId: string): CouponValidationResult => {
       const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
       if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
-        return { valid: false, status: 'Invalid', message: 'Token ID must be a valid 13-character festival code.' }
+        return { valid: false, status: 'Invalid', message: 'Please enter a valid festival coupon code.' }
       }
 
       // Check if already used by any participant
@@ -171,7 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return {
           valid: false,
           status: 'Used',
-          message: 'This coupon is already taken.',
+          message: 'This coupon has already been used and is no longer valid.',
         }
       }
 
@@ -183,35 +183,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
             valid: false,
             status: 'Used',
             coupon: found,
-            message: 'This coupon is already taken.',
+            message: 'This coupon has already been used and is no longer valid.',
           }
         }
-        return { valid: true, status: 'Unused', coupon: found, message: 'Valid Festival Coupon! Ready for entry.' }
+        return { valid: true, status: 'Unused', coupon: found, message: 'Valid Festival Coupon! Ready for registration.' }
+      }
+
+      // If local coupons list has records, reject unknown codes
+      if (coupons.length > 0) {
+        return {
+          valid: false,
+          status: 'Invalid',
+          message: 'This coupon was not found in the festival database.',
+        }
       }
 
       return {
         valid: true,
         status: 'Unused',
-        message: 'Valid Festival Coupon! Ready for entry.',
+        message: 'Valid Festival Coupon! Ready for registration.',
       }
     }
 
     const validateCouponAsync = async (couponId: string): Promise<CouponValidationResult> => {
-      const localCheck = validateCoupon(couponId)
+      const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
+      if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
+        return { valid: false, status: 'Invalid', message: 'Please enter a valid festival coupon code.' }
+      }
+
+      // Check local cache first for instant response if known used
+      const localCheck = validateCoupon(cleanId)
       if (!localCheck.valid && localCheck.status === 'Used') {
         return localCheck
       }
 
       try {
-        const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
-        if (cleanId.length >= 8 && cleanId.length <= 16) {
-          const res = await api.validateCoupon(cleanId)
-          if (res && (res.status === 'Used' || res.status === 'Invalid' || res.valid)) {
-            return res
+        const res = await api.validateCoupon(cleanId)
+        if (res) {
+          if (res.status === 'Used' || !res.valid) {
+            return {
+              valid: false,
+              status: res.status === 'Used' ? 'Used' : 'Invalid',
+              coupon: res.coupon,
+              message: res.message || 'This coupon has already been used and is no longer valid.',
+            }
+          }
+          if (res.valid && res.status === 'Unused') {
+            return {
+              valid: true,
+              status: 'Unused',
+              coupon: res.coupon,
+              message: res.message || 'Valid Festival Coupon! Ready for registration.',
+            }
           }
         }
       } catch {
-        // fallback to local check
+        // network fallback to local check
       }
       return localCheck
     }

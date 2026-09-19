@@ -46,7 +46,13 @@ router.post('/register', async (req, res) => {
     // Check if coupon already used by someone else
     const usedBy = await Participant.findOne({ couponId: cleanCoupon })
     if (usedBy) {
-      return res.status(400).json({ ok: false, error: 'This coupon is already taken.' })
+      return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
+    }
+
+    // Check if coupon exists and is already marked Used
+    const existingCoupon = await Coupon.findOne({ id: cleanCoupon })
+    if (existingCoupon && existingCoupon.status === 'Used') {
+      return res.status(400).json({ ok: false, error: 'This coupon has already been used and is no longer valid.' })
     }
 
     const participantName = name?.trim() || `Shopper ${phone.slice(-4)}`

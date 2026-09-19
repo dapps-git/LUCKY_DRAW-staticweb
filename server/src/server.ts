@@ -121,6 +121,13 @@ async function startServer() {
     // Seed database if empty
     await seedDatabase()
 
+    // Enforce unique indexes for coupons and participants
+    await Promise.allSettled([
+      Coupon.collection.createIndex({ id: 1 }, { unique: true }),
+      Participant.collection.createIndex({ couponId: 1 }, { unique: true, sparse: true }),
+    ])
+    console.log('✅ Unique coupon indexes verified.')
+
     app.listen(PORT, () => {
       console.log(`🚀 Valanchery Festival Backend running on http://localhost:${PORT}`)
     })
