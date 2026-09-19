@@ -48,25 +48,51 @@ export async function POST(request: Request) {
       }
     }
 
-    // Next ID
-    const count = await participantsCol.countDocuments()
-    const participantId = `VF2026-${String(count + 1).padStart(5, '0')}`
-    const now = new Date().toISOString()
+    // Guaranteed unique incremental participant ID (calculates highest existing suffix)
+    const existingParticipants = await participantsCol
+      .find({}, { projection: { id: 1 } })
+      .toArray()
 
-    const newParticipant = {
-      id: participantId,
-      name: name || 'Festival Participant',
-      phone: cleanPhone,
-      address: address || '',
-      location: location || '',
-      couponId: cleanCouponId,
-      registeredAt: now,
-      createdAt: now,
-      eligibility: 'Eligible',
-      status: 'Active',
+    let maxNum = 0
+    for (const p of existingParticipants) {
+      if (p.id) {
+        const match = p.id.match(/\d+$/)
+        if (match) {
+          const num = parseInt(match[0], 10)
+          if (!isNaN(num) && num > maxNum) maxNum = num
+        }
+      }
     }
 
-    await participantsCol.insertOne(newParticipant)
+    const now = new Date().toISOString()
+    let newParticipant: any = null
+    let participantId = ''
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      participantId = `VF2026-${String(maxNum + attempt + 1).padStart(5, '0')}`
+      newParticipant = {
+        id: participantId,
+        name: name || 'Festival Participant',
+        phone: cleanPhone,
+        address: address || '',
+        location: location || '',
+        couponId: cleanCouponId,
+        registeredAt: now,
+        createdAt: now,
+        eligibility: 'Eligible',
+        status: 'Active',
+      }
+
+      try {
+        await participantsCol.insertOne(newParticipant)
+        break
+      } catch (err: any) {
+        if (err?.code === 11000 && attempt < 9) {
+          continue // retry with next suffix
+        }
+        throw err
+      }
+    }
 
     // Mark coupon as used in MongoDB and update batch registered person count
     if (cleanCouponId) {
