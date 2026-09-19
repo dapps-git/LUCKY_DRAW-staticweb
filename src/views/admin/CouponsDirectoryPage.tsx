@@ -120,7 +120,7 @@ export function CouponsDirectoryPage() {
 
   const totalPages = Math.max(1, Math.ceil(effectiveFilteredCount / PAGE_SIZE))
 
-  // Combine items for display with instant pagination
+  // Combine items for display from real server records
   const displayCoupons = useMemo(() => {
     if (serverCoupons.length > 0) {
       return serverCoupons.map((c) => {
@@ -142,65 +142,29 @@ export function CouponsDirectoryPage() {
       })
     }
 
-    // High-performance fallback coupon generator from batches & participants
-    const list: any[] = []
-    const registered = data.participants || []
-    const batchList = data.batches && data.batches.length > 0 ? data.batches : [{ id: 'BATCH-1789215940343', name: 'Batch #1 (10,000 pcs)', count: 10000 }]
-
-    if (statusFilter === 'Used') {
-      const pageRegistered = registered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-      return pageRegistered.map((p) => ({
-        id: p.couponId || `VF${p.id.replace(/\D/g, '').padStart(11, '0')}`,
-        batchId: 'BATCH-1789215940343',
-        status: 'Used' as const,
-        createdAt: p.registeredAt || '2026-09-12',
-        usedAt: p.registeredAt || '2026-09-12',
-        participantName: p.name,
-        participantPhone: p.phone,
-        participantAddress: p.address,
-        participantLocation: p.location,
-        participantTicketId: p.id,
-      }))
+    // If local coupons list has items (e.g. from generated batch in current session)
+    if (coupons && coupons.length > 0) {
+      return coupons.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((c) => {
+        const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const p = participantMap.get(cleanId)
+        const isUsed = c.status === 'Used' || Boolean(p)
+        return {
+          id: c.id,
+          batchId: c.batchId,
+          status: isUsed ? ('Used' as const) : ('Unused' as const),
+          createdAt: c.createdAt,
+          usedAt: c.usedAt || p?.registeredAt,
+          participantName: p?.name || (c as any).usedByParticipantName,
+          participantPhone: p?.phone || (c as any).usedByParticipantPhone,
+          participantAddress: p?.address,
+          participantLocation: p?.location,
+          participantTicketId: p?.id || (c as any).usedByParticipantId,
+        }
+      })
     }
 
-    const startIndex = (currentPage - 1) * PAGE_SIZE
-    const endIndex = Math.min(startIndex + PAGE_SIZE, totalCount)
-
-    for (let i = startIndex; i < endIndex; i++) {
-      // First 13 are registered participants if viewing page 1 and all statuses
-      if (statusFilter === 'all' && i < registered.length && registered[i]) {
-        const p = registered[i]
-        list.push({
-          id: p.couponId || `VF${p.id.replace(/\D/g, '').padStart(11, '0')}`,
-          batchId: 'BATCH-1789215940343',
-          status: 'Used' as const,
-          createdAt: p.registeredAt || '2026-09-12',
-          usedAt: p.registeredAt || '2026-09-12',
-          participantName: p.name,
-          participantPhone: p.phone,
-          participantAddress: p.address,
-          participantLocation: p.location,
-          participantTicketId: p.id,
-        })
-      } else {
-        // Generate deterministic unique coupon ID based on index and batch
-        const batchIndex = Math.min(Math.floor(i / 10000), batchList.length - 1)
-        const batch = batchList[batchIndex] || batchList[0]
-        const numPart = String((i * 7919) % 100000000).padStart(8, '0')
-        const charPart = ['C9AK0', '0LGH9', 'TD5U8', 'F2Y1M', 'B3Z6Z', '7JT3N', 'T92GE', 'C6197', 'A89ZC', '5H44N'][(i + batchIndex) % 10]
-        const id = `${charPart}${numPart}`
-
-        list.push({
-          id,
-          batchId: batch.id,
-          status: 'Unused' as const,
-          createdAt: (batch as any).createdAt || '2026-09-12',
-        })
-      }
-    }
-
-    return list
-  }, [serverCoupons, data.participants, data.batches, participantMap, statusFilter, currentPage, totalCount])
+    return []
+  }, [serverCoupons, coupons, participantMap, currentPage])
 
   const copyCouponCode = (code: string) => {
     navigator.clipboard.writeText(code)
