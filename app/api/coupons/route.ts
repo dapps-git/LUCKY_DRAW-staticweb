@@ -96,6 +96,19 @@ export async function DELETE(request: Request) {
     const couponsCol = db.collection('coupons')
     const batchesCol = db.collection('couponbatches')
 
+    const cleanOrphans = searchParams.get('cleanOrphans') === 'true'
+
+    if (cleanOrphans) {
+      const activeBatches = await batchesCol.find({}, { projection: { id: 1 } }).toArray()
+      const activeIds = activeBatches.map((b: any) => b.id).filter(Boolean)
+      const couponsRes = await couponsCol.deleteMany({ batchId: { $nin: activeIds } })
+      return NextResponse.json({
+        ok: true,
+        message: `Purged ${couponsRes.deletedCount} orphan coupons from deleted batches`,
+        deletedCoupons: couponsRes.deletedCount,
+      })
+    }
+
     if (batchId) {
       const [batchRes, couponsRes] = await Promise.all([
         batchesCol.deleteOne({ id: batchId }),
@@ -122,7 +135,7 @@ export async function DELETE(request: Request) {
       })
     }
 
-    return NextResponse.json({ ok: false, error: 'Specify ?batchId=<id> or ?all=true' }, { status: 400 })
+    return NextResponse.json({ ok: false, error: 'Specify ?batchId=<id>, ?cleanOrphans=true, or ?all=true' }, { status: 400 })
   } catch (err: any) {
     console.error('DELETE /api/coupons error:', err)
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
