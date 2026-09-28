@@ -85,3 +85,47 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const all = searchParams.get('all') === 'true'
+    const batchId = searchParams.get('batchId')
+
+    const db = await connectDB()
+    const couponsCol = db.collection('coupons')
+    const batchesCol = db.collection('couponbatches')
+
+    if (batchId) {
+      const [batchRes, couponsRes] = await Promise.all([
+        batchesCol.deleteOne({ id: batchId }),
+        couponsCol.deleteMany({ batchId }),
+      ])
+      return NextResponse.json({
+        ok: true,
+        message: `Deleted batch ${batchId} and ${couponsRes.deletedCount} coupons`,
+        deletedBatches: batchRes.deletedCount,
+        deletedCoupons: couponsRes.deletedCount,
+      })
+    }
+
+    if (all) {
+      const [batchRes, couponsRes] = await Promise.all([
+        batchesCol.deleteMany({}),
+        couponsCol.deleteMany({}),
+      ])
+      return NextResponse.json({
+        ok: true,
+        message: 'Deleted all batches and coupons successfully',
+        deletedBatches: batchRes.deletedCount,
+        deletedCoupons: couponsRes.deletedCount,
+      })
+    }
+
+    return NextResponse.json({ ok: false, error: 'Specify ?batchId=<id> or ?all=true' }, { status: 400 })
+  } catch (err: any) {
+    console.error('DELETE /api/coupons error:', err)
+    return NextResponse.json({ ok: false, error: err.message }, { status: 500 })
+  }
+}
+

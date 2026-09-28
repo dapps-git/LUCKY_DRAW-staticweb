@@ -104,9 +104,9 @@ export function CouponsDirectoryPage() {
 
   // Aggregate stats
   const totalCount =
-    serverTotal !== undefined && serverTotal > 0
+    serverTotal !== undefined
       ? serverTotal
-      : (data.totalCouponsCount || (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0))
+      : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0))
   const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 0
   const activeCount = Math.max(0, totalCount - usedCount)
 
@@ -116,7 +116,7 @@ export function CouponsDirectoryPage() {
       ? usedCount
       : statusFilter === 'Unused'
       ? activeCount
-      : serverTotal || totalCount
+      : (serverTotal !== undefined ? serverTotal : totalCount)
 
   const totalPages = Math.max(1, Math.ceil(effectiveFilteredCount / PAGE_SIZE))
 

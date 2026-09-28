@@ -220,7 +220,14 @@ export const api = {
   },
 
   async deleteBatch(batchId: string): Promise<{ ok: boolean }> {
-    const res = await fetchWithTimeout(`${API_BASE}/coupons/batches/${batchId}`, {
+    const res = await fetchWithTimeout(`${API_BASE}/coupons?batchId=${encodeURIComponent(batchId)}`, {
+      method: 'DELETE',
+    })
+    return res.json()
+  },
+
+  async deleteAllBatchesAndCoupons(): Promise<{ ok: boolean }> {
+    const res = await fetchWithTimeout(`${API_BASE}/coupons?all=true`, {
       method: 'DELETE',
     })
     return res.json()

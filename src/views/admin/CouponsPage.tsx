@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft, Upload, CheckCircle2, FileText, QrCode, Users } from 'lucide-react'
+import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft, Upload, CheckCircle2, FileText, QrCode, Users, Trash2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
 import { downloadA4QrPdf } from '../../lib/couponPdfGenerator'
@@ -9,7 +9,7 @@ import { api } from '../../lib/api'
 import * as XLSX from 'xlsx'
 
 export function CouponsPage() {
-  const { generateCouponBatch, data, coupons, refreshData } = useApp()
+  const { generateCouponBatch, deleteCouponBatch, data, coupons, refreshData } = useApp()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -25,9 +25,25 @@ export function CouponsPage() {
   const [qrLayout, setQrLayout] = useState<'left-offset' | 'center'>('left-offset')
   const [showCutGuides, setShowCutGuides] = useState(false)
   const [downloadingBatchId, setDownloadingBatchId] = useState<string | null>(null)
+  const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null)
   const [progressMsg, setProgressMsg] = useState<string>('')
   const [isUploadingXlsx, setIsUploadingXlsx] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<string>('')
+
+  const handleDeleteBatch = async (batchId: string, batchName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${batchName}" and all its coupons from MongoDB?`)) {
+      return
+    }
+    setDeletingBatchId(batchId)
+    try {
+      await deleteCouponBatch(batchId)
+      await refreshData()
+    } catch (err: any) {
+      alert('Failed to delete batch: ' + (err.message || err))
+    } finally {
+      setDeletingBatchId(null)
+    }
+  }
 
   // Generate & Stream directly to MongoDB Atlas, then Export Excel
   const handleGenerateAndDownloadCsv = async () => {
@@ -534,6 +550,20 @@ export function CouponsPage() {
                     >
                       <Download size={13} className="text-[#5e0917]" />
                       <span>Download Excel</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteBatch(b.id, b.name || `Batch #${idx + 1}`)}
+                      disabled={deletingBatchId === b.id}
+                      className="inline-flex items-center justify-center gap-1 border border-red-200 bg-white hover:bg-red-50 hover:border-red-400 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+                      title="Delete this batch and its coupons permanently"
+                    >
+                      {deletingBatchId === b.id ? (
+                        <Loader2 size={13} className="animate-spin text-red-600" />
+                      ) : (
+                        <Trash2 size={13} />
+                      )}
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>

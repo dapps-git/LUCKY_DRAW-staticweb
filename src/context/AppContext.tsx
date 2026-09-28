@@ -312,14 +312,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteCouponBatch: async (batchId: string) => {
         try {
           await api.deleteBatch(batchId)
-        } catch {
-          // ignore
+        } catch (err) {
+          console.error('Failed to delete batch via API:', err)
         }
-        setData((prev) => ({
-          ...prev,
-          batches: (prev.batches || []).filter((b) => b.id !== batchId),
-          coupons: (prev.coupons || []).filter((c) => c.batchId !== batchId),
-        }))
+        setData((prev) => {
+          const remainingBatches = (prev.batches || []).filter((b) => b.id !== batchId)
+          const remainingCoupons = (prev.coupons || []).filter((c) => c.batchId !== batchId)
+          const deletedBatch = (prev.batches || []).find((b) => b.id === batchId)
+          const deletedCount = deletedBatch?.count || 0
+          return {
+            ...prev,
+            batches: remainingBatches,
+            coupons: remainingCoupons,
+            totalCouponsCount: Math.max(0, (prev.totalCouponsCount || 0) - deletedCount),
+          }
+        })
+        try {
+          await refreshData()
+        } catch {}
       },
       registerParticipant: async (input) => {
         const phone = input.phone.replace(/\D/g, '').slice(-10)
