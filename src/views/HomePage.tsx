@@ -154,8 +154,8 @@ export function HomePage() {
               <span className="h-px w-5 sm:w-8 bg-[#5c4e46]" />
             </div>
 
-            {/* Two-Tone Serif Headline */}
-            <h1 className="font-serif text-3xl sm:text-5xl lg:text-[66px] font-bold tracking-tight leading-[0.98]">
+            {/* Two-Tone Headline */}
+            <h1 className="text-3xl sm:text-5xl lg:text-[66px] font-black tracking-tight leading-[0.98]">
               <span className="text-[#0d3830]">Valanchery</span>
               <br />
               <span className="text-[#720e1e]">Festival 2026</span>

@@ -598,7 +598,7 @@ export function LuckyDrawPage() {
               </div>
 
               {/* Congratulations Title */}
-              <h2 className="mt-2 font-serif italic text-3xl sm:text-4xl font-bold tracking-tight text-[#5e0917]">
+              <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-[#5e0917]">
                 Congratulations!
               </h2>
 

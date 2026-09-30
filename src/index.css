@@ -7,29 +7,35 @@
   --gold-soft: #f3d48a;
   --cream: #f7f0e6;
   --ink: #140d10;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 html,
 body,
 #root {
   min-height: 100%;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
 }
 
 body {
   margin: 0;
-  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
   color: var(--ink);
   background: #f8f6f0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.font-serif,
-.font-serif-luxury {
-  font-family: 'Playfair Display', Georgia, serif !important;
+*, ::before, ::after {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
 }
 
-.font-cinzel {
-  font-family: 'Cinzel', serif !important;
+.font-sans {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif !important;
+}
+
+.font-mono, code, pre, kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
 input:-webkit-autofill,
