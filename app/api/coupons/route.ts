@@ -8,13 +8,18 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, Number(searchParams.get('page')) || 1)
-    // Hard cap at 100 to avoid memory/timeout issues with 50k docs
-    const limit = Math.min(100, Number(searchParams.get('limit')) || 50)
+    const batchId = searchParams.get('batchId')
+    const rawLimit = Number(searchParams.get('limit')) || 50
+    // Allow up to 200,000 for batch download, cap at 100 for directory pagination
+    const limit = batchId ? Math.min(200000, rawLimit) : Math.min(100, rawLimit)
     const skip = (page - 1) * limit
     const search = (searchParams.get('search') || '').trim()
     const status = searchParams.get('status') || ''
 
     const query: any = {}
+    if (batchId) {
+      query.batchId = batchId
+    }
     if (status && status !== 'all') {
       query.status = status
     }
@@ -22,6 +27,7 @@ export async function GET(request: Request) {
       const cleanSearch = search.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
       query.$or = [
         { id: { $regex: cleanSearch, $options: 'i' } },
+        { serialNo: { $regex: cleanSearch, $options: 'i' } },
         { usedByParticipantName: { $regex: search, $options: 'i' } },
         { usedByParticipantPhone: { $regex: search, $options: 'i' } },
       ]
@@ -31,7 +37,8 @@ export async function GET(request: Request) {
     const couponsCol = db.collection('coupons')
     const batchesCol = db.collection('couponbatches')
 
-    const hasFilter = Boolean(search || (status && status !== 'all'))
+    const hasFilter = Boolean(search || batchId || (status && status !== 'all'))
+    const sortOrder: any = batchId ? { serialNo: 1, _id: 1 } : { _id: -1 }
 
     // Use estimatedDocumentCount for total — instant, no scan
     // Use countDocuments only when filtering (much smaller result set)
@@ -42,6 +49,8 @@ export async function GET(request: Request) {
         .find(query, {
           projection: {
             id: 1,
+            serialNo: 1,
+            prefix: 1,
             batchId: 1,
             status: 1,
             createdAt: 1,
@@ -51,7 +60,7 @@ export async function GET(request: Request) {
             usedByParticipantId: 1,
           },
         })
-        .sort({ _id: -1 })
+        .sort(sortOrder)
         .skip(skip)
         .limit(limit)
         .toArray(),

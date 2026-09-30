@@ -18,7 +18,9 @@ export interface Participant {
 }
 
 export interface Coupon {
-  id: string // 10-digit unique string e.g. "7294018253"
+  id: string // Unique registration security code e.g. "SAR6LFPG6LO3I"
+  serialNo?: string // Sequential 6-digit prefix ID e.g. "A000001"
+  prefix?: 'A' | 'B' | 'C' | 'D' | string
   batchId: string
   status: CouponStatus
   createdAt: string

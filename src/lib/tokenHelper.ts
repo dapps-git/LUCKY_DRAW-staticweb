@@ -30,19 +30,31 @@ export function extractCouponId(input?: string | null): string | null {
     // fallback
   }
 
-  // 2. Look for 13-character code (5 letters + 8 digits or 13 alphanumeric)
+  // 2. Look for 4-prefix sequential ID: e.g. A000001, B025000, C000049, D000100
   const cleanAlphanumeric = trimmed.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  const matchPrefix = cleanAlphanumeric.match(/^[ABCD]\d{5,6}$/)
+  if (matchPrefix) {
+    return matchPrefix[0]
+  }
+
+  // 3. Look for 13-character registration security code
   if (cleanAlphanumeric.length === 13) {
     return cleanAlphanumeric
   }
 
-  // 3. Match 13-char regex within string
+  // 4. Match 13-char regex within string
   const match13 = trimmed.toUpperCase().match(/\b[A-Z0-9]{13}\b/)
   if (match13) {
     return match13[0]
   }
 
-  // 4. Backward compatibility: 10 digits
+  // 5. Match prefix ID within string
+  const matchPrefixInner = trimmed.toUpperCase().match(/\b[ABCD]\d{5,6}\b/)
+  if (matchPrefixInner) {
+    return matchPrefixInner[0]
+  }
+
+  // 6. Backward compatibility: 10 digits
   if (cleanAlphanumeric.length === 10) {
     return cleanAlphanumeric
   }
@@ -51,12 +63,12 @@ export function extractCouponId(input?: string | null): string | null {
     return match10[0]
   }
 
-  // 5. If string starts with 13 alphanumeric chars
+  // 7. If string starts with 13 alphanumeric chars
   if (cleanAlphanumeric.length > 13) {
     return cleanAlphanumeric.slice(0, 13)
   }
 
-  return cleanAlphanumeric.length >= 8 ? cleanAlphanumeric : null
+  return cleanAlphanumeric.length >= 6 ? cleanAlphanumeric : null
 }
 
 

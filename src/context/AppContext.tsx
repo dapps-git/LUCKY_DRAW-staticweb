@@ -161,7 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const validateCoupon = (couponId: string): CouponValidationResult => {
       const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
-      if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
+      if (!cleanId || cleanId.length < 6 || cleanId.length > 16) {
         return { valid: false, status: 'Invalid', message: 'Please enter a valid festival coupon code.' }
       }
 
@@ -175,8 +175,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Check in coupons list
-      const found = coupons.find((c) => c.id === cleanId)
+      // Check in coupons list (by ID or Serial No)
+      const found = coupons.find((c) => c.id === cleanId || c.serialNo === cleanId)
       if (found) {
         if (found.status === 'Used') {
           return {
@@ -198,7 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const validateCouponAsync = async (couponId: string): Promise<CouponValidationResult> => {
       const cleanId = extractCouponId(couponId) || (couponId ? couponId.replace(/[^A-Za-z0-9]/g, '').trim().toUpperCase() : '')
-      if (!cleanId || cleanId.length < 8 || cleanId.length > 16) {
+      if (!cleanId || cleanId.length < 6 || cleanId.length > 16) {
         return { valid: false, status: 'Invalid', message: 'Please enter a valid festival coupon code.' }
       }
 

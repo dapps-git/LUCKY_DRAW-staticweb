@@ -1,9 +1,22 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Loader2, FileSpreadsheet, ListFilter, Download, Calendar, Layers, Ticket, ArrowLeft, Upload, CheckCircle2, FileText, QrCode, Users, Trash2 } from 'lucide-react'
+import {
+  Loader2,
+  FileSpreadsheet,
+  ListFilter,
+  Download,
+  Calendar,
+  Layers,
+  Ticket,
+  ArrowLeft,
+  Upload,
+  CheckCircle2,
+  Users,
+  Trash2,
+  Sparkles,
+} from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
-import { downloadA4QrPdf } from '../../lib/couponPdfGenerator'
 import { formatShortDate } from '../../lib/format'
 import { api } from '../../lib/api'
 import * as XLSX from 'xlsx'
@@ -14,24 +27,14 @@ export function CouponsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [count, setCount] = useState<number>(100)
-  const [customDomain, setCustomDomain] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return window.location.origin
-    }
-    return 'https://www.valancheryfestival.com'
-  })
   const [isGeneratingCsv, setIsGeneratingCsv] = useState(false)
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-  const [qrLayout, setQrLayout] = useState<'left-offset' | 'center'>('left-offset')
-  const [showCutGuides, setShowCutGuides] = useState(false)
-  const [downloadingBatchId, setDownloadingBatchId] = useState<string | null>(null)
   const [deletingBatchId, setDeletingBatchId] = useState<string | null>(null)
   const [progressMsg, setProgressMsg] = useState<string>('')
   const [isUploadingXlsx, setIsUploadingXlsx] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<string>('')
 
   const handleDeleteBatch = async (batchId: string, batchName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${batchName}" and all its coupons from MongoDB?`)) {
+    if (!window.confirm(`Are you sure you want to delete "${batchName}" and all its coupon tokens from MongoDB?`)) {
       return
     }
     setDeletingBatchId(batchId)
@@ -49,19 +52,20 @@ export function CouponsPage() {
   const handleGenerateAndDownloadCsv = async () => {
     if (count <= 0) return
     setIsGeneratingCsv(true)
-    setProgressMsg(`Generating ${count} unique tokens...`)
+    const perPrefix = Math.floor(count / 4)
+    setProgressMsg(`Generating ${count.toLocaleString()} coupons (${perPrefix.toLocaleString()} each for A, B, C, D)...`)
 
     try {
-      const batchName = `Coupons Batch (${count} pcs)`
+      const batchName = `Coupons Batch (${count.toLocaleString()} pcs)`
       const { coupons: newCoupons } = await generateCouponBatch(count, batchName, (saved, total) => {
         const pct = Math.round((saved / total) * 100)
-        setProgressMsg(`Saving to Database: ${saved.toLocaleString()} / ${total.toLocaleString()} tokens (${pct}%)...`)
+        setProgressMsg(`Saving to MongoDB: ${saved.toLocaleString()} / ${total.toLocaleString()} coupons (${pct}%)...`)
       })
 
-      setProgressMsg('Building Excel spreadsheet...')
-      const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
-      exportCouponsToXlsx(newCoupons, `festival 1-${count}.xlsx`, activeBase)
-      setProgressMsg('Done! 100% Stored in MongoDB & Downloaded.')
+      setProgressMsg('Building 8-column Excel spreadsheet (A/B/C/D)...')
+      const fileName = `Coupons_1-${count}_(A-D).xlsx`
+      exportCouponsToXlsx(newCoupons, fileName)
+      setProgressMsg('Done! 100% Stored in MongoDB & Downloaded as Excel.')
       setTimeout(() => setProgressMsg(''), 4000)
     } catch (err: any) {
       console.error('Excel generation error:', err)
@@ -69,40 +73,6 @@ export function CouponsPage() {
       setProgressMsg('')
     } finally {
       setIsGeneratingCsv(false)
-    }
-  }
-
-  // Generate & Stream directly to MongoDB Atlas, then Export White A4 PDF Sheets (4 QR codes per page)
-  const handleGenerateAndDownloadA4Pdf = async () => {
-    if (count <= 0) return
-    setIsGeneratingPdf(true)
-    setProgressMsg(`Generating ${count} unique tokens...`)
-
-    try {
-      const batchName = `Coupons Batch (${count} pcs)`
-      const { coupons: newCoupons } = await generateCouponBatch(count, batchName, (saved, total) => {
-        const pct = Math.round((saved / total) * 100)
-        setProgressMsg(`Saving to Database: ${saved.toLocaleString()} / ${total.toLocaleString()} tokens (${pct}%)...`)
-      })
-
-      setProgressMsg('Building White A4 Sheets (4 QR codes per page in PDF)...')
-      const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
-      await downloadA4QrPdf(newCoupons, `coupons-a4-4per-sheet-${count}.pdf`, {
-        baseUrl: activeBase,
-        layout: qrLayout,
-        showCutGuides,
-        onProgress: (done, total) => {
-          setProgressMsg(`Rendering PDF: ${done} / ${total} coupons (${Math.ceil(done / 4)} A4 sheets)...`)
-        },
-      })
-      setProgressMsg('Done! 100% Stored in MongoDB & Downloaded as A4 PDF.')
-      setTimeout(() => setProgressMsg(''), 4000)
-    } catch (err: any) {
-      console.error('PDF generation error:', err)
-      alert(`Error generating PDF batch: ${err.message || 'Please check MongoDB connection'}`)
-      setProgressMsg('')
-    } finally {
-      setIsGeneratingPdf(false)
     }
   }
 
@@ -120,18 +90,57 @@ export function CouponsPage() {
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
       const rows: any[] = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
 
-      // Extract coupon codes from first column or header
-      const extractedCodes: string[] = []
-      for (const row of rows) {
-        if (!row || !row[0]) continue
-        const rawCode = String(row[0]).trim().toUpperCase()
-        const clean = rawCode.replace(/[^A-Za-z0-9]/g, '')
-        if (clean.length >= 8 && clean.length <= 16 && clean !== 'COUPONCODE' && clean !== 'TOKEN') {
-          extractedCodes.push(clean)
+      // Extract coupon codes and serial numbers from 8-column layout or single column
+      const extractedCoupons: Array<{ id: string; serialNo?: string; prefix?: string }> = []
+      const headerRow = rows[0] || []
+      const is8ColLayout = headerRow.some(
+        (h: any) => String(h).includes('Sl No') || String(h).includes('Reg Code')
+      )
+
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r]
+        if (!row) continue
+
+        if (is8ColLayout || row.length >= 8) {
+          // Col 0 & 1 (A)
+          const sl1 = String(row[0] || '').trim().toUpperCase()
+          const code1 = String(row[1] || '').trim().toUpperCase().replace(/[^A-Za-z0-9]/g, '')
+          if (code1.length >= 6 && !code1.includes('REGCODE')) {
+            extractedCoupons.push({ id: code1, serialNo: sl1 || undefined, prefix: 'A' })
+          }
+
+          // Col 2 & 3 (B)
+          const sl2 = String(row[2] || '').trim().toUpperCase()
+          const code2 = String(row[3] || '').trim().toUpperCase().replace(/[^A-Za-z0-9]/g, '')
+          if (code2.length >= 6 && !code2.includes('REGCODE')) {
+            extractedCoupons.push({ id: code2, serialNo: sl2 || undefined, prefix: 'B' })
+          }
+
+          // Col 4 & 5 (C)
+          const sl3 = String(row[4] || '').trim().toUpperCase()
+          const code3 = String(row[5] || '').trim().toUpperCase().replace(/[^A-Za-z0-9]/g, '')
+          if (code3.length >= 6 && !code3.includes('REGCODE')) {
+            extractedCoupons.push({ id: code3, serialNo: sl3 || undefined, prefix: 'C' })
+          }
+
+          // Col 6 & 7 (D)
+          const sl4 = String(row[6] || '').trim().toUpperCase()
+          const code4 = String(row[7] || '').trim().toUpperCase().replace(/[^A-Za-z0-9]/g, '')
+          if (code4.length >= 6 && !code4.includes('REGCODE')) {
+            extractedCoupons.push({ id: code4, serialNo: sl4 || undefined, prefix: 'D' })
+          }
+        } else {
+          // Fallback single column
+          for (let c = 0; c < row.length; c++) {
+            const raw = String(row[c] || '').trim().toUpperCase().replace(/[^A-Za-z0-9]/g, '')
+            if (raw.length >= 6 && !raw.includes('COUPON') && !raw.includes('TOKEN')) {
+              extractedCoupons.push({ id: raw })
+            }
+          }
         }
       }
 
-      if (extractedCodes.length === 0) {
+      if (extractedCoupons.length === 0) {
         alert('No valid coupon codes found in this Excel sheet.')
         setIsUploadingXlsx(false)
         setUploadStatus('')
@@ -139,11 +148,13 @@ export function CouponsPage() {
       }
 
       const batchId = `BATCH-${Date.now()}`
-      const batchName = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') || `Imported Batch (${extractedCodes.length} pcs)`
+      const batchName = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') || `Imported Batch (${extractedCoupons.length} pcs)`
       const now = new Date().toISOString()
 
-      const couponObjects = extractedCodes.map((code) => ({
-        id: code,
+      const couponObjects = extractedCoupons.map((c) => ({
+        id: c.id,
+        serialNo: c.serialNo,
+        prefix: c.prefix,
         batchId,
         status: 'Unused' as const,
         createdAt: now,
@@ -153,7 +164,6 @@ export function CouponsPage() {
       const CHUNK_SIZE = 5000
       for (let i = 0; i < couponObjects.length; i += CHUNK_SIZE) {
         const chunk = couponObjects.slice(i, i + CHUNK_SIZE)
-        const isLast = i + CHUNK_SIZE >= couponObjects.length
         setUploadStatus(`Uploading to MongoDB: ${Math.min(i + CHUNK_SIZE, couponObjects.length)} / ${couponObjects.length} coupons...`)
 
         await api.bulkInsertCoupons({
@@ -161,8 +171,8 @@ export function CouponsPage() {
             id: batchId,
             name: batchName,
             count: couponObjects.length,
-            startId: couponObjects[0]?.id || '',
-            endId: couponObjects[couponObjects.length - 1]?.id || '',
+            startId: couponObjects[0]?.serialNo || couponObjects[0]?.id || '',
+            endId: couponObjects[couponObjects.length - 1]?.serialNo || couponObjects[couponObjects.length - 1]?.id || '',
             createdAt: now,
             unusedCount: couponObjects.length,
             usedCount: 0,
@@ -185,72 +195,31 @@ export function CouponsPage() {
   }
 
   // Re-download an existing prepared batch as Excel
-  const handleDownloadBatch = (batchId: string, batchName: string) => {
-    const batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
-    const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
-    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`, activeBase)
-  }
+  const handleDownloadBatch = async (batchId: string, batchName: string, batchCount: number) => {
+    let batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
 
-  // Re-download an existing prepared batch as White A4 PDF Sheets (4 QR codes per page)
-  const handleDownloadBatchA4Pdf = async (batchId: string, batchName: string, batchCount: number) => {
-    setDownloadingBatchId(batchId)
-    setProgressMsg(`Loading coupons for ${batchName}...`)
-
-    try {
-      let batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
-
-      // If not enough coupons in memory, fetch from backend API
-      if (batchCoupons.length < (batchCount || 1)) {
-        try {
-          const res = await fetch(`/api/coupons?batchId=${batchId}&limit=${Math.min(batchCount || 10000, 20000)}`)
-          if (res.ok) {
-            const d = await res.json()
-            if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
-              batchCoupons = d.coupons
-            }
+    if (batchCoupons.length < (batchCount || 1)) {
+      try {
+        const res = await fetch(`/api/coupons?batchId=${batchId}&limit=${Math.min(batchCount || 10000, 50000)}`)
+        if (res.ok) {
+          const d = await res.json()
+          if (d.ok && Array.isArray(d.coupons) && d.coupons.length > 0) {
+            batchCoupons = d.coupons
           }
-        } catch {
-          // ignore
         }
+      } catch {
+        // ignore
       }
-
-      // Fallback deterministic coupons if server has none
-      if (batchCoupons.length === 0) {
-        const targetCount = Math.min(batchCount || 100, 500)
-        const charPart = 'VF' + batchId.replace(/\D/g, '').slice(-4)
-        for (let i = 0; i < targetCount; i++) {
-          const num = String(((i + 1) * 7919) % 100000000).padStart(8, '0')
-          batchCoupons.push({
-            id: `${charPart}${num}`,
-            batchId,
-            status: 'Unused' as const,
-            createdAt: new Date().toISOString(),
-          })
-        }
-      }
-
-      setProgressMsg(`Rendering A4 PDF (${batchCoupons.length} coupons, ${Math.ceil(batchCoupons.length / 4)} sheets)...`)
-      const activeBase = customDomain.trim().replace(/\/$/, '') || (typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com')
-      await downloadA4QrPdf(batchCoupons, `${batchName.replace(/\s+/g, '_')}_A4_4per_sheet.pdf`, {
-        baseUrl: activeBase,
-        layout: qrLayout,
-        showCutGuides,
-        onProgress: (done, total) => {
-          setProgressMsg(`Rendering PDF: ${done} / ${total} coupons (${Math.ceil(done / 4)} A4 sheets)...`)
-        },
-      })
-      setProgressMsg('Done! A4 PDF Downloaded.')
-      setTimeout(() => setProgressMsg(''), 4000)
-    } catch (err: any) {
-      console.error('Batch PDF download error:', err)
-      alert(`Error exporting batch PDF: ${err.message || err}`)
-      setProgressMsg('')
-    } finally {
-      setDownloadingBatchId(null)
     }
+
+    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
   }
 
   const batches = data.batches || []
+
+  // Calculate per prefix preview
+  const perPrefixPreview = Math.floor(count / 4)
+  const remainder = count % 4
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -266,10 +235,10 @@ export function CouponsPage() {
           </button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-              Coupon Generator & Sync
+              Coupon Generator & Excel Export
             </h1>
             <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
-              Produce serialized coupon tokens directly into MongoDB and export to Excel.
+              Generate 4-prefix sequential coupon IDs (A, B, C, D) directly into MongoDB and export to Excel.
             </p>
           </div>
         </div>
@@ -287,7 +256,7 @@ export function CouponsPage() {
       <div className="border border-black/10 bg-white p-6 shadow-sm space-y-5">
         <div className="space-y-4">
           <label className="block text-xs font-semibold uppercase tracking-wider text-black/70">
-            How many coupons do you want to generate into MongoDB?
+            How many coupons do you want to generate? (Distributed equally across A, B, C, D)
           </label>
 
           {/* Quick Preset Buttons */}
@@ -312,70 +281,62 @@ export function CouponsPage() {
           <div className="flex items-center gap-2">
             <input
               type="number"
-              min={1}
+              min={4}
+              step={4}
               max={500000}
               value={count}
               onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full border border-black/20 bg-[#fbf8f3] px-4 py-2.5 text-sm font-medium text-black outline-none focus:border-emerald-600"
-              placeholder="Or enter custom number (e.g. 100000)..."
+              placeholder="Enter total quantity (e.g. 100000)..."
             />
             <span className="text-xs font-medium text-black/50">coupons</span>
           </div>
 
-          {/* Website Domain for QR Codes */}
-          <div>
-            <label className="block text-[11px] font-semibold text-black/70 mb-1">
-              QR Code Website Domain (Links point to this domain)
-            </label>
-            <input
-              type="text"
-              value={customDomain}
-              onChange={(e) => setCustomDomain(e.target.value)}
-              placeholder="e.g. https://www.valancheryfestival.com or http://localhost:5173"
-              className="w-full border border-black/20 bg-[#fbf8f3] px-3 py-2 text-xs font-mono text-black outline-none focus:border-emerald-600"
-            />
-          </div>
-
-          {/* A4 QR PDF Layout & Print Settings */}
-          <div className="rounded-lg border border-[#e8decb] bg-[#faf7f0] p-3.5 space-y-3">
+          {/* 4-Prefix Distribution Preview Card */}
+          <div className="rounded-lg border border-[#e8decb] bg-[#faf7f0] p-4 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[#140d10]">
-                <QrCode size={14} className="text-[#a46e09]" />
-                <span>White A4 Sheet Print Options (4 QR Codes / Page)</span>
+                <Sparkles size={14} className="text-[#a46e09]" />
+                <span>4-Prefix Equal Distribution Preview</span>
               </div>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#a46e09] bg-amber-100/60 px-2 py-0.5 rounded">
-                Standard A4
+              <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded">
+                {perPrefixPreview.toLocaleString()} pcs / prefix
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-700 mb-1">
-                  QR Code Alignment
-                </label>
-                <select
-                  value={qrLayout}
-                  onChange={(e) => setQrLayout(e.target.value as any)}
-                  className="w-full border border-black/20 bg-white px-2.5 py-1.5 text-xs text-slate-800 outline-none focus:border-amber-600"
-                >
-                  <option value="left-offset">Left Offset (X ≈ 36mm - Pre-printed Ticket Stub / Sample)</option>
-                  <option value="center">Centered on Sheet (X = 94mm)</option>
-                </select>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="bg-white border border-black/10 p-2.5 rounded text-center">
+                <span className="block font-bold text-slate-800 text-xs text-emerald-700">Prefix A</span>
+                <span className="font-mono text-[11px] text-slate-600 font-medium">
+                  A00001 → A{String(perPrefixPreview + (remainder >= 1 ? 1 : 0)).padStart(5, '0')}
+                </span>
               </div>
 
-              <div className="flex items-center gap-2 pt-4 sm:pt-5">
-                <input
-                  type="checkbox"
-                  id="showCutGuidesCheck"
-                  checked={showCutGuides}
-                  onChange={(e) => setShowCutGuides(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-[#7a1426] focus:ring-[#7a1426] cursor-pointer"
-                />
-                <label htmlFor="showCutGuidesCheck" className="text-xs text-slate-700 font-medium cursor-pointer">
-                  Print faint horizontal cut guidelines between tickets
-                </label>
+              <div className="bg-white border border-black/10 p-2.5 rounded text-center">
+                <span className="block font-bold text-slate-800 text-xs text-emerald-700">Prefix B</span>
+                <span className="font-mono text-[11px] text-slate-600 font-medium">
+                  B00001 → B{String(perPrefixPreview + (remainder >= 2 ? 1 : 0)).padStart(5, '0')}
+                </span>
+              </div>
+
+              <div className="bg-white border border-black/10 p-2.5 rounded text-center">
+                <span className="block font-bold text-slate-800 text-xs text-emerald-700">Prefix C</span>
+                <span className="font-mono text-[11px] text-slate-600 font-medium">
+                  C00001 → C{String(perPrefixPreview + (remainder >= 3 ? 1 : 0)).padStart(5, '0')}
+                </span>
+              </div>
+
+              <div className="bg-white border border-black/10 p-2.5 rounded text-center">
+                <span className="block font-bold text-slate-800 text-xs text-emerald-700">Prefix D</span>
+                <span className="font-mono text-[11px] text-slate-600 font-medium">
+                  D00001 → D{String(perPrefixPreview).padStart(5, '0')}
+                </span>
               </div>
             </div>
+
+            <p className="text-[11px] text-slate-500 font-normal">
+              Excel sheet columns: <strong className="text-slate-700 font-semibold">Sl No. 1 | Reg Code 01 | Sl No. 2 | Reg Code 02 | Sl No. 3 | Reg Code 03 | Sl No. 4 | Reg Code 04</strong>
+            </p>
           </div>
 
           {/* Progress Banner */}
@@ -386,42 +347,22 @@ export function CouponsPage() {
             </div>
           )}
 
-          {/* Download Action Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            {/* Download A4 QR PDF (4 per sheet) */}
-            <button
-              onClick={handleGenerateAndDownloadA4Pdf}
-              disabled={isGeneratingPdf || isGeneratingCsv || count <= 0}
-              className="flex items-center justify-center gap-2 border border-[#7a1426] bg-[#7a1426] py-3.5 px-4 text-xs sm:text-sm font-bold tracking-wide text-white shadow-md transition hover:bg-[#961a30] disabled:opacity-50 cursor-pointer"
-            >
-              {isGeneratingPdf ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Generating White A4 PDF...
-                </>
-              ) : (
-                <>
-                  <FileText size={16} />
-                  GENERATE & DOWNLOAD A4 QR PDF (4/SHEET)
-                </>
-              )}
-            </button>
-
-            {/* Download Excel Button */}
+          {/* Download Action Button */}
+          <div className="pt-1">
             <button
               onClick={handleGenerateAndDownloadCsv}
-              disabled={isGeneratingPdf || isGeneratingCsv || count <= 0}
-              className="flex items-center justify-center gap-2 border border-emerald-700 bg-emerald-700 py-3.5 px-4 text-xs sm:text-sm font-bold tracking-wide text-white shadow-md transition hover:bg-emerald-800 disabled:opacity-50 cursor-pointer"
+              disabled={isGeneratingCsv || count <= 0}
+              className="w-full flex items-center justify-center gap-2.5 border border-emerald-800 bg-emerald-700 py-3.5 px-6 text-sm font-bold tracking-wide text-white shadow-md transition hover:bg-emerald-800 disabled:opacity-50 cursor-pointer"
             >
               {isGeneratingCsv ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Writing to DB & Excel...
+                  <Loader2 size={18} className="animate-spin" />
+                  Generating & Saving to Database...
                 </>
               ) : (
                 <>
-                  <FileSpreadsheet size={16} />
-                  GENERATE & DOWNLOAD EXCEL
+                  <FileSpreadsheet size={18} />
+                  GENERATE & DOWNLOAD EXCEL SPREADSHEET ({count.toLocaleString()} PCS)
                 </>
               )}
             </button>
@@ -434,7 +375,7 @@ export function CouponsPage() {
             <div>
               <p className="text-xs font-bold text-[#140d10]">Already have a downloaded Excel file?</p>
               <p className="text-[11px] text-slate-600">
-                Upload your existing Excel file to save all its coupons and batch into MongoDB Atlas immediately.
+                Upload your 8-column or standard Excel sheet to sync all coupons into MongoDB Atlas immediately.
               </p>
             </div>
 
@@ -513,11 +454,11 @@ export function CouponsPage() {
                       <span className="inline-flex items-center gap-1.5 text-xs">
                         <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 text-amber-900 font-semibold text-[11px]">
                           <Users size={12} className="text-amber-700" />
-                          <span>{usedInBatch} Registered Persons</span>
+                          <span>{usedInBatch} Registered</span>
                         </span>
                         <span className="text-slate-400">·</span>
                         <span className="text-slate-500 text-[11px]">
-                          {unusedInBatch} available
+                          {unusedInBatch.toLocaleString()} available
                         </span>
                       </span>
                     </div>
@@ -525,28 +466,9 @@ export function CouponsPage() {
 
                   <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                     <button
-                      onClick={() => handleDownloadBatchA4Pdf(b.id, b.name || `Batch_${idx + 1}`, totalCount)}
-                      disabled={downloadingBatchId === b.id}
-                      className="inline-flex items-center justify-center gap-1.5 border border-[#7a1426]/40 bg-[#faf6ee] hover:bg-[#7a1426] hover:text-white px-3 py-1.5 text-xs font-semibold text-[#7a1426] transition shadow-2xs cursor-pointer disabled:opacity-50"
-                      title="Download White A4 Sheets (4 QR Codes per page in PDF)"
-                    >
-                      {downloadingBatchId === b.id ? (
-                        <>
-                          <Loader2 size={13} className="animate-spin" />
-                          <span>Rendering PDF...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FileText size={13} />
-                          <span>A4 QR PDF (4/sheet)</span>
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`)}
+                      onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`, totalCount)}
                       className="inline-flex items-center justify-center gap-1.5 border border-[#e8decb] bg-white hover:bg-[#faf6ee] hover:border-[#5e0917] px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#5e0917] transition shadow-2xs cursor-pointer shrink-0"
-                      title="Re-download Excel Sheet for this batch"
+                      title="Download Excel Sheet for this batch"
                     >
                       <Download size={13} className="text-[#5e0917]" />
                       <span>Download Excel</span>

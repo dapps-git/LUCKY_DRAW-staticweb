@@ -4,25 +4,20 @@ import {
   Search,
   Ticket,
   CheckCircle2,
-  XCircle,
   Copy,
-  ExternalLink,
-  QrCode,
   ChevronLeft,
   ChevronRight,
   User,
   Phone,
   MapPin,
-  Calendar,
-  Filter,
   Check,
   Loader2,
-  FileText,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { formatShortDate } from '../../lib/format'
 import { formatCouponDisplay } from '../../lib/tokenHelper'
-import { downloadA4QrPdf } from '../../lib/couponPdfGenerator'
+import { exportCouponsToXlsx } from '../../lib/exportCsv'
 
 const PAGE_SIZE = 50
 
@@ -37,23 +32,10 @@ export function CouponsDirectoryPage() {
   const [isLoadingServer, setIsLoadingServer] = useState(false)
   const [serverCoupons, setServerCoupons] = useState<any[]>([])
   const [serverTotal, setServerTotal] = useState<number>(0)
-  const [isExportingPdf, setIsExportingPdf] = useState(false)
 
-  const handleDownloadPagePdf = async () => {
+  const handleDownloadPageExcel = () => {
     if (displayCoupons.length === 0) return
-    setIsExportingPdf(true)
-    try {
-      const activeBase = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
-      await downloadA4QrPdf(displayCoupons, `coupons-page-${currentPage}-a4.pdf`, {
-        baseUrl: activeBase,
-        layout: 'left-offset',
-      })
-    } catch (err: any) {
-      console.error('Export error:', err)
-      alert('Failed to generate A4 PDF: ' + (err.message || err))
-    } finally {
-      setIsExportingPdf(false)
-    }
+    exportCouponsToXlsx(displayCoupons, `coupons-page-${currentPage}.xlsx`)
   }
 
   // Fetch paginated coupons from MongoDB API
@@ -125,10 +107,13 @@ export function CouponsDirectoryPage() {
     if (serverCoupons.length > 0) {
       return serverCoupons.map((c) => {
         const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        const p = participantMap.get(cleanId)
+        const cleanSerial = (c.serialNo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const p = participantMap.get(cleanId) || (cleanSerial ? participantMap.get(cleanSerial) : undefined)
         const isUsed = c.status === 'Used' || Boolean(p)
         return {
           id: c.id,
+          serialNo: c.serialNo,
+          prefix: c.prefix,
           batchId: c.batchId,
           status: isUsed ? ('Used' as const) : ('Unused' as const),
           createdAt: c.createdAt,
@@ -146,10 +131,13 @@ export function CouponsDirectoryPage() {
     if (coupons && coupons.length > 0) {
       return coupons.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((c) => {
         const cleanId = (c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
-        const p = participantMap.get(cleanId)
+        const cleanSerial = (c.serialNo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+        const p = participantMap.get(cleanId) || (cleanSerial ? participantMap.get(cleanSerial) : undefined)
         const isUsed = c.status === 'Used' || Boolean(p)
         return {
           id: c.id,
+          serialNo: c.serialNo,
+          prefix: c.prefix,
           batchId: c.batchId,
           status: isUsed ? ('Used' as const) : ('Unused' as const),
           createdAt: c.createdAt,
@@ -188,29 +176,20 @@ export function CouponsDirectoryPage() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           <button
-            onClick={handleDownloadPagePdf}
-            disabled={isExportingPdf || displayCoupons.length === 0}
-            className="flex items-center gap-1.5 rounded-lg border border-[#7a1426]/50 bg-[#faf6ee] hover:bg-[#7a1426] hover:text-white px-3 py-2 text-xs font-semibold text-[#7a1426] transition shadow-sm disabled:opacity-50 cursor-pointer"
-            title="Download White A4 Sheets (4 QR codes per page) for currently visible coupons"
+            onClick={handleDownloadPageExcel}
+            disabled={displayCoupons.length === 0}
+            className="flex items-center gap-1.5 rounded-lg border border-emerald-800 bg-[#faf6ee] hover:bg-emerald-800 hover:text-white px-3 py-2 text-xs font-semibold text-emerald-800 transition shadow-sm disabled:opacity-50 cursor-pointer"
+            title="Download Excel spreadsheet for visible coupons"
           >
-            {isExportingPdf ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Rendering PDF...</span>
-              </>
-            ) : (
-              <>
-                <FileText size={14} className="text-[#c28e18]" />
-                <span>Download A4 QR PDF ({displayCoupons.length})</span>
-              </>
-            )}
+            <FileSpreadsheet size={14} className="text-emerald-700" />
+            <span>Export Page Excel ({displayCoupons.length})</span>
           </button>
 
           <Link
             to="/admin/coupons"
-            className="flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+            className="flex items-center gap-1.5 rounded-lg border border-[#7a1426] bg-[#7a1426] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#961a30] transition shadow-sm"
           >
-            <Ticket size={14} className="text-[#c28e18]" />
+            <Ticket size={14} />
             <span>Generate New Batch</span>
           </Link>
         </div>
@@ -256,7 +235,7 @@ export function CouponsDirectoryPage() {
           className={`cursor-pointer border p-3 sm:p-4 transition ${
             statusFilter === 'Used'
               ? 'border-emerald-700 bg-emerald-50 shadow-sm'
-              : 'border-black/10 bg-white hover:border-emerald-400'
+              : 'border-black/10 bg-white hover:border-emerald-300'
           }`}
         >
           <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Registered</p>
@@ -264,8 +243,8 @@ export function CouponsDirectoryPage() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="border border-black/10 bg-white p-3 sm:p-4 shadow-sm space-y-3">
+      {/* Filters Toolbar */}
+      <div className="border border-black/10 bg-white p-4 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
           {/* Search Input */}
           <div className="sm:col-span-6 relative">
@@ -277,7 +256,7 @@ export function CouponsDirectoryPage() {
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              placeholder="Search coupon ID, customer name, mobile, locality..."
+              placeholder="Search Serial No (e.g. A000001), Reg Code, Name, Phone..."
               className="w-full border border-slate-300 bg-[#fdfbf7] pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
             />
           </div>
@@ -331,12 +310,12 @@ export function CouponsDirectoryPage() {
             <thead className="border-b border-black/10 bg-[#faf6ee] text-[11px] font-bold text-black/70 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 w-10">#</th>
-                <th className="px-4 py-3">Coupon ID</th>
+                <th className="px-4 py-3">Serial No</th>
+                <th className="px-4 py-3">Registration Code</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Registered Participant</th>
                 <th className="px-4 py-3">Mobile (WhatsApp)</th>
                 <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">QR Link</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
@@ -349,13 +328,23 @@ export function CouponsDirectoryPage() {
                     <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">{rowNum}</td>
 
                     <td className="px-4 py-3">
+                      {item.serialNo ? (
+                        <span className="font-mono text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                          {item.serialNo}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-mono text-[11px]">—</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-200">
                           {formatCouponDisplay(item.id)}
                         </span>
                         <button
                           onClick={() => copyCouponCode(item.id)}
-                          className="text-slate-400 hover:text-slate-700 p-1 rounded transition"
+                          className="text-slate-400 hover:text-slate-700 p-1 rounded transition cursor-pointer"
                           title="Copy Code"
                         >
                           {copiedId === item.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
@@ -416,19 +405,6 @@ export function CouponsDirectoryPage() {
                           {isRegistered ? 'Registered' : 'Generated'}
                         </span>
                       </div>
-                    </td>
-
-                    <td className="px-4 py-3 text-right">
-                      <a
-                        href={`/qr/${encodeURIComponent(item.id)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#5e0917] hover:underline"
-                      >
-                        <QrCode size={12} />
-                        <span>QR</span>
-                        <ExternalLink size={10} />
-                      </a>
                     </td>
                   </tr>
                 )

@@ -25,7 +25,9 @@ export async function GET(request: Request) {
       })
     }
 
-    const coupon = await db.collection('coupons').findOne({ id: clean })
+    const coupon = await db.collection('coupons').findOne({
+      $or: [{ id: clean }, { serialNo: clean }],
+    })
     if (coupon && coupon.status === 'Used') {
       return NextResponse.json({
         valid: false,

@@ -26,6 +26,8 @@ export async function GET() {
             {
               projection: {
                 id: 1,
+                serialNo: 1,
+                prefix: 1,
                 batchId: 1,
                 status: 1,
                 createdAt: 1,

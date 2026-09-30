@@ -39,7 +39,9 @@ export async function POST(request: Request) {
       }
 
       // 3. Check if coupon is marked Used in coupons collection
-      const existingCouponDoc = await couponsCol.findOne({ id: cleanCouponId })
+      const existingCouponDoc = await couponsCol.findOne({
+        $or: [{ id: cleanCouponId }, { serialNo: cleanCouponId }],
+      })
       if (existingCouponDoc && existingCouponDoc.status === 'Used') {
         return NextResponse.json(
           { ok: false, error: 'This coupon has already been used and is no longer valid.' },
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
     // Mark coupon as used in MongoDB and update batch registered person count
     if (cleanCouponId) {
       const updatedCoupon = await couponsCol.findOneAndUpdate(
-        { id: cleanCouponId },
+        { $or: [{ id: cleanCouponId }, { serialNo: cleanCouponId }] },
         {
           $set: {
             status: 'Used',
