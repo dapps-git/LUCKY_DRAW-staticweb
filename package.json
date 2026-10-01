@@ -33,6 +33,7 @@
     "mongodb": "^7.6.0",
     "mongoose": "^8.9.5",
     "next": "15.5.25",
+    "nodemailer": "^10.0.13",
     "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -41,5 +42,8 @@
     "typescript": "~5.9.2",
     "vite": "^7.1.5",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^8.0.2"
   }
 }

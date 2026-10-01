@@ -244,24 +244,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       refreshData,
       login: async (email, password) => {
         const cleanEmail = email.trim().toLowerCase()
-        const isMaster = cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD
-
-        if (isMaster) {
-          localStorage.setItem(AUTH_KEY, '1')
-          setIsAdmin(true)
-          api.login(email, password).catch(() => {})
-          return true
-        }
-
         try {
-          const res = await api.login(email, password)
-          if (res.ok) {
+          const res = await api.login(cleanEmail, password)
+          if (res && res.ok) {
             localStorage.setItem(AUTH_KEY, '1')
             setIsAdmin(true)
             return true
           }
+          if (res && res.ok === false) {
+            return false
+          }
         } catch {
-          // fallback
+          // Offline fallback only if server is unreachable
+          if (cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+            localStorage.setItem(AUTH_KEY, '1')
+            setIsAdmin(true)
+            return true
+          }
         }
         return false
       },
@@ -317,15 +316,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.error('Failed to delete batch via API:', err)
         }
         setData((prev) => {
+          const deletedCoupons = (prev.coupons || []).filter((c) => c.batchId === batchId)
+          const deletedCouponIds = new Set(deletedCoupons.map((c) => (c.id || '').toUpperCase()))
+          deletedCoupons.forEach((c) => {
+            if (c.serialNo) deletedCouponIds.add(c.serialNo.toUpperCase())
+          })
+
+          const participantsToRemove = (prev.participants || []).filter((p) =>
+            p.couponId ? deletedCouponIds.has(p.couponId.toUpperCase()) : false
+          )
+          const removedParticipantIds = new Set(participantsToRemove.map((p) => p.id))
+
           const remainingBatches = (prev.batches || []).filter((b) => b.id !== batchId)
           const remainingCoupons = (prev.coupons || []).filter((c) => c.batchId !== batchId)
+          const remainingParticipants = (prev.participants || []).filter((p) => !removedParticipantIds.has(p.id))
+          const remainingWinners = (prev.winners || []).filter((w) => !removedParticipantIds.has(w.participantId))
+
           const deletedBatch = (prev.batches || []).find((b) => b.id === batchId)
           const deletedCount = deletedBatch?.count || 0
+
           return {
             ...prev,
             batches: remainingBatches,
             coupons: remainingCoupons,
+            participants: remainingParticipants,
+            winners: remainingWinners,
             totalCouponsCount: Math.max(0, (prev.totalCouponsCount || 0) - deletedCount),
+            usedCouponsCount: Math.max(0, (prev.usedCouponsCount || 0) - participantsToRemove.length),
           }
         })
         try {

@@ -85,6 +85,33 @@ export const api = {
     return res.json()
   },
 
+  async forgotPassword(email: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }, 12000)
+    return res.json()
+  },
+
+  async verifyOtp(email: string, otp: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp }),
+    }, 10000)
+    return res.json()
+  },
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<{ ok: boolean; message?: string; error?: string }> {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, newPassword }),
+    }, 12000)
+    return res.json()
+  },
+
   // Fetch full Initial App Data from MongoDB
   async getAllData(): Promise<AppData> {
     try {

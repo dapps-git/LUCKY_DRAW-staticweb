@@ -16,8 +16,40 @@ export async function DELETE(
     const db = await connectDB()
     const batchesCol = db.collection('couponbatches')
     const couponsCol = db.collection('coupons')
+    const participantsCol = db.collection('participants')
+    const winnersCol = db.collection('winners')
 
-    // Delete batch metadata and all associated coupon tokens
+    // 1. Find all coupons in this batch
+    const batchCoupons = await couponsCol.find({ batchId: id }, { projection: { id: 1, serialNo: 1 } }).toArray()
+    const couponIdentifiers = new Set<string>()
+    batchCoupons.forEach((c: any) => {
+      if (c.id) couponIdentifiers.add(String(c.id).toUpperCase())
+      if (c.serialNo) couponIdentifiers.add(String(c.serialNo).toUpperCase())
+    })
+    const couponIdsArray = Array.from(couponIdentifiers)
+
+    // 2. Find and delete participants registered with these coupons
+    let deletedParticipantsCount = 0
+    let deletedWinnersCount = 0
+
+    if (couponIdsArray.length > 0) {
+      const participantsToDelete = await participantsCol
+        .find({ couponId: { $in: couponIdsArray } }, { projection: { id: 1 } })
+        .toArray()
+
+      const participantIds = participantsToDelete.map((p: any) => p.id).filter(Boolean)
+
+      if (participantIds.length > 0) {
+        const [partRes, winRes] = await Promise.all([
+          participantsCol.deleteMany({ id: { $in: participantIds } }),
+          winnersCol.deleteMany({ participantId: { $in: participantIds } }),
+        ])
+        deletedParticipantsCount = partRes.deletedCount
+        deletedWinnersCount = winRes.deletedCount
+      }
+    }
+
+    // 3. Delete batch metadata and all associated coupon tokens
     const [batchRes, couponsRes] = await Promise.all([
       batchesCol.deleteOne({ id }),
       couponsCol.deleteMany({ batchId: id }),
@@ -26,9 +58,11 @@ export async function DELETE(
     return NextResponse.json(
       {
         ok: true,
-        message: 'Batch and associated coupons deleted successfully',
+        message: 'Batch, coupons, and registered participants deleted successfully',
         deletedBatches: batchRes.deletedCount,
         deletedCoupons: couponsRes.deletedCount,
+        deletedParticipants: deletedParticipantsCount,
+        deletedWinners: deletedWinnersCount,
       },
       {
         headers: {

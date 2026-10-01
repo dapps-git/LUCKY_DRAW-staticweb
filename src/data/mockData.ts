@@ -1,7 +1,7 @@
 import type { AppData } from '../types'
 
 export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
-export const ADMIN_PASSWORD = 'admin123'
+export const ADMIN_PASSWORD = 'Admin@2026'
 
 export const GIFT_PRESETS = [
   {

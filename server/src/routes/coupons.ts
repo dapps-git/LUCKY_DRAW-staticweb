@@ -196,15 +196,33 @@ router.get('/batches', async (_req, res) => {
   }
 })
 
-// 5. Delete a coupon batch
+// 5. Delete a coupon batch with cascade participant cleanup
 router.delete('/batches/:id', async (req, res) => {
   try {
     const batchId = req.params.id
+
+    // Find coupons in batch
+    const batchCoupons = await Coupon.find({ batchId }, { id: 1, serialNo: 1 }).lean()
+    const couponIdentifiers = new Set<string>()
+    batchCoupons.forEach((c: any) => {
+      if (c.id) couponIdentifiers.add(String(c.id).toUpperCase())
+      if (c.serialNo) couponIdentifiers.add(String(c.serialNo).toUpperCase())
+    })
+    const couponIdsArray = Array.from(couponIdentifiers)
+
+    if (couponIdsArray.length > 0) {
+      const participantsToDelete = await Participant.find({ couponId: { $in: couponIdsArray } }, { id: 1 }).lean()
+      const participantIds = participantsToDelete.map((p: any) => p.id).filter(Boolean)
+      if (participantIds.length > 0) {
+        await Participant.deleteMany({ id: { $in: participantIds } })
+      }
+    }
+
     await Promise.all([
       CouponBatch.deleteOne({ id: batchId }),
       Coupon.deleteMany({ batchId }),
     ])
-    res.json({ ok: true, message: 'Batch deleted' })
+    res.json({ ok: true, message: 'Batch and associated participants deleted' })
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message })
   }
