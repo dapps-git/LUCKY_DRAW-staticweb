@@ -84,11 +84,9 @@ export function CouponsDirectoryPage() {
     return map
   }, [data.participants])
 
-  // Aggregate stats
-  const totalCount =
-    serverTotal !== undefined
-      ? serverTotal
-      : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0))
+  // Aggregate stats from active batches
+  const batchesTotal = (data.batches || []).reduce((acc, b) => acc + (b.count || 0), 0)
+  const totalCount = batchesTotal > 0 ? batchesTotal : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : (serverTotal || 0))
   const usedCount = data.usedCouponsCount ?? data.participants?.length ?? 0
   const activeCount = Math.max(0, totalCount - usedCount)
 
@@ -98,7 +96,7 @@ export function CouponsDirectoryPage() {
       ? usedCount
       : statusFilter === 'Unused'
       ? activeCount
-      : (serverTotal !== undefined ? serverTotal : totalCount)
+      : (searchQuery.trim() ? (serverTotal ?? totalCount) : totalCount)
 
   const totalPages = Math.max(1, Math.ceil(effectiveFilteredCount / PAGE_SIZE))
 
@@ -161,36 +159,36 @@ export function CouponsDirectoryPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       {/* Header with Navigation Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-black/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Coupons Directory
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-normal">
-            Complete database of all generated festival coupons with live registration status, customer details, and search.
+          <p className="mt-0.5 text-xs text-slate-400 font-normal">
+            Database of all generated coupons with registration status and participant details.
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={handleDownloadPageExcel}
             disabled={displayCoupons.length === 0}
-            className="flex items-center gap-1.5 rounded-lg border border-emerald-800 bg-[#faf6ee] hover:bg-emerald-800 hover:text-white px-3 py-2 text-xs font-semibold text-emerald-800 transition shadow-sm disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-white hover:bg-pink-50 text-[#FF0B6B] px-3.5 py-2 text-xs font-medium transition shadow-none disabled:opacity-50 cursor-pointer"
             title="Download Excel spreadsheet for visible coupons"
           >
-            <FileSpreadsheet size={14} className="text-emerald-700" />
-            <span>Export Page Excel ({displayCoupons.length})</span>
+            <FileSpreadsheet size={14} />
+            <span>Export Page ({displayCoupons.length})</span>
           </button>
 
           <Link
             to="/admin/coupons"
-            className="flex items-center gap-1.5 rounded-lg border border-[#7a1426] bg-[#7a1426] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#961a30] transition shadow-sm"
+            className="flex items-center gap-1.5 rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] px-3.5 py-2 text-xs font-medium text-white transition shadow-xs shadow-pink-200"
           >
             <Ticket size={14} />
-            <span>Generate New Batch</span>
+            <span>Generate Batches</span>
           </Link>
         </div>
       </div>
@@ -202,14 +200,14 @@ export function CouponsDirectoryPage() {
             setStatusFilter('all')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer border p-3 sm:p-4 transition ${
+          className={`cursor-pointer rounded-xl border p-3.5 sm:p-4 transition ${
             statusFilter === 'all'
-              ? 'border-[#7a1426] bg-[#7a1426]/5 shadow-sm'
-              : 'border-black/10 bg-white hover:border-black/20'
+              ? 'border-[#FF0B6B] bg-pink-50/50 shadow-xs'
+              : 'border-slate-100 bg-white hover:border-pink-200'
           }`}
         >
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Coupons</p>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{totalCount.toLocaleString()}</p>
+          <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 uppercase tracking-wider">Total Coupons</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{totalCount.toLocaleString()}</p>
         </div>
 
         <div
@@ -217,14 +215,14 @@ export function CouponsDirectoryPage() {
             setStatusFilter('Unused')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer border p-3 sm:p-4 transition ${
+          className={`cursor-pointer rounded-xl border p-3.5 sm:p-4 transition ${
             statusFilter === 'Unused'
-              ? 'border-amber-400 bg-amber-50 shadow-sm'
-              : 'border-black/10 bg-white hover:border-amber-300'
+              ? 'border-amber-400 bg-amber-50/60 shadow-xs'
+              : 'border-slate-100 bg-white hover:border-amber-300'
           }`}
         >
-          <p className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Unregistered (Available)</p>
-          <p className="text-xl sm:text-2xl font-bold text-amber-900 mt-0.5">{activeCount.toLocaleString()}</p>
+          <p className="text-[10px] sm:text-[11px] font-medium text-amber-600 uppercase tracking-wider">Available (Unused)</p>
+          <p className="text-xl sm:text-2xl font-bold text-amber-600 mt-1">{activeCount.toLocaleString()}</p>
         </div>
 
         <div
@@ -232,23 +230,23 @@ export function CouponsDirectoryPage() {
             setStatusFilter('Used')
             setCurrentPage(1)
           }}
-          className={`cursor-pointer border p-3 sm:p-4 transition ${
+          className={`cursor-pointer rounded-xl border p-3.5 sm:p-4 transition ${
             statusFilter === 'Used'
-              ? 'border-emerald-700 bg-emerald-50 shadow-sm'
-              : 'border-black/10 bg-white hover:border-emerald-300'
+              ? 'border-emerald-500 bg-emerald-50/60 shadow-xs'
+              : 'border-slate-100 bg-white hover:border-emerald-300'
           }`}
         >
-          <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Registered</p>
-          <p className="text-xl sm:text-2xl font-bold text-emerald-900 mt-0.5">{usedCount.toLocaleString()}</p>
+          <p className="text-[10px] sm:text-[11px] font-medium text-emerald-600 uppercase tracking-wider">Registered</p>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">{usedCount.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Filters Toolbar */}
-      <div className="border border-black/10 bg-white p-4 shadow-sm space-y-3">
+      <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
           {/* Search Input */}
           <div className="sm:col-span-6 relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -256,8 +254,8 @@ export function CouponsDirectoryPage() {
                 setSearchQuery(e.target.value)
                 setCurrentPage(1)
               }}
-              placeholder="Search Serial No (e.g. A000001), Reg Code, Name, Phone..."
-              className="w-full border border-slate-300 bg-[#fdfbf7] pl-9 pr-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none focus:border-[#c28e18] focus:ring-1 focus:ring-[#c28e18]"
+              placeholder="Search serial (A000001), code, participant..."
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-[#FF0B6B] focus:bg-white transition"
             />
           </div>
 
@@ -269,7 +267,7 @@ export function CouponsDirectoryPage() {
                 setStatusFilter(e.target.value as any)
                 setCurrentPage(1)
               }}
-              className="w-full border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-800 font-medium outline-none focus:border-[#c28e18]"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 font-medium outline-none focus:border-[#FF0B6B] focus:bg-white transition"
             >
               <option value="all">All Statuses ({totalCount.toLocaleString()})</option>
               <option value="Unused">Unregistered ({activeCount.toLocaleString()})</option>
@@ -286,50 +284,50 @@ export function CouponsDirectoryPage() {
                 setDateFilter(e.target.value)
                 setCurrentPage(1)
               }}
-              className="w-full border border-slate-300 bg-[#fdfbf7] px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#c28e18]"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 outline-none focus:border-[#FF0B6B] focus:bg-white transition"
             />
           </div>
         </div>
 
         {/* Results Counter */}
-        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
           <div className="flex items-center gap-2">
             <span>
-              Showing <strong className="font-semibold text-slate-800">{displayCoupons.length}</strong> coupons (Page {currentPage} of {totalPages})
+              Showing <span className="font-semibold text-slate-700">{displayCoupons.length}</span> coupons (Page {currentPage} of {totalPages})
             </span>
-            {isLoadingServer && <Loader2 size={12} className="animate-spin text-[#5e0917]" />}
+            {isLoadingServer && <Loader2 size={12} className="animate-spin text-[#FF0B6B]" />}
           </div>
-          <span>Sorted: Latest First · 50 per page</span>
+          <span>50 per page</span>
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="border border-black/10 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-slate-100 bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[750px] text-left text-xs">
-            <thead className="border-b border-black/10 bg-[#faf6ee] text-[11px] font-bold text-black/70 uppercase tracking-wider">
+            <thead className="border-b border-slate-100 bg-pink-50/30 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 w-10">#</th>
                 <th className="px-4 py-3">Serial No</th>
                 <th className="px-4 py-3">Registration Code</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Registered Participant</th>
-                <th className="px-4 py-3">Mobile (WhatsApp)</th>
+                <th className="px-4 py-3">Mobile</th>
                 <th className="px-4 py-3">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/5">
+            <tbody className="divide-y divide-slate-100">
               {displayCoupons.map((item, idx) => {
                 const rowNum = (currentPage - 1) * PAGE_SIZE + idx + 1
                 const isRegistered = item.status === 'Used'
 
                 return (
-                  <tr key={item.id || idx} className="hover:bg-[#fbf9f4] transition">
+                  <tr key={item.id || idx} className="hover:bg-pink-50/15 transition font-normal">
                     <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">{rowNum}</td>
 
                     <td className="px-4 py-3">
                       {item.serialNo ? (
-                        <span className="font-mono text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                        <span className="font-mono text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                           {item.serialNo}
                         </span>
                       ) : (
@@ -339,12 +337,12 @@ export function CouponsDirectoryPage() {
 
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-200">
+                        <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
                           {formatCouponDisplay(item.id)}
                         </span>
                         <button
                           onClick={() => copyCouponCode(item.id)}
-                          className="text-slate-400 hover:text-slate-700 p-1 rounded transition cursor-pointer"
+                          className="text-slate-400 hover:text-[#FF0B6B] p-1 rounded transition cursor-pointer"
                           title="Copy Code"
                         >
                           {copiedId === item.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
@@ -354,13 +352,13 @@ export function CouponsDirectoryPage() {
 
                     <td className="px-4 py-3">
                       {isRegistered ? (
-                        <span className="inline-flex items-center gap-1 border border-emerald-800 bg-[#0f5132] px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                          <CheckCircle2 size={11} className="text-emerald-200" />
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                          <CheckCircle2 size={11} className="text-emerald-600" />
                           Registered
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 border border-amber-300 bg-[#fffbeb] px-2.5 py-0.5 text-[11px] font-medium text-amber-900">
-                          <Ticket size={11} className="text-amber-700" />
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-medium text-amber-700">
+                          <Ticket size={11} className="text-amber-500" />
                           Unregistered
                         </span>
                       )}
@@ -369,26 +367,26 @@ export function CouponsDirectoryPage() {
                     <td className="px-4 py-3">
                       {item.participantName ? (
                         <div className="space-y-0.5">
-                          <div className="font-semibold text-slate-900 flex items-center gap-1">
-                            <User size={12} className="text-[#5e0917]" />
+                          <div className="font-semibold text-slate-800 flex items-center gap-1">
+                            <User size={12} className="text-[#FF0B6B]" />
                             <span>{item.participantName}</span>
                           </div>
                           {item.participantLocation && (
-                            <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1">
                               <MapPin size={10} />
                               <span>{item.participantLocation}</span>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-400 font-normal italic">Available for registration</span>
+                        <span className="text-slate-400 font-normal italic">Available</span>
                       )}
                     </td>
 
                     <td className="px-4 py-3">
                       {item.participantPhone ? (
                         <div className="flex items-center gap-1 font-mono text-slate-700">
-                          <Phone size={12} className="text-emerald-700" />
+                          <Phone size={11} className="text-emerald-600" />
                           <span>{item.participantPhone}</span>
                         </div>
                       ) : (
@@ -396,12 +394,12 @@ export function CouponsDirectoryPage() {
                       )}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-slate-500">
                       <div className="space-y-0.5">
-                        <div className="font-medium text-[11px]">
+                        <div className="font-normal text-[11px]">
                           {formatShortDate(item.usedAt || item.createdAt)}
                         </div>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-slate-400">
                           {isRegistered ? 'Registered' : 'Generated'}
                         </span>
                       </div>
@@ -423,23 +421,23 @@ export function CouponsDirectoryPage() {
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="border-t border-black/10 bg-[#faf6ee] px-4 py-3 flex items-center justify-between text-xs">
+          <div className="border-t border-slate-100 bg-pink-50/30 px-4 py-3 flex items-center justify-between text-xs">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="inline-flex items-center gap-1 border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
             >
               <ChevronLeft size={14} /> Previous
             </button>
 
-            <span className="text-slate-600 font-medium">
-              Page <strong className="text-slate-900">{currentPage}</strong> of <strong className="text-slate-900">{totalPages}</strong>
+            <span className="text-slate-500 font-normal">
+              Page <span className="font-semibold text-slate-800">{currentPage}</span> of <span className="font-semibold text-slate-800">{totalPages}</span>
             </span>
 
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
-              className="inline-flex items-center gap-1 border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
             >
               Next <ChevronRight size={14} />
             </button>

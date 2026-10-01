@@ -4,7 +4,7 @@ import { Confetti } from '../../components/Confetti'
 import { Toast } from '../../components/Toast'
 import { useApp } from '../../context/AppContext'
 import { GIFT_PRESETS } from '../../data/mockData'
-import type { Participant, Prize } from '../../types'
+import type { Participant, Prize, Draw } from '../../types'
 import {
   Sparkles,
   Trophy,
@@ -12,14 +12,12 @@ import {
   RotateCcw,
   Gift,
   Plus,
-  ChevronDown,
   Check,
   CheckCircle2,
-  ShieldCheck,
   X,
-  Sparkle,
   Upload,
   Loader2,
+  Users,
 } from 'lucide-react'
 
 type Phase = 'ready' | 'spinning' | 'verifying' | 'reveal' | 'done'
@@ -28,41 +26,84 @@ export function LuckyDrawPage() {
   const {
     data,
     eligibleParticipants,
-    winnerParticipantIds,
     nextDraw,
     getPrize,
     confirmWinner,
     addPrize,
     assignPrizeToDraw,
+    addDraw,
   } = useApp()
   const navigate = useNavigate()
 
-  // Selected prize for current draw (defaults to draw's assigned prize)
-  const defaultPrize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
+  // Selected prize for current draw
   const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null)
   const [showPrizeSelector, setShowPrizeSelector] = useState(false)
   const [showAddPrizeModal, setShowAddPrizeModal] = useState(false)
 
-  // Sync selected prize id when nextDraw changes
-  useEffect(() => {
-    if (nextDraw && !selectedPrizeId) {
-      setSelectedPrizeId(nextDraw.prizeId)
+  // Current active draw fallback so it NEVER blocks
+  const activeDraw: Draw = useMemo(() => {
+    if (nextDraw) return nextDraw
+    if (data.draws.length > 0) return data.draws[0]
+    return {
+      id: 'live-draw',
+      number: (data.winners?.length || 0) + 1,
+      date: new Date().toISOString().slice(0, 10),
+      prizeId: data.prizes[0]?.id || 'default-prize',
+      status: 'Upcoming',
+      winnerCount: 1,
     }
-  }, [nextDraw, selectedPrizeId])
+  }, [nextDraw, data.draws, data.winners])
 
-  const activePrize: Prize | undefined = useMemo(() => {
+  // Current active prize fallback
+  const activePrize: Prize = useMemo(() => {
     if (selectedPrizeId) {
       const found = getPrize(selectedPrizeId)
       if (found) return found
     }
-    return defaultPrize
-  }, [selectedPrizeId, getPrize, defaultPrize])
+    if (nextDraw) {
+      const found = getPrize(nextDraw.prizeId)
+      if (found) return found
+    }
+    if (data.prizes.length > 0) return data.prizes[0]
+    return {
+      id: 'default-prize',
+      name: 'Grand Lucky Prize',
+      value: '₹50,000',
+      image: GIFT_PRESETS[0].image,
+      description: 'Official Grand Festival Prize',
+      assignedDrawId: null,
+      status: 'Available',
+    }
+  }, [selectedPrizeId, getPrize, nextDraw, data.prizes])
 
-  // STRICT POOL: only active participants who have NOT won yet
-  const pool = useMemo(
-    () => eligibleParticipants.filter((p) => p.status === 'Active'),
-    [eligibleParticipants],
-  )
+  // Eligible pool: all active participants
+  const pool = useMemo(() => {
+    if (eligibleParticipants.length > 0) {
+      return eligibleParticipants.filter((p) => p.status === 'Active')
+    }
+    return data.participants.filter((p) => p.status === 'Active')
+  }, [eligibleParticipants, data.participants])
+
+  // Map of participantId -> list of past wins with prize names
+  const previousWinsMap = useMemo(() => {
+    const map = new Map<
+      string,
+      Array<{ drawId: string; drawNumber?: number; prizeName: string; date: string }>
+    >()
+    data.winners.forEach((w) => {
+      const prize = getPrize(w.prizeId)
+      const draw = data.draws.find((d) => d.id === w.drawId)
+      const existing = map.get(w.participantId) || []
+      existing.push({
+        drawId: w.drawId,
+        drawNumber: draw?.number,
+        prizeName: prize?.name || 'Prize',
+        date: w.date,
+      })
+      map.set(w.participantId, existing)
+    })
+    return map
+  }, [data.winners, data.draws, getPrize])
 
   const [phase, setPhase] = useState<Phase>('ready')
   const [display, setDisplay] = useState<Participant | null>(pool[0] ?? null)
@@ -79,27 +120,6 @@ export function LuckyDrawPage() {
   const [toast, setToast] = useState('')
   const [flash, setFlash] = useState(false)
   const timers = useRef<number[]>([])
-
-  const handleConfirmWinner = async () => {
-    if (!winner || !nextDraw || !activePrize) return
-    setIsConfirming(true)
-    try {
-      const res = await confirmWinner(winner.id, nextDraw.id, activePrize.id)
-      if (res.ok) {
-        setConfirmedWinnerInfo({
-          winner,
-          prize: activePrize,
-          drawNumber: nextDraw.number,
-        })
-        setShowModal(false)
-        setToast(`Winner "${winner.name}" officially confirmed and recorded!`)
-      } else {
-        setToast(res.error || 'Failed to record winner')
-      }
-    } finally {
-      setIsConfirming(false)
-    }
-  }
 
   // New Gift Form State
   const [newGift, setNewGift] = useState({
@@ -137,24 +157,27 @@ export function LuckyDrawPage() {
     setProgress(0)
     setShowModal(false)
 
-    const duration = 5000
+    const duration = 4500
     const start = Date.now()
     let delay = 50
+    let stepCount = 0
 
     const tick = () => {
       const elapsed = Date.now() - start
       setProgress(Math.min(100, (elapsed / duration) * 100))
-      const idx = Math.floor(Math.random() * pool.length)
+      
+      // Cycle through pool smoothly even if pool size is 2
+      const idx = pool.length > 1 ? stepCount % pool.length : 0
+      stepCount++
       setDisplay(pool[idx])
 
-      if (elapsed < duration - 1400) {
+      if (elapsed < duration - 1200) {
         delay = Math.min(180, delay + 4)
         timers.current.push(window.setTimeout(tick, delay))
       } else if (elapsed < duration) {
-        timers.current.push(window.setTimeout(tick, 280))
+        timers.current.push(window.setTimeout(tick, 250))
       } else {
         setDisplay(chosen)
-        // Switch to verifying phase with spinner
         setPhase('verifying')
         timers.current.push(
           window.setTimeout(() => {
@@ -165,9 +188,9 @@ export function LuckyDrawPage() {
                 setFlash(false)
                 setPhase('done')
                 setShowModal(true)
-              }, 900),
+              }, 800),
             )
-          }, 1800),
+          }, 1500),
         )
       }
     }
@@ -182,13 +205,35 @@ export function LuckyDrawPage() {
     setProgress(0)
   }
 
+  const handleConfirmWinner = async () => {
+    if (!winner || !activePrize) return
+    setIsConfirming(true)
+    try {
+      const drawIdToUse = activeDraw?.id || 'live-draw'
+      const res = await confirmWinner(winner.id, drawIdToUse, activePrize.id)
+      if (res.ok) {
+        setConfirmedWinnerInfo({
+          winner,
+          prize: activePrize,
+          drawNumber: activeDraw?.number || 1,
+        })
+        setShowModal(false)
+        setToast(`Winner "${winner.name}" officially recorded!`)
+      } else {
+        setToast(res.error || 'Failed to record winner')
+      }
+    } finally {
+      setIsConfirming(false)
+    }
+  }
+
   const handleSelectPrize = (prizeId: string) => {
     setSelectedPrizeId(prizeId)
-    if (nextDraw) {
-      assignPrizeToDraw(nextDraw.id, prizeId)
+    if (activeDraw?.id && activeDraw.id !== 'live-draw') {
+      assignPrizeToDraw(activeDraw.id, prizeId)
     }
     setShowPrizeSelector(false)
-    setToast('Prize updated for this lucky draw!')
+    setToast('Prize selected for spinning!')
   }
 
   const handleSaveNewGift = (e: React.FormEvent) => {
@@ -198,18 +243,15 @@ export function LuckyDrawPage() {
     const newId = addPrize({
       name: newGift.name.trim(),
       value: newGift.value.trim() || '₹0',
-      description: newGift.description.trim() || 'Valanchery Festival Special Prize',
+      description: newGift.description.trim() || 'Lucky Draw Prize',
       image: newGift.image,
-      assignedDrawId: nextDraw?.id ?? null,
-      status: 'Assigned',
+      assignedDrawId: activeDraw?.id ?? null,
+      status: 'Available',
     })
 
-    if (nextDraw) {
-      assignPrizeToDraw(nextDraw.id, newId)
-    }
     setSelectedPrizeId(newId)
     setShowAddPrizeModal(false)
-    setToast(`Gift "${newGift.name}" created and assigned to Draw!`)
+    setToast(`Gift "${newGift.name}" added and ready for live draw!`)
     setNewGift({
       name: '',
       value: '',
@@ -218,317 +260,239 @@ export function LuckyDrawPage() {
     })
   }
 
-  if (!nextDraw || !activePrize) {
-    return (
-      <div className="space-y-4 font-['Montserrat',sans-serif]">
-        <div className="flex items-center justify-start">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
-            title="Go back"
-          >
-            <ArrowLeft size={14} /> Back
-          </button>
-        </div>
-
-        <div className="border border-[#e8decb] bg-white p-8 text-center text-[#140d10] md:p-12 shadow-xs">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#f7f0e6] text-[#ad823e]">
-            <Trophy size={28} />
-          </div>
-          <h2 className="mt-4 text-2xl font-bold tracking-tight text-[#140d10]">
-            All Scheduled Draws are Completed!
-          </h2>
-          <p className="mt-2 text-xs text-slate-600 sm:text-sm max-w-md mx-auto leading-relaxed">
-            Check the Winners records for complete festival history or configure a new draw in Schedule.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="inline-flex items-center gap-1.5 border border-slate-300 bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-700 transition cursor-pointer"
-            >
-              <ArrowLeft size={14} /> Back
-            </button>
-            <Link
-              to="/admin/winners"
-              className="border border-[#5e0917] bg-[#5e0917] px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-white transition hover:bg-[#720e1e] shadow-sm shadow-[#5e0917]/20"
-            >
-              View All Winners
-            </Link>
-            <Link
-              to="/admin/dashboard"
-              className="border border-slate-300 bg-[#fbf4ea] px-5 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-800 transition hover:bg-[#f6ebd8]"
-            >
-              Dashboard
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="relative min-h-[calc(100vh-120px)] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 font-sans">
+    <div className="relative min-h-[calc(100vh-120px)] flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
       <Confetti active={phase === 'reveal' || phase === 'done'} />
-      {flash && <div className="pointer-events-none absolute inset-0 z-20 bg-white animate-[flash_0.7s_ease]" />}
+      {flash && <div className="pointer-events-none absolute inset-0 z-20 bg-white animate-[flash_0.6s_ease]" />}
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
 
-      {/* Decorative festive vector elements matching reference design */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
-        {/* Left tilted gift box line art */}
-        <svg
-          className="absolute left-6 lg:left-14 top-1/2 -translate-y-1/2 -rotate-12 w-28 h-28 sm:w-36 sm:h-36 text-[#ebd8c2] opacity-50 hidden md:block"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="8" width="18" height="13" rx="2" />
-          <path d="M12 8v13" />
-          <path d="M19 12H5" />
-          <path d="M12 8a3 3 0 1 0-3-3c0 2 3 3 3 3z" />
-          <path d="M12 8a3 3 0 1 1 3-3c0 2-3 3-3 3z" />
-        </svg>
-
-        {/* Right tilted gift box line art */}
-        <svg
-          className="absolute right-6 lg:right-14 top-1/2 -translate-y-1/2 rotate-12 w-28 h-28 sm:w-36 sm:h-36 text-[#ebd8c2] opacity-50 hidden md:block"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="8" width="18" height="13" rx="2" />
-          <path d="M12 8v13" />
-          <path d="M19 12H5" />
-          <path d="M12 8a3 3 0 1 0-3-3c0 2 3 3 3 3z" />
-          <path d="M12 8a3 3 0 1 1 3-3c0 2-3 3-3 3z" />
-        </svg>
-
-        {/* Soft pastel bokeh dots */}
-        <div className="absolute left-[12%] top-[22%] h-3 w-3 rounded-full bg-[#f4cfd4] opacity-70" />
-        <div className="absolute right-[16%] top-[25%] h-3 w-3 rounded-full bg-[#fae7cf] opacity-80" />
-        <div className="absolute left-[14%] bottom-[28%] h-3 w-3 rounded-full bg-[#fae7cf] opacity-80" />
-        <div className="absolute right-[14%] bottom-[25%] h-3 w-3 rounded-full bg-[#f4cfd4] opacity-70" />
-
-        {/* Soft ribbon swirls */}
-        <svg
-          className="absolute left-[18%] bottom-[40%] w-12 h-12 text-[#f3d0d6] opacity-70 hidden sm:block"
-          viewBox="0 0 50 50"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        >
-          <path d="M10 40 Q 25 10, 45 25" />
-        </svg>
-        <svg
-          className="absolute right-[17%] bottom-[35%] w-14 h-14 text-[#f3d0d6] opacity-70 hidden sm:block"
-          viewBox="0 0 50 50"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        >
-          <path d="M5 15 Q 25 40, 45 20" />
-        </svg>
-      </div>
-
-      {/* Back to Dashboard Button */}
-      <div className="relative z-10 w-full max-w-[440px] mb-3.5 flex items-center justify-start">
+      {/* Top Controls Bar */}
+      <div className="relative z-10 w-full max-w-[460px] mb-4 flex items-center justify-between gap-3">
         <Link
           to="/admin/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#5c0b17] transition bg-white/90 hover:bg-white px-3.5 py-1.5 rounded-none border border-[#e8decb] shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-[#FF0B6B] transition bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs cursor-pointer"
         >
-          <ArrowLeft size={14} />
-          <span>Back to Dashboard</span>
+          <ArrowLeft size={13} />
+          <span>Dashboard</span>
         </Link>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPrizeSelector(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#FF0B6B] hover:bg-pink-50 bg-white border border-pink-200 px-3 py-1.5 rounded-lg transition cursor-pointer shadow-2xs"
+          >
+            <Gift size={13} />
+            <span>Select Gift</span>
+          </button>
+        </div>
       </div>
 
-      {/* Main Centered Card */}
-      <div className="relative z-10 w-full max-w-[440px] rounded-none bg-[#fffdfa] p-7 sm:p-10 text-center shadow-[0_22px_50px_rgba(0,0,0,0.06)] border border-[#f5ece0]">
-        {/* Draw Title */}
-        <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#5c0b17]">
-          Lucky Draw #{String(nextDraw.number).padStart(2, '0')}
+      {/* Main Centered Stage Card */}
+      <div className="relative z-10 w-full max-w-[460px] rounded-2xl bg-white p-6 sm:p-8 text-center shadow-lg shadow-pink-500/5 border border-pink-100">
+        {/* Draw Header */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="rounded-md bg-pink-50 border border-pink-100 px-2.5 py-0.5 text-xs font-semibold text-[#FF0B6B] uppercase">
+            Live Draw #{String(activeDraw.number).padStart(2, '0')}
+          </span>
+        </div>
+
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+          Lucky Draw Stage
         </h1>
 
-        {/* Rose accent divider */}
-        <div className="mx-auto mt-2 h-[2px] w-12 rounded-none bg-[#deb3ba]" />
-
-        {/* Eligible Participants Count */}
-        <p className="mt-2.5 text-xs sm:text-[13px] text-slate-500 font-normal">
-          {pool.length} eligible participants in this draw
+        <p className="mt-1 text-xs text-slate-400 font-normal">
+          {pool.length} participants eligible in this live draw
         </p>
 
-        {/* Prize Image */}
-        <div className="mt-6 mb-4 w-full h-44 sm:h-48 overflow-hidden rounded-none shadow-xs border border-[#eee4d6]">
-          <img
-            src={activePrize.image}
-            alt={activePrize.name}
-            className="w-full h-full object-cover"
-          />
+        {/* Prize Showcase Card */}
+        <div className="mt-5 rounded-xl border border-pink-100 bg-pink-50/20 p-3.5 space-y-2.5">
+          <div className="w-full h-44 sm:h-48 overflow-hidden rounded-lg bg-white border border-pink-100 shadow-2xs relative">
+            <img
+              src={activePrize.image}
+              alt={activePrize.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-2.5 right-2.5 rounded-md bg-white/95 backdrop-blur-xs border border-pink-100 px-2.5 py-0.5 text-xs font-semibold font-mono text-[#FF0B6B] shadow-2xs">
+              {activePrize.value}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-left">
+            <div>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Current Gift</p>
+              <h2 className="text-sm font-semibold text-slate-800">{activePrize.name}</h2>
+            </div>
+            {phase === 'ready' && (
+              <button
+                onClick={() => setShowPrizeSelector(true)}
+                className="text-xs font-medium text-[#FF0B6B] hover:underline cursor-pointer"
+              >
+                Change
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Prize Label & Name */}
-        <div>
-          <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.22em] text-[#ad823e] uppercase">
-            CURRENT PRIZE
-          </p>
-          <p className="text-xl sm:text-[22px] font-bold text-[#5c0b17] mt-1">
-            {activePrize.name} <span className="font-bold">({activePrize.value})</span>
-          </p>
-
-          {/* Change Prize Button */}
-          {phase === 'ready' && (
-            <button
-              onClick={() => setShowPrizeSelector(true)}
-              className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-[#5c0b17] hover:text-white bg-[#fbf4ea] hover:bg-[#5c0b17] border border-[#e8decb] hover:border-[#5c0b17] px-3.5 py-1.5 transition cursor-pointer shadow-2xs"
-            >
-              <Gift size={13} className="text-[#ad823e]" />
-              <span>Select Gift from Vault</span>
-            </button>
-          )}
-        </div>
-
-        {/* Ready Phase - Prominent START LIVE DRAW Button */}
-        {phase === 'ready' && (
+        {/* Ready Phase - Spin Button */}
+        {phase === 'ready' && !confirmedWinnerInfo && (
           <div className="mt-6">
             {pool.length > 0 ? (
               <button
                 onClick={startDraw}
-                className="w-full rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3.5 px-6 text-xs sm:text-[13px] font-bold tracking-widest uppercase text-white shadow-[0_8px_20px_rgba(94,9,23,0.35)] transition duration-150 active:scale-[0.98] cursor-pointer"
+                className="w-full rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-3 px-6 text-xs sm:text-sm font-semibold tracking-wide text-white shadow-md shadow-pink-300 transition duration-150 active:scale-[0.99] cursor-pointer"
               >
-                START LIVE DRAW
+                Start Live Draw
               </button>
             ) : (
-              <p className="text-xs text-rose-700 font-medium py-2">
-                No eligible participants remaining in the pool.
+              <p className="text-xs text-slate-400 font-normal py-2">
+                No active participants registered in database.
               </p>
             )}
           </div>
         )}
 
-        {/* Spinning Phase in Card */}
+        {/* Spinning Phase */}
         {phase === 'spinning' && display && (
-          <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-[#ad823e] uppercase animate-pulse">
+          <div className="mt-6 border-t border-slate-100 pt-5 space-y-3">
+            <p className="text-xs font-semibold text-[#FF0B6B] uppercase tracking-wider animate-pulse">
               Selecting Winner…
             </p>
-            <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight truncate">
+            <p className="text-2xl font-bold text-slate-900 tracking-tight truncate">
               {display.name}
             </p>
-            {display.couponId && (
-              <span className="inline-block font-mono text-xs font-bold text-slate-800 bg-[#f7f0e6] px-3 py-1 rounded-none border border-[#e8decb]">
-                🎫 {display.couponId}
-              </span>
-            )}
-            <div className="h-1.5 w-full bg-slate-200 overflow-hidden rounded-none mt-3">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {display.couponId && (
+                <span className="inline-block font-mono text-xs font-medium text-pink-700 bg-pink-50 px-2.5 py-0.5 rounded-md border border-pink-100">
+                  🎫 {display.couponId}
+                </span>
+              )}
+              {previousWinsMap.has(display.id) && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+                  <Trophy size={11} className="text-amber-600" />
+                  Already Won ({previousWinsMap.get(display.id)!.length}x)
+                </span>
+              )}
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 overflow-hidden rounded-full mt-3">
               <div
-                className="h-full bg-[#5e0917] transition-all duration-75"
+                className="h-full bg-[#FF0B6B] transition-all duration-75 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
         )}
 
-        {/* Verifying Phase with Spinner */}
+        {/* Verifying Phase */}
         {phase === 'verifying' && display && (
-          <div className="mt-6 border-t border-[#f0e6d6] pt-6 pb-2 space-y-3">
+          <div className="mt-6 border-t border-slate-100 pt-5 pb-2 space-y-3">
             <div className="flex justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fbf4ea] text-[#ad823e]">
-                <Loader2 size={26} className="animate-spin" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-50 text-[#FF0B6B]">
+                <Loader2 size={22} className="animate-spin" />
               </div>
             </div>
-            <p className="text-xs font-bold tracking-wider text-[#ad823e] uppercase">
+            <p className="text-xs font-semibold text-[#FF0B6B] uppercase">
               Verifying Winner & Token…
             </p>
-            <p className="text-xl sm:text-2xl font-bold text-[#5c0b17] tracking-tight truncate">
+            <p className="text-xl font-bold text-slate-900 tracking-tight truncate">
               {display.name}
             </p>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Checking tamper-proof certificate & coupon status in ledger…
-            </p>
+            {previousWinsMap.has(display.id) && (
+              <p className="text-xs text-amber-700 font-medium">
+                🏆 Previous Winner: Won {previousWinsMap.get(display.id)!.map((p) => p.prizeName).join(', ')}
+              </p>
+            )}
           </div>
         )}
 
-        {/* Confirmed Phase in Card */}
+        {/* Confirmed Phase */}
         {confirmedWinnerInfo ? (
-          <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 bg-emerald-100/90 border border-emerald-600/40 px-3 py-1 rounded-none uppercase tracking-wider">
-              <CheckCircle2 size={13} className="text-emerald-700" />
-              Winner Confirmed & Saved to DB
+          <div className="mt-6 border-t border-slate-100 pt-5 space-y-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-md">
+              <CheckCircle2 size={13} className="text-emerald-600" />
+              Winner Confirmed & Saved
             </span>
-            <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight">
+            <p className="text-2xl font-bold text-slate-900 tracking-tight">
               {confirmedWinnerInfo.winner.name}
             </p>
             {confirmedWinnerInfo.winner.couponId && (
-              <p className="font-mono text-xs sm:text-sm font-bold text-[#8b1e2e]">
+              <p className="font-mono text-xs font-medium text-[#FF0B6B]">
                 🎫 Coupon: {confirmedWinnerInfo.winner.couponId}
               </p>
             )}
-            <p className="font-mono text-xs font-bold text-slate-800">
+            <p className="font-mono text-xs text-slate-500 font-normal">
               Phone: +91 {confirmedWinnerInfo.winner.phone}
             </p>
+            {previousWinsMap.get(confirmedWinnerInfo.winner.id)?.length ? (
+              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md">
+                <Trophy size={13} className="text-amber-600" />
+                <span>Awarded {previousWinsMap.get(confirmedWinnerInfo.winner.id)!.length} total prizes</span>
+              </div>
+            ) : null}
 
-            <div className="pt-3 flex flex-col gap-2">
-              <Link
-                to="/admin/winners"
-                className="w-full rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition text-center"
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setConfirmedWinnerInfo(null)
+                  setWinner(null)
+                  setPhase('ready')
+                }}
+                className="w-full rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-2.5 text-xs font-semibold tracking-wide text-white shadow-xs transition cursor-pointer"
               >
-                View in Winners List →
-              </Link>
+                Spin Next Winner / Draw
+              </button>
               <div className="flex gap-2">
                 <Link
+                  to="/admin/winners"
+                  className="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition text-center"
+                >
+                  View Winners
+                </Link>
+                <Link
                   to="/admin/dashboard"
-                  className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition text-center"
+                  className="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition text-center"
                 >
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => {
-                    setConfirmedWinnerInfo(null)
-                    setWinner(null)
-                    setPhase('ready')
-                  }}
-                  className="flex-1 rounded-none border border-[#e8decb] bg-[#faf6ee] hover:bg-[#f6ebd8] py-2.5 text-xs font-bold tracking-wider text-[#5e0917] transition cursor-pointer"
-                >
-                  Next Draw
-                </button>
               </div>
             </div>
           </div>
         ) : (
           /* Reveal / Done Phase in Card */
           (phase === 'reveal' || phase === 'done') && winner && (
-            <div className="mt-6 border-t border-[#f0e6d6] pt-5 space-y-3">
-              <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-3 py-0.5 rounded-none uppercase tracking-wider">
-                Winner Selected
-              </span>
-              <p className="text-2xl sm:text-3xl font-extrabold text-[#5c0b17] tracking-tight">
+            <div className="mt-6 border-t border-slate-100 pt-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-md uppercase">
+                  Winner Selected
+                </span>
+                {previousWinsMap.has(winner.id) && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md uppercase">
+                    <Trophy size={10} className="text-amber-600" />
+                    Already Won ({previousWinsMap.get(winner.id)!.length}x)
+                  </span>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-slate-900 tracking-tight">
                 {winner.name}
               </p>
               {winner.couponId && (
-                <p className="font-mono text-xs sm:text-sm font-bold text-[#8b1e2e]">
+                <p className="font-mono text-xs font-medium text-[#FF0B6B]">
                   🎫 Coupon: {winner.couponId}
                 </p>
               )}
-              <p className="font-mono text-xs font-bold text-slate-800">
+              <p className="font-mono text-xs text-slate-500 font-normal">
                 Phone: +91 {winner.phone}
               </p>
 
-              <div className="pt-2 flex flex-col gap-2 sm:flex-row">
+              <div className="pt-2 flex gap-2">
                 <button
                   onClick={() => setShowModal(true)}
-                  className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-3 text-xs font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 transition active:scale-95 cursor-pointer"
+                  className="flex-1 rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-2.5 text-xs font-semibold tracking-wide text-white shadow-xs transition cursor-pointer"
                 >
                   Confirm Winner
                 </button>
                 <button
                   onClick={() => setConfirmAgain(true)}
-                  className="rounded-none border border-slate-300 py-3 px-4 text-xs font-semibold tracking-wider text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  className="rounded-lg border border-slate-200 py-2.5 px-3.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Re-spin
                 </button>
@@ -538,202 +502,100 @@ export function LuckyDrawPage() {
         )}
       </div>
 
-      {/* Confirmation Modal - Festive Certificate Design */}
+      {/* Confirmation Modal */}
       {showModal && winner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto font-['Montserrat',sans-serif]">
-          <div className="animate-reveal relative w-full max-w-2xl my-auto rounded-none border border-[#e8decb] bg-[#fffaf6] p-6 sm:p-9 text-[#140d10] shadow-[0_25px_60px_rgba(0,0,0,0.25)] overflow-hidden">
-            {/* Background Decorative Floral & Bokeh Accents */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden select-none opacity-40">
-              <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-[#fde2e4] blur-2xl" />
-              <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#faecd6] blur-2xl" />
-              <div className="absolute -right-12 -bottom-12 h-40 w-40 rounded-full bg-[#fde2e4] blur-2xl" />
-              <div className="absolute -left-12 -bottom-12 h-40 w-40 rounded-full bg-[#faecd6] blur-2xl" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="relative w-full max-w-lg my-auto rounded-2xl border border-pink-100 bg-white p-6 sm:p-7 text-center shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#FF0B6B]">
+                <Sparkles size={14} />
+                <span>Winner Announcement</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
             </div>
 
-            {/* Top Bar: Brand & Back/Close Button */}
-            <div className="relative z-10 flex items-center justify-between border-b border-[#f3e5d7] pb-3 text-left">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center bg-[#5e0917] text-white font-bold text-xs shadow-xs">
-                  VF
-                </div>
-                <div>
-                  <p className="text-xs font-bold tracking-tight text-[#140d10] uppercase">
-                    Valanchery Festival
-                  </p>
-                  <p className="text-[9px] tracking-widest text-[#ad823e] uppercase font-semibold">
-                    Shop · Celebrate · Win Together
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-[#5e0917] bg-[#fbf4ea] hover:bg-[#f6ebd8] border border-[#e8decb] px-3 py-1.5 transition cursor-pointer"
-                >
-                  <ArrowLeft size={13} />
-                  <span>Back to Stage</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition cursor-pointer"
-                  title="Close"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+            {/* Trophy icon */}
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pink-50 text-[#FF0B6B]">
+              <Trophy size={28} />
             </div>
 
-            {/* Center Trophy & Congratulations Header */}
-            <div className="relative z-10 text-center mt-5 mb-4">
-              {/* Golden Trophy with Laurel Icon */}
-              <div className="mx-auto flex items-center justify-center gap-2">
-                <span className="text-[#ad823e] text-lg select-none">🌿</span>
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#fff3db] to-[#fce4ba] border border-[#e5c278] text-[#ad823e] shadow-sm">
-                  <Trophy size={28} className="text-[#b58737] drop-shadow-xs" />
-                </div>
-                <span className="text-[#ad823e] text-lg select-none scale-x-[-1]">🌿</span>
-              </div>
-
-              {/* Congratulations Title */}
-              <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-[#5e0917]">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-900">
                 Congratulations!
               </h2>
+              <p className="mt-0.5 text-xs text-slate-400 font-normal">
+                Lucky Draw Winner Selected
+              </p>
+            </div>
 
-              {/* Subtitle with gold accent lines */}
-              <div className="mt-1.5 flex items-center justify-center gap-3">
-                <div className="h-[1px] w-12 sm:w-20 bg-gradient-to-r from-transparent to-[#ad823e]" />
-                <p className="text-[10px] sm:text-[11px] font-bold tracking-[0.25em] text-[#8c6727] uppercase">
-                  LUCKY DRAW WINNER · DRAW #{String(nextDraw.number).padStart(2, '0')}
+            {/* Winner info box */}
+            <div className="rounded-xl border border-pink-100 bg-pink-50/20 p-4 text-center space-y-1">
+              <h3 className="text-xl font-bold text-slate-900">{winner.name}</h3>
+              <p className="text-xs text-slate-600 font-medium">+91 {winner.phone}</p>
+              {winner.couponId && (
+                <p className="text-xs font-mono font-medium text-[#FF0B6B]">Token ID: {winner.couponId}</p>
+              )}
+            </div>
+
+            {/* Previous Win notice if already won */}
+            {previousWinsMap.has(winner.id) && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-left space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
+                  <Trophy size={14} className="text-amber-600 shrink-0" />
+                  <span>Already Won in Previous Draw</span>
+                </div>
+                <p className="text-[11px] text-amber-800 font-normal leading-relaxed">
+                  This participant has previously won:{' '}
+                  <strong>{previousWinsMap.get(winner.id)!.map((p) => p.prizeName).join(', ')}</strong>.
+                  They are eligible and can be awarded this gift as well!
                 </p>
-                <div className="h-[1px] w-12 sm:w-20 bg-gradient-to-l from-transparent to-[#ad823e]" />
+              </div>
+            )}
+
+            {/* Prize won box */}
+            <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-left">
+              <img
+                src={activePrize.image}
+                alt={activePrize.name}
+                className="h-12 w-14 object-cover rounded-lg border border-pink-100 bg-white shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-medium text-slate-400 uppercase">Prize Won</p>
+                <p className="text-xs font-semibold text-slate-800 truncate">{activePrize.name}</p>
+                <p className="text-xs font-mono font-semibold text-[#FF0B6B]">{activePrize.value}</p>
               </div>
             </div>
-
-            {/* Main Winner Card */}
-            <div className="relative z-10 my-5 rounded-none border border-[#eddcd0] bg-white p-5 sm:p-6 shadow-md text-left">
-              {/* Grand Prize Floating Badge on Card Top */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5e0917] px-4 py-1 text-[11px] font-bold tracking-wider uppercase text-white shadow-md shadow-[#5e0917]/25 border border-[#8a1a2e]">
-                  <Gift size={12} className="text-[#fce4ba]" />
-                  <span>Grand Prize Draw</span>
-                </span>
-              </div>
-
-              {/* Winner Profile & Info Section */}
-              <div className="mt-2 flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                {/* Avatar with Golden Crown */}
-                <div className="relative shrink-0">
-                  <div className="absolute -top-3 -left-1 text-base select-none z-10 rotate-[-15deg] drop-shadow-xs">
-                    👑
-                  </div>
-                  <div className="flex h-18 w-18 items-center justify-center rounded-full bg-[#f7d6dc] border-2 border-white shadow-sm text-[#720e1e] font-bold text-2xl">
-                    {winner.name.charAt(0).toUpperCase()}
-                  </div>
-                </div>
-
-                {/* Winner Name, Phone & Coupon ID */}
-                <div className="flex-1 text-center sm:text-left min-w-0">
-                  <h3 className="text-2xl sm:text-[26px] font-bold tracking-tight text-[#140d10] truncate">
-                    {winner.name}
-                  </h3>
-
-                  <div className="mt-1.5 flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 text-xs">
-                    <span className="font-semibold text-slate-800 tracking-wide">
-                      +91 {winner.phone}
-                    </span>
-                  </div>
-
-                  {/* Clean Inline Coupon ID without box */}
-                  {winner.couponId && (
-                    <div className="mt-1.5 flex items-center justify-center sm:justify-start gap-1.5 text-xs">
-                      <span className="text-[11px] font-semibold text-[#8c6727] tracking-wider uppercase">
-                        Token ID:
-                      </span>
-                      <span className="font-mono font-bold text-xs tracking-wider text-[#5e0917]">
-                        {winner.couponId}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Prize Inset Banner Box */}
-              <div className="mt-5 flex flex-col sm:flex-row items-center justify-between gap-3.5 rounded-none border border-[#f2ded6] bg-[#fbf2ef] p-3.5 sm:p-4">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <img
-                    src={activePrize.image}
-                    alt={activePrize.name}
-                    className="h-14 w-16 sm:h-16 sm:w-20 object-cover border border-[#e8decb] bg-white shrink-0 shadow-2xs"
-                  />
-                  <div>
-                    <p className="text-[10px] font-bold tracking-widest text-[#8c6727] uppercase">
-                      PRIZE WON
-                    </p>
-                    <p className="text-base sm:text-lg font-bold text-[#5e0917] leading-snug">
-                      {activePrize.name}
-                    </p>
-                    {activePrize.description && (
-                      <p className="text-[11px] text-slate-500 line-clamp-1">
-                        {activePrize.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="hidden sm:block h-10 w-[1px] bg-[#e4cdc4]" />
-
-                <div className="text-center sm:text-right w-full sm:w-auto border-t sm:border-t-0 border-[#f0dbd2] pt-2 sm:pt-0">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase block sm:hidden">
-                    Value
-                  </span>
-                  <span className="font-mono text-xl sm:text-2xl font-bold text-[#5e0917]">
-                    {activePrize.value}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Participation Note */}
-            <p className="relative z-10 text-center text-xs text-slate-500 font-medium">
-              We appreciate your participation! Keep shopping, keep supporting local.
-            </p>
 
             {/* Action Buttons */}
-            <div className="relative z-10 mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="pt-2 flex gap-2">
               <button
                 disabled={isConfirming}
                 onClick={handleConfirmWinner}
-                className="w-full sm:w-auto min-w-[200px] rounded-full bg-[#5e0917] hover:bg-[#720e1e] py-3 px-6 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-white transition duration-150 active:scale-95 cursor-pointer shadow-lg shadow-[#5e0917]/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-2.5 text-xs font-semibold tracking-wide text-white transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isConfirming ? (
                   <>
-                    <Loader2 size={15} className="animate-spin text-white" />
-                    <span>RECORDING WINNER…</span>
+                    <Loader2 size={14} className="animate-spin text-white" />
+                    <span>Recording…</span>
                   </>
                 ) : (
-                  <span>CONFIRM WINNER →</span>
+                  <span>Confirm Winner</span>
                 )}
               </button>
 
               <button
                 disabled={isConfirming}
                 onClick={() => setConfirmAgain(true)}
-                className="w-full sm:w-auto rounded-full border border-[#d8c5b6] bg-white hover:bg-[#faf6f0] py-3 px-6 text-xs sm:text-[13px] font-bold tracking-wider uppercase text-slate-700 transition cursor-pointer disabled:opacity-50"
+                className="rounded-lg border border-slate-200 py-2.5 px-4 text-xs font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
               >
-                SPIN AGAIN
+                Spin Again
               </button>
-            </div>
-
-            {/* Bottom Tagline Footer */}
-            <div className="relative z-10 mt-6 pt-3 border-t border-[#f3e5d7] flex items-center justify-center gap-3 text-center">
-              <div className="h-[1px] w-8 sm:w-16 bg-[#e2cebf]" />
-              <p className="text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[#8c6727] uppercase">
-                VALANCHERY FESTIVAL · A BRIGHTER TOWN TOGETHER
-              </p>
-              <div className="h-[1px] w-8 sm:w-16 bg-[#e2cebf]" />
             </div>
           </div>
         </div>
@@ -741,22 +603,22 @@ export function LuckyDrawPage() {
 
       {/* Re-spin confirmation */}
       {confirmAgain && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 font-['Montserrat',sans-serif]">
-          <div className="w-full max-w-sm rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
-            <h4 className="text-lg font-bold text-[#140d10]">Select another winner?</h4>
-            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-              This will discard the current draw result and allow you to re-spin the randomizer for another participant.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-xl space-y-3">
+            <h4 className="text-base font-semibold text-slate-900">Select another winner?</h4>
+            <p className="text-xs text-slate-500 font-normal">
+              This will discard the current draw result and spin the randomizer for another participant.
             </p>
-            <div className="mt-6 flex gap-2">
+            <div className="pt-2 flex gap-2">
               <button
                 onClick={() => setConfirmAgain(false)}
-                className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-bold tracking-wider uppercase text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={resetSpin}
-                className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
+                className="flex-1 rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-2 text-xs font-semibold text-white cursor-pointer"
               >
                 Re-spin
               </button>
@@ -767,60 +629,58 @@ export function LuckyDrawPage() {
 
       {/* Prize / Gift Selector Modal */}
       {showPrizeSelector && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-100 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-[#140d10]">Choose Gift for this Draw</h3>
-                <p className="text-xs text-slate-500">Select any gift from the vault to award in Lucky Draw #{nextDraw.number}</p>
+                <h3 className="text-base font-semibold text-slate-900">Choose Gift for Live Draw</h3>
+                <p className="text-xs text-slate-400 font-normal">Select any gift to award in this spin</p>
               </div>
-              <button onClick={() => setShowPrizeSelector(false)} className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer">
+              <button onClick={() => setShowPrizeSelector(false)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2.5 sm:grid-cols-2 max-h-72 overflow-y-auto">
               {data.prizes.map((p) => {
                 const isSelected = p.id === activePrize?.id
                 return (
                   <div
                     key={p.id}
                     onClick={() => handleSelectPrize(p.id)}
-                    className={`cursor-pointer border p-3.5 transition flex items-center gap-3 rounded-none ${isSelected
-                        ? 'border-[#5e0917] bg-[#fbf3f4] ring-2 ring-[#5e0917]'
-                        : 'border-[#e8decb] hover:border-[#5e0917] hover:bg-[#fbf3f4]/40 bg-[#faf7f0]'
-                      }`}
+                    className={`cursor-pointer border p-3 transition flex items-center gap-3 rounded-xl ${
+                      isSelected
+                        ? 'border-[#FF0B6B] bg-pink-50/50 ring-1 ring-[#FF0B6B]'
+                        : 'border-slate-100 hover:border-pink-200 bg-white'
+                    }`}
                   >
-                    <img src={p.image} alt={p.name} className="h-14 w-14 object-cover rounded-none border border-[#e8decb] shrink-0" />
+                    <img src={p.image} alt={p.name} className="h-12 w-12 object-cover rounded-lg border border-pink-100 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-[#140d10] truncate">{p.name}</p>
-                        {isSelected && <Check size={14} className="text-[#5e0917] shrink-0" />}
+                        <p className="text-xs font-semibold text-slate-800 truncate">{p.name}</p>
+                        {isSelected && <Check size={14} className="text-[#FF0B6B] shrink-0" />}
                       </div>
-                      <p className="text-xs font-mono font-bold text-[#5e0917] mt-0.5">{p.value}</p>
-                      {p.description && (
-                        <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{p.description}</p>
-                      )}
+                      <p className="text-xs font-mono font-medium text-[#FF0B6B] mt-0.5">{p.value}</p>
                     </div>
                   </div>
                 )
               })}
             </div>
 
-            <div className="mt-6 flex items-center justify-between border-t border-[#e8decb] pt-4">
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowPrizeSelector(false)
                   setShowAddPrizeModal(true)
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#5e0917] hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#FF0B6B] hover:underline cursor-pointer"
               >
-                <Plus size={14} /> Add A Brand New Gift Instead
+                <Plus size={14} /> Add New Gift
               </button>
               <button
                 onClick={() => setShowPrizeSelector(false)}
-                className="rounded-none border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Close
               </button>
@@ -831,61 +691,49 @@ export function LuckyDrawPage() {
 
       {/* Add New Gift Modal */}
       {showAddPrizeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-none border border-[#e8decb] bg-white p-6 sm:p-7 text-[#140d10] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#e8decb] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-100 bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-[#140d10]">Add New Gift</h3>
-                <p className="text-xs text-slate-500">Create a gift instantly and assign it to the live draw</p>
+                <h3 className="text-base font-semibold text-slate-900">Add New Gift</h3>
+                <p className="text-xs text-slate-400 font-normal">Create a gift instantly for live spinning</p>
               </div>
-              <button onClick={() => setShowAddPrizeModal(false)} className="text-slate-400 hover:text-slate-800 p-1 cursor-pointer">
+              <button onClick={() => setShowAddPrizeModal(false)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveNewGift} className="mt-4 space-y-4 text-xs">
+            <form onSubmit={handleSaveNewGift} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Gift / Prize Name *</label>
+                <label className="block text-[11px] font-medium text-slate-600 uppercase mb-1">Gift Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. 5G Smartphone, Gold Coin, Electric Bike"
                   value={newGift.name}
                   onChange={(e) => setNewGift({ ...newGift, name: e.target.value })}
-                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#FF0B6B]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Approximate Value *</label>
+                <label className="block text-[11px] font-medium text-slate-600 uppercase mb-1">Approximate Value *</label>
                 <input
                   type="text"
                   placeholder="e.g. ₹25,000"
                   value={newGift.value}
                   onChange={(e) => setNewGift({ ...newGift, value: e.target.value })}
-                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-[#FF0B6B]"
                 />
               </div>
 
+              {/* Photo & Presets */}
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase">Description</label>
-                <input
-                  type="text"
-                  placeholder="Short description of prize"
-                  value={newGift.description}
-                  onChange={(e) => setNewGift({ ...newGift, description: e.target.value })}
-                  className="mt-1 w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                />
-              </div>
-
-              {/* Prize Photo Uploader & Selector */}
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-700 uppercase mb-1.5">
-                  Gift Photo / Image *
+                <label className="block text-[11px] font-medium text-slate-600 uppercase mb-1">
+                  Gift Photo
                 </label>
 
-                {/* File Upload Box */}
-                <div className="border-2 border-dashed border-[#d8c59f] bg-[#faf7f0] p-3 text-center transition hover:bg-[#f5eedf]">
+                <div className="rounded-xl border border-dashed border-pink-200 bg-pink-50/20 p-3 text-center">
                   <input
                     type="file"
                     id="live-gift-image-upload"
@@ -897,56 +745,32 @@ export function LuckyDrawPage() {
                       const reader = new FileReader()
                       reader.onload = (evt) => {
                         const res = evt.target?.result as string
-                        if (res) {
-                          setNewGift((prev) => ({ ...prev, image: res }))
-                        }
+                        if (res) setNewGift((prev) => ({ ...prev, image: res }))
                       }
                       reader.readAsDataURL(file)
                     }}
                   />
 
-                  {newGift.image ? (
-                    <div className="flex flex-col sm:flex-row items-center gap-3">
-                      <div className="h-16 w-24 shrink-0 overflow-hidden border border-[#d8c59f] bg-white shadow-xs">
-                        <img src={newGift.image} alt="Preview" className="h-full w-full object-cover" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-xs font-bold text-slate-800">Photo Attached</p>
-                        <div className="mt-1 flex gap-2">
-                          <label
-                            htmlFor="live-gift-image-upload"
-                            className="inline-flex items-center gap-1 bg-[#5e0917] hover:bg-[#720e1e] text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider cursor-pointer shadow-xs transition active:scale-95"
-                          >
-                            <Upload size={11} /> Change
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setNewGift((prev) => ({ ...prev, image: '' }))}
-                            className="inline-flex items-center gap-1 border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-semibold cursor-pointer"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <img src={newGift.image} alt="Preview" className="h-12 w-14 object-cover rounded-lg border border-pink-200 bg-white shrink-0" />
+                      <p className="text-xs font-medium text-slate-800">Photo Attached</p>
                     </div>
-                  ) : (
+
                     <label
                       htmlFor="live-gift-image-upload"
-                      className="flex flex-col items-center justify-center cursor-pointer py-1.5"
+                      className="inline-flex items-center gap-1 rounded-lg border border-pink-200 bg-white hover:bg-pink-50 text-[#FF0B6B] px-3 py-1.5 text-xs font-medium cursor-pointer transition"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e6d6] text-[#720e1e]">
-                        <Upload size={15} />
-                      </div>
-                      <p className="mt-1 text-xs font-bold text-slate-800">Click to Upload Photo from Device</p>
+                      <Upload size={12} /> Upload
                     </label>
-                  )}
+                  </div>
                 </div>
 
                 <div className="mt-2.5">
-                  <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                    Or Select Preset Image
+                  <p className="text-[10px] font-medium text-slate-400 uppercase mb-1">
+                    Or Select Preset:
                   </p>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 max-h-28 overflow-y-auto border border-[#e8decb] p-2 bg-white">
+                  <div className="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto rounded-lg border border-slate-100 p-1.5 bg-white">
                     {GIFT_PRESETS.map((preset, idx) => (
                       <button
                         key={idx}
@@ -960,40 +784,31 @@ export function LuckyDrawPage() {
                             description: newGift.description || preset.description,
                           })
                         }}
-                        className={`relative border p-1 text-left transition cursor-pointer ${newGift.image === preset.image ? 'border-[#5e0917] bg-[#fffbf2] ring-2 ring-[#5e0917]' : 'border-[#e8decb] bg-white'
-                          }`}
+                        className={`rounded-lg border p-1 text-center transition cursor-pointer ${
+                          newGift.image === preset.image ? 'border-[#FF0B6B] bg-pink-50 ring-1 ring-[#FF0B6B]' : 'border-slate-100 hover:border-pink-200'
+                        }`}
                       >
-                        <img src={preset.image} alt={preset.name} className="h-10 w-full object-cover" />
-                        <p className="mt-1 text-[9px] truncate font-bold text-slate-800">{preset.name}</p>
+                        <img src={preset.image} alt={preset.name} className="h-8 w-full object-cover rounded" />
+                        <p className="mt-0.5 text-[8px] truncate font-medium text-slate-700">{preset.name}</p>
                       </button>
                     ))}
                   </div>
                 </div>
-
-                <div className="mt-2">
-                  <input
-                    type="url"
-                    placeholder="Or paste custom image URL"
-                    value={newGift.image}
-                    onChange={(e) => setNewGift({ ...newGift, image: e.target.value })}
-                    className="w-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-[#5e0917]"
-                  />
-                </div>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-[#e8decb]">
+              <div className="pt-2 flex gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddPrizeModal(false)}
-                  className="flex-1 rounded-none border border-slate-300 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="flex-1 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-none bg-[#5e0917] hover:bg-[#720e1e] py-2.5 text-xs font-bold tracking-wider uppercase text-white transition active:scale-95 cursor-pointer shadow-md shadow-[#5e0917]/20"
+                  className="flex-1 rounded-lg bg-[#FF0B6B] hover:bg-[#E0095E] py-2 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
                 >
-                  Save & Use for Draw
+                  Save & Use
                 </button>
               </div>
             </form>

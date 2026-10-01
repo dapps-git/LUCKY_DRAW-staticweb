@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { AnimatedNumber } from '../../components/AnimatedNumber'
 import { useApp } from '../../context/AppContext'
-import { formatDate, formatShortDate, maskPhone } from '../../lib/format'
+import { formatDate, formatShortDate } from '../../lib/format'
 import { exportCouponsToXlsx } from '../../lib/exportCsv'
-import { Sparkles, ArrowRight, Trophy, Ticket, Layers, Download, CheckCircle2, ListFilter, Users } from 'lucide-react'
+import { Sparkles, ArrowRight, Trophy, Ticket, Layers, Download, Users, QrCode, Eye, UserCheck, Dices } from 'lucide-react'
 
 export function DashboardPage() {
-  const { data, coupons, batches, nextDraw, getPrize, getParticipant, getDraw, eligibleParticipants } = useApp()
+  const { data, coupons, batches, nextDraw, getPrize, getParticipant, eligibleParticipants } = useApp()
   const prize = nextDraw ? getPrize(nextDraw.prizeId) : undefined
   const recent = [...data.winners]
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime() || b.id.localeCompare(a.id))
@@ -14,54 +14,101 @@ export function DashboardPage() {
 
   const allBatches = batches && batches.length > 0 ? batches : data.batches || []
   const totalFromBatches = allBatches.reduce((acc, b) => acc + (b.count || 0), 0)
-  const totalCouponsCount = typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : totalFromBatches
+  const totalCouponsCount = totalFromBatches > 0 ? totalFromBatches : (typeof data.totalCouponsCount === 'number' ? data.totalCouponsCount : 0)
   const usedCount = typeof data.usedCouponsCount === 'number' ? data.usedCouponsCount : data.participants.length
   const unusedCount = Math.max(0, totalCouponsCount - usedCount)
 
   const handleDownloadBatch = (batchId: string, batchName: string) => {
     const batchCoupons = (coupons || []).filter((c) => c.batchId === batchId)
-    const activeBase = typeof window !== 'undefined' ? window.location.origin : 'https://www.valancheryfestival.com'
-    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`, activeBase)
+    exportCouponsToXlsx(batchCoupons, `${batchName.replace(/\s+/g, '_')}.xlsx`)
   }
 
   const cards = [
-    { label: 'Total Prepared Coupons', value: totalCouponsCount, color: 'text-slate-900', bg: 'bg-white', border: 'border-slate-300', accent: 'border-l-4 border-l-[#5e0917]' },
-    { label: 'Available (Unused)', value: unusedCount, color: 'text-amber-800', bg: 'bg-amber-50/40', border: 'border-amber-300/80', accent: 'border-l-4 border-l-[#d4a017]' },
-    { label: 'Registered Participants', value: data.participants.length, color: 'text-emerald-800', bg: 'bg-emerald-50/40', border: 'border-emerald-300/80', accent: 'border-l-4 border-l-emerald-600' },
-    { label: 'Prepared Batches', value: allBatches.length, color: 'text-[#5e0917]', bg: 'bg-white', border: 'border-black/10', accent: 'border-l-4 border-l-slate-700' },
-    { label: 'Total Lucky Draws', value: data.draws.length, color: 'text-slate-900', bg: 'bg-white', border: 'border-black/10', accent: 'border-l-4 border-l-blue-600' },
-    { label: 'Confirmed Winners', value: data.winners.length, color: 'text-[#5e0917]', bg: 'bg-white', border: 'border-black/10', accent: 'border-l-4 border-l-[#a46e09]' },
+    {
+      label: 'TOTAL PREPARED COUPONS',
+      value: totalCouponsCount,
+      color: 'text-slate-900',
+      iconColor: 'text-[#FF0B6B]',
+      iconBg: 'bg-pink-50',
+      accent: 'border-l-4 border-l-[#FF0B6B]',
+      icon: Ticket,
+    },
+    {
+      label: 'AVAILABLE (UNUSED)',
+      value: unusedCount,
+      color: 'text-amber-500',
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-50',
+      accent: 'border-l-4 border-l-amber-400',
+      icon: Users,
+    },
+    {
+      label: 'REGISTERED PARTICIPANTS',
+      value: data.participants.length,
+      color: 'text-emerald-600',
+      iconColor: 'text-emerald-500',
+      iconBg: 'bg-emerald-50',
+      accent: 'border-l-4 border-l-emerald-500',
+      icon: UserCheck,
+    },
+    {
+      label: 'PREPARED BATCHES',
+      value: allBatches.length,
+      color: 'text-slate-900',
+      iconColor: 'text-purple-500',
+      iconBg: 'bg-purple-50',
+      accent: 'border-l-4 border-l-purple-500',
+      icon: Layers,
+    },
+    {
+      label: 'TOTAL LUCKY DRAWS',
+      value: data.draws.length,
+      color: 'text-slate-900',
+      iconColor: 'text-sky-500',
+      iconBg: 'bg-sky-50',
+      accent: 'border-l-4 border-l-sky-500',
+      icon: Dices,
+    },
+    {
+      label: 'CONFIRMED WINNERS',
+      value: data.winners.length,
+      color: 'text-[#FF0B6B]',
+      iconColor: 'text-rose-500',
+      iconBg: 'bg-rose-50',
+      accent: 'border-l-4 border-l-[#FF0B6B]',
+      icon: Trophy,
+    },
   ]
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-6 font-sans">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-black/10 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 bg-[#5e0917]" />
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#140d10]">
-              Festival Operations Dashboard
+          <div className="flex items-center gap-2.5">
+            <span className="w-1 h-5 bg-[#FF0B6B] rounded-full inline-block shrink-0" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Operations Dashboard
             </h1>
           </div>
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 font-medium">
-            Real-time live summary of prepared coupon batches, participant registrations, and lucky draws.
+          <p className="mt-1 text-xs text-slate-400 font-normal pl-3.5">
+            Real-time summary of coupon batches, registrations, and lucky draws.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link
             to="/admin/coupons-directory"
-            className="flex items-center gap-1.5 border border-[#5e0917] bg-[#5e0917] px-4 py-2 text-xs font-bold text-white hover:bg-[#7e0c1f] transition shadow-sm"
+            className="flex items-center gap-2 bg-[#FF0B6B] hover:bg-[#E0095E] px-3.5 py-2 text-xs font-medium text-white rounded-lg shadow-xs shadow-pink-200 transition"
           >
-            <ListFilter size={14} />
+            <Ticket size={14} />
             <span>Coupons Directory</span>
           </Link>
           <Link
             to="/admin/coupons"
-            className="flex items-center gap-1.5 border border-black/20 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50 transition shadow-sm"
+            className="flex items-center gap-2 border border-pink-200 bg-white hover:bg-pink-50 px-3.5 py-2 text-xs font-medium text-[#FF0B6B] rounded-lg transition"
           >
-            <Ticket size={14} className="text-[#c28e18]" />
+            <QrCode size={14} />
             <span>Generate Batches</span>
           </Link>
         </div>
@@ -69,38 +116,49 @@ export function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {cards.map((c) => (
-          <div key={c.label} className={`border ${c.border} ${c.bg} ${c.accent} p-4 shadow-xs transition hover:shadow-sm`}>
-            <p className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-500 uppercase">{c.label}</p>
-            <p className={`mt-2 text-2xl sm:text-3xl font-black tracking-tight ${c.color}`}>
-              <AnimatedNumber value={c.value} />
-            </p>
-          </div>
-        ))}
+        {cards.map((c) => {
+          const Icon = c.icon
+          return (
+            <div
+              key={c.label}
+              className={`bg-white rounded-xl p-4 border border-slate-100 shadow-xs transition hover:shadow-sm ${c.accent}`}
+            >
+              <div className={`w-7 h-7 rounded-lg ${c.iconBg} ${c.iconColor} flex items-center justify-center mb-2.5`}>
+                <Icon size={15} />
+              </div>
+              <p className="text-[10px] font-medium tracking-wider text-slate-400 uppercase leading-snug">{c.label}</p>
+              <p className={`mt-1.5 text-2xl font-bold tracking-tight ${c.color}`}>
+                <AnimatedNumber value={c.value} />
+              </p>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Prepared Coupon Batches in MongoDB Section */}
-      <div className="border border-[#e8decb] bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-[#e8decb] bg-[#faf6ee] px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2.5 text-xs font-extrabold text-[#5e0917] uppercase tracking-wider">
-            <Layers size={17} className="text-[#a46e09]" />
-            <span>Prepared Coupon Batches in Database ({allBatches.length} Batches)</span>
+      {/* Prepared Coupon Batches in Database Section */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-xs overflow-hidden">
+        <div className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-slate-800">
+            <div className="w-6 h-6 rounded-md bg-pink-50 text-[#FF0B6B] flex items-center justify-center">
+              <Layers size={14} />
+            </div>
+            <span>Coupon Batches ({allBatches.length} Batches)</span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-medium">
-            <span className="text-slate-600">
-              Total Database Tokens: <strong className="font-extrabold text-slate-900">{totalCouponsCount.toLocaleString()} pcs</strong>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-slate-400 font-normal">
+              Total Database Tokens: <strong className="font-semibold text-slate-700">{totalCouponsCount.toLocaleString()} pcs</strong>
             </span>
             <Link
               to="/admin/coupons"
-              className="text-[#5e0917] font-bold underline hover:text-[#9b1c32] tracking-wide"
+              className="text-[#FF0B6B] font-medium hover:underline tracking-wide"
             >
-              + Create New Batch
+              + Create Batch
             </Link>
           </div>
         </div>
 
         {allBatches.length > 0 ? (
-          <div className="divide-y divide-[#f3ebde]">
+          <div className="divide-y divide-slate-100">
             {allBatches.map((b, idx) => {
               const count = b.count || (b.endId ? 10000 : 50)
               const usedInBatch = b.usedCount || 0
@@ -110,38 +168,38 @@ export function DashboardPage() {
               return (
                 <div
                   key={b.id || idx}
-                  className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 hover:bg-[#fcfaf5] transition"
+                  className="px-5 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-pink-50/15 transition"
                 >
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="font-extrabold text-sm text-[#140d10]">{b.name || `Batch #${idx + 1}`}</span>
-                      <span className="font-mono text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 border border-slate-300">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-xs sm:text-sm text-slate-800">{b.name || `Coupons Batch (${count.toLocaleString()} pcs)`}</span>
+                      <span className="font-mono text-[10px] font-normal text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-100">
                         {b.id}
                       </span>
-                      <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5">
+                      <span className="text-[10px] font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                         {count.toLocaleString()} pcs total
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 font-medium">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400 font-normal">
                       <span>
-                        Created: <strong className="font-bold text-slate-800">{formatShortDate(b.createdAt)}</strong>
+                        Created: <span className="font-medium text-slate-600">{formatShortDate(b.createdAt)}</span>
                       </span>
                       <span>·</span>
-                      <span className="inline-flex items-center gap-1 text-amber-900 font-bold text-xs">
-                        <Users size={13} className="text-amber-700" />
+                      <span className="inline-flex items-center gap-1 text-slate-600 font-medium text-xs">
+                        <Users size={12} className="text-amber-500" />
                         <span>{usedInBatch.toLocaleString()} Registered</span>
                       </span>
                       <span>·</span>
-                      <span className="text-slate-600 font-semibold">
+                      <span className="text-slate-500 font-normal">
                         {unusedInBatch.toLocaleString()} Available
                       </span>
                     </div>
 
                     {/* Mini Progress Bar */}
-                    <div className="w-full max-w-xs h-1.5 bg-slate-200 overflow-hidden mt-1">
+                    <div className="w-full max-w-xs h-1 bg-slate-100 rounded-full overflow-hidden mt-1">
                       <div
-                        className="h-full bg-emerald-600 transition-all duration-300"
+                        className="h-full bg-[#FF0B6B] transition-all duration-300 rounded-full"
                         style={{ width: `${percentageUsed}%` }}
                       />
                     </div>
@@ -150,13 +208,14 @@ export function DashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link
                       to={`/admin/coupons-directory`}
-                      className="inline-flex items-center justify-center gap-1 border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition"
+                      className="inline-flex items-center justify-center gap-1.5 border border-pink-200 bg-white hover:bg-pink-50 px-3 py-1.5 text-xs font-medium text-[#FF0B6B] rounded-lg transition shadow-none"
                     >
-                      View Tokens
+                      <Eye size={13} />
+                      <span>View Tokens</span>
                     </Link>
                     <button
                       onClick={() => handleDownloadBatch(b.id, b.name || `Batch_${idx + 1}`)}
-                      className="inline-flex items-center justify-center gap-1.5 border border-[#5e0917] bg-[#5e0917] hover:bg-[#7e0c1f] px-4 py-1.5 text-xs font-bold text-white transition cursor-pointer shadow-xs"
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#FF0B6B] hover:bg-[#E0095E] px-3.5 py-1.5 text-xs font-medium text-white rounded-lg transition cursor-pointer shadow-xs shadow-pink-200"
                       title="Download Excel Sheet for this batch"
                     >
                       <Download size={13} />
@@ -168,42 +227,42 @@ export function DashboardPage() {
             })}
           </div>
         ) : (
-          <div className="p-8 text-center text-xs text-slate-500 font-medium">
-            <p>No coupon batches found. Click "Generate Batches" above to create tokens in MongoDB.</p>
+          <div className="p-8 text-center text-xs text-slate-400 font-normal">
+            <p>No coupon batches found. Click "Generate Batches" above to create tokens in database.</p>
           </div>
         )}
       </div>
 
       {/* Next Draw Spotlight */}
       {nextDraw && prize && (
-        <div className="border border-[#d4a017]/40 bg-gradient-to-br from-[#1b060d] via-[#240811] to-[#120408] text-white shadow-xl md:grid md:grid-cols-2 overflow-hidden">
-          <div className="relative h-64 w-full bg-black/60 md:h-full min-h-[260px]">
+        <div className="rounded-xl border border-pink-100 bg-white shadow-xs md:grid md:grid-cols-2 overflow-hidden">
+          <div className="relative h-60 w-full bg-slate-100 md:h-full min-h-[240px]">
             <img src={prize.image} alt={prize.name} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent md:bg-gradient-to-r md:from-transparent md:to-[#240811]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent md:bg-gradient-to-r md:from-transparent md:to-white" />
           </div>
-          <div className="p-6 md:p-8 flex flex-col justify-between">
+          <div className="p-5 md:p-6 flex flex-col justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 border border-[#d4a017]/60 bg-[#d4a017]/15 px-3 py-1 text-[10px] font-extrabold tracking-widest text-[#f3d48a] uppercase">
-                <Sparkles size={13} className="text-[#f3d48a]" /> NEXT SCHEDULED DRAW
+              <div className="inline-flex items-center gap-1.5 bg-pink-50 border border-pink-200 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider text-[#FF0B6B] uppercase">
+                <Sparkles size={12} className="text-[#FF0B6B]" /> Next Draw
               </div>
-              <h2 className="mt-3.5 text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+              <h2 className="mt-2.5 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 Draw #{String(nextDraw.number).padStart(2, '0')}
               </h2>
-              <div className="mt-3.5 space-y-1.5 text-xs text-white/85 sm:text-sm font-medium">
-                <p>Scheduled Date: <strong className="font-bold text-white">{formatDate(nextDraw.date)}</strong></p>
-                <p className="text-base sm:text-lg font-extrabold text-[#f3d48a]">Grand Prize: {prize.name}</p>
-                <p className="text-xs text-white/70 font-semibold">{prize.value}</p>
+              <div className="mt-2.5 space-y-1 text-xs text-slate-600 sm:text-sm font-normal">
+                <p>Scheduled Date: <strong className="font-semibold text-slate-800">{formatDate(nextDraw.date)}</strong></p>
+                <p className="text-sm sm:text-base font-bold text-[#FF0B6B]">Prize: {prize.name}</p>
+                <p className="text-xs text-slate-400 font-normal">{prize.value}</p>
               </div>
-              <p className="mt-4 text-xs text-white/75 font-medium">
-                <strong className="text-emerald-400 font-bold">{eligibleParticipants.length.toLocaleString()}</strong> Eligible participants in this raffle pool ({data.winners.length} past winners excluded).
+              <p className="mt-3 text-xs text-slate-500 font-normal">
+                <strong className="text-emerald-600 font-semibold">{eligibleParticipants.length.toLocaleString()}</strong> Eligible participants ({data.winners.length} past winners excluded).
               </p>
             </div>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
                 to="/admin/lucky-draw"
-                className="inline-flex items-center gap-2 border border-[#d4a017] bg-[#d4a017] hover:bg-[#e5b32e] px-6 py-3 text-xs font-black tracking-widest text-[#140d10] transition shadow-md uppercase"
+                className="inline-flex items-center gap-2 bg-[#FF0B6B] hover:bg-[#E0095E] px-5 py-2.5 text-xs font-semibold tracking-wider text-white rounded-lg transition shadow-xs shadow-pink-200 uppercase"
               >
-                LAUNCH LIVE DRAW <ArrowRight size={14} />
+                Launch Live Draw <ArrowRight size={13} />
               </Link>
             </div>
           </div>
@@ -211,28 +270,28 @@ export function DashboardPage() {
       )}
 
       {/* Recent Winners Table */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-extrabold tracking-tight text-[#140d10]">Recent Confirmed Winners</h3>
-            <p className="text-xs text-slate-500 font-medium">Latest verified winners across festival draws</p>
+            <h3 className="text-base font-semibold tracking-tight text-slate-800">Recent Confirmed Winners</h3>
+            <p className="text-xs text-slate-400 font-normal">Latest verified winners across festival draws</p>
           </div>
           <Link
             to="/admin/winners"
-            className="text-xs font-bold text-[#6b1020] underline underline-offset-4 hover:text-[#9b1c32]"
+            className="text-xs font-medium text-[#FF0B6B] hover:underline"
           >
             View all history →
           </Link>
         </div>
 
-        <div className="overflow-x-auto border border-[#e8decb] bg-white shadow-xs">
-          <table className="w-full min-w-[550px] text-left text-xs sm:text-sm">
-            <thead className="border-b border-[#e8decb] bg-[#faf6ee] text-[11px] font-bold tracking-wider text-slate-700 uppercase">
+        <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white shadow-xs">
+          <table className="w-full min-w-[550px] text-left text-xs">
+            <thead className="border-b border-slate-100 bg-pink-50/30 text-[10px] font-medium tracking-wider text-slate-400 uppercase">
               <tr>
-                <th className="px-4 py-3.5">Winner Name</th>
-                <th className="px-4 py-3.5">Phone</th>
-                <th className="px-4 py-3.5">Prize Won</th>
-                <th className="px-4 py-3.5">Draw Date</th>
+                <th className="px-4 py-3">Winner Name</th>
+                <th className="px-4 py-3">Phone</th>
+                <th className="px-4 py-3">Prize Won</th>
+                <th className="px-4 py-3">Draw Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -243,17 +302,17 @@ export function DashboardPage() {
                 const phoneDisplay = p?.phone || '—'
                 const prizeDisplay = pr?.name || 'Festival Prize'
                 return (
-                  <tr key={w.id} className="hover:bg-[#fcfaf5] transition font-medium">
-                    <td className="px-4 py-3.5 font-bold text-[#140d10]">{nameDisplay}</td>
-                    <td className="px-4 py-3.5 font-mono font-medium text-slate-700">{phoneDisplay}</td>
-                    <td className="px-4 py-3.5 font-bold text-[#720e1e]">{prizeDisplay}</td>
-                    <td className="px-4 py-3.5 text-slate-500">{formatDate(w.date)}</td>
+                  <tr key={w.id} className="hover:bg-pink-50/20 transition font-normal">
+                    <td className="px-4 py-3 font-semibold text-slate-800">{nameDisplay}</td>
+                    <td className="px-4 py-3 font-mono text-slate-500">{phoneDisplay}</td>
+                    <td className="px-4 py-3 font-medium text-[#FF0B6B]">{prizeDisplay}</td>
+                    <td className="px-4 py-3 text-slate-400">{formatDate(w.date)}</td>
                   </tr>
                 )
               })}
               {recent.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-500 font-medium">
+                  <td colSpan={4} className="px-4 py-6 text-center text-xs text-slate-400 font-normal">
                     No completed draws yet.
                   </td>
                 </tr>

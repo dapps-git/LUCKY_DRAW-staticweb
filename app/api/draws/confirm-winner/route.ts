@@ -20,15 +20,6 @@ export async function POST(request: Request) {
     const drawsCol = db.collection('draws')
     const prizesCol = db.collection('prizes')
 
-    // Check if participant already won in previous draw
-    const alreadyWon = await winnersCol.findOne({ participantId })
-    if (alreadyWon) {
-      return NextResponse.json(
-        { ok: false, error: 'This participant has already won in a previous draw!' },
-        { status: 400 }
-      )
-    }
-
     const draw = await drawsCol.findOne({ id: drawId })
     if (!draw) {
       return NextResponse.json({ ok: false, error: 'Draw not found' }, { status: 404 })

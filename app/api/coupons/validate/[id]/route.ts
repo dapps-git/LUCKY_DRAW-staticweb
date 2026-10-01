@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '../../../../../src/lib/db'
+import { connectDB } from '@/src/lib/db'
 
 export const dynamic = 'force-dynamic'
 

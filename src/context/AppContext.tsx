@@ -34,6 +34,7 @@ interface AppContextValue {
   assignPrizeToDraw: (drawId: string, prizeId: string) => void
   addDraw: (draw: Omit<Draw, 'id'>) => void
   updateDraw: (id: string, patch: Partial<Draw>) => void
+  deleteDraw: (id: string) => void
   confirmWinner: (participantId: string, drawId: string, customPrizeId?: string) => Promise<{ ok: true; winnerId: string } | { ok: false; error: string }>
   getPrize: (id: string) => Prize | undefined
   getParticipant: (id: string) => Participant | undefined
@@ -152,7 +153,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const winnerParticipantIds = new Set(data.winners.map((w) => w.participantId))
     const eligibleParticipants = data.participants.filter(
-      (p) => p.eligibility === 'Eligible' && p.status === 'Active' && !winnerParticipantIds.has(p.id),
+      (p) => p.eligibility === 'Eligible' && p.status === 'Active',
     )
 
     const nextDraw = [...data.draws]
@@ -540,11 +541,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           draws: prev.draws.map((d) => (d.id === id ? { ...d, ...patch } : d)),
         }))
       },
+      deleteDraw: (id) => {
+        api.deleteDraw(id).catch(() => {})
+        setData((prev) => ({
+          ...prev,
+          draws: prev.draws.filter((d) => d.id !== id),
+        }))
+      },
       confirmWinner: async (participantId, drawId, customPrizeId) => {
-        if (winnerParticipantIds.has(participantId)) {
-          return { ok: false, error: 'This participant has already won a prize in a previous draw!' }
-        }
-
         const draw = data.draws.find((d) => d.id === drawId)
         if (!draw) return { ok: false, error: 'Draw not found.' }
 

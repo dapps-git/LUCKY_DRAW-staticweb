@@ -41,12 +41,6 @@ router.post('/confirm-winner', async (req, res) => {
   try {
     const { participantId, drawId, prizeId } = req.body
 
-    // Check if participant already won in previous draw
-    const alreadyWon = await Winner.findOne({ participantId })
-    if (alreadyWon) {
-      return res.status(400).json({ ok: false, error: 'This participant has already won in a previous draw!' })
-    }
-
     const draw = await Draw.findOne({ id: drawId })
     if (!draw) return res.status(404).json({ ok: false, error: 'Draw not found' })
 

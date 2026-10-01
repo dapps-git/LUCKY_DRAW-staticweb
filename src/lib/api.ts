@@ -330,6 +330,13 @@ export const api = {
     return res.json()
   },
 
+  async deleteDraw(id: string): Promise<{ ok: boolean }> {
+    const res = await fetchWithTimeout(`${API_BASE}/draws/${id}`, {
+      method: 'DELETE',
+    })
+    return res.json()
+  },
+
   async confirmWinner(
     participantId: string,
     drawId: string,

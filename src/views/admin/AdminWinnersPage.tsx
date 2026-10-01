@@ -37,23 +37,23 @@ export function AdminWinnersPage() {
   }, [data.winners])
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 font-sans">
       {/* Header with Back button */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e8decb]/80 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1.5 border border-[#e8decb] bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-pink-50 hover:text-[#FF0B6B] hover:border-pink-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition cursor-pointer shadow-none"
             title="Go back"
           >
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={13} /> Back
           </button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#140d10]">
-              Official Winner Records
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Winner Records
             </h1>
-            <p className="mt-0.5 text-xs sm:text-sm text-slate-600 font-normal">
-              Logged winners across completed Valanchery Festival 2026 lucky draws
+            <p className="mt-0.5 text-xs text-slate-400 font-normal">
+              Logged winners across completed lucky draws.
             </p>
           </div>
         </div>
@@ -61,53 +61,53 @@ export function AdminWinnersPage() {
 
       {/* KPI Metric Strip */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="flex items-center gap-3 border border-amber-200/80 bg-[#fffcf5] p-3.5 shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-amber-200 bg-amber-50 text-amber-700">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-pink-50 text-[#FF0B6B]">
             <Trophy size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-800">Total Winners</p>
-            <p className="text-xl font-bold text-amber-900">{data.winners.length} <span className="text-xs font-normal text-amber-700">recipients</span></p>
+            <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-400">Total Winners</p>
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{data.winners.length} <span className="text-xs font-normal text-slate-400">recipients</span></p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border border-[#e8decb] bg-white p-3.5 shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#e8decb] bg-[#faf6ee] text-[#5e0917]">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-pink-50 text-[#FF0B6B]">
             <Calendar size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Completed Draws</p>
-            <p className="text-xl font-bold text-[#140d10]">{completedDrawsCount} <span className="text-xs font-normal text-slate-500">draw events</span></p>
+            <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-slate-400">Completed Draws</p>
+            <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">{completedDrawsCount} <span className="text-xs font-normal text-slate-400">events</span></p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border border-emerald-200/80 bg-[#f9fdfa] p-3.5 shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-emerald-200 bg-emerald-50 text-emerald-700">
+        <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
             <CheckCircle2 size={18} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800">Awards Status</p>
-            <p className="text-xl font-bold text-emerald-900">100% <span className="text-xs font-normal text-emerald-700">verified</span></p>
+            <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-emerald-600">Awards Status</p>
+            <p className="text-xl sm:text-2xl font-bold text-emerald-600 mt-0.5">100% <span className="text-xs font-normal text-emerald-600/70">verified</span></p>
           </div>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-wrap items-center gap-2.5 border border-[#e8decb] bg-white p-3 shadow-xs">
+      <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-3.5 shadow-xs">
         <div className="relative min-w-[220px] flex-1">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search draw #, name, phone, or prize…"
-            className="w-full border border-[#e8decb] bg-white pl-9 pr-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-[#5e0917]"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-9 pr-3.5 py-2 text-xs text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-[#FF0B6B] focus:bg-white"
           />
-          <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-400" size={15} />
+          <Search className="pointer-events-none absolute left-3 top-2.5 text-slate-400" size={14} />
         </div>
 
         <select
           value={prize}
           onChange={(e) => setPrize(e.target.value)}
-          className="border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#5e0917] cursor-pointer"
+          className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF0B6B] focus:bg-white transition cursor-pointer"
         >
           <option value="">All Prizes</option>
           {data.prizes.map((p) => (
@@ -121,13 +121,13 @@ export function AdminWinnersPage() {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="border border-[#e8decb] bg-white px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#5e0917] cursor-pointer"
+          className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-700 outline-none focus:border-[#FF0B6B] focus:bg-white transition cursor-pointer"
         />
 
         {hasActiveFilters && (
           <button
             onClick={handleResetFilters}
-            className="inline-flex items-center gap-1 border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 transition cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600 transition cursor-pointer"
             title="Clear filters"
           >
             <RotateCcw size={13} /> Reset
@@ -136,10 +136,10 @@ export function AdminWinnersPage() {
       </div>
 
       {/* Winners Table */}
-      <div className="overflow-hidden border border-[#e8decb] bg-white shadow-xs">
+      <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[650px] text-left text-xs">
-            <thead className="border-b border-[#e8decb] bg-[#faf6ee] text-[11px] font-bold tracking-wider text-[#5e0917] uppercase">
+            <thead className="border-b border-slate-100 bg-pink-50/30 text-[10px] font-medium tracking-wider text-slate-400 uppercase">
               <tr>
                 <th className="w-12 px-4 py-3.5 text-center">SL</th>
                 <th className="px-4 py-3.5">Draw</th>
@@ -150,7 +150,7 @@ export function AdminWinnersPage() {
                 <th className="px-4 py-3.5 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f3ebde]">
+            <tbody className="divide-y divide-slate-100">
               {rows.map((w, idx) => {
                 const p = getParticipant(w.participantId)
                 const pr = getPrize(w.prizeId)
@@ -164,43 +164,43 @@ export function AdminWinnersPage() {
                 const nameDisplay = p?.name || 'Verified Winner'
                 const phoneDisplay = p?.phone || '—'
                 return (
-                  <tr key={w.id} className="hover:bg-[#fcfaf5] transition-colors">
+                  <tr key={w.id} className="hover:bg-pink-50/15 transition-colors font-normal">
                     {/* SL Number */}
-                    <td className="w-12 px-4 py-3.5 text-center font-mono text-xs font-semibold text-slate-500">
+                    <td className="w-12 px-4 py-3.5 text-center font-mono text-xs text-slate-400">
                       {idx + 1}
                     </td>
 
                     {/* Draw Number */}
-                    <td className="px-4 py-3.5 font-mono text-xs font-bold text-[#5e0917]">
+                    <td className="px-4 py-3.5 font-mono text-xs font-semibold text-[#FF0B6B]">
                       {drawTag}
                     </td>
 
                     {/* Winner Name */}
-                    <td className="px-4 py-3.5 font-semibold text-[#140d10]">
+                    <td className="px-4 py-3.5 font-semibold text-slate-800">
                       {nameDisplay}
                     </td>
 
                     {/* Full Phone Number */}
-                    <td className="px-4 py-3.5 font-mono text-xs font-bold text-slate-900">
+                    <td className="px-4 py-3.5 font-mono text-xs font-medium text-slate-700">
                       {phoneDisplay}
                     </td>
 
                     {/* Prize Awarded */}
                     <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1.5 font-semibold text-[#5e0917]">
-                        <Award size={14} className="text-[#a46e09]" /> {prizeName}
+                      <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                        <Award size={13} className="text-[#FF0B6B]" /> {prizeName}
                       </span>
                     </td>
 
                     {/* Draw Date */}
-                    <td className="px-4 py-3.5 text-xs font-medium text-slate-600 whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-xs font-normal text-slate-500 whitespace-nowrap">
                       {formatDate(w.date)}
                     </td>
 
                     {/* Status */}
                     <td className="px-4 py-3.5 text-right">
-                      <span className="inline-flex items-center gap-1 border border-[#b2e2c8] bg-[#f2faf5] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#136c42] shadow-2xs">
-                        <span className="status-dot h-1.5 w-1.5 rounded-full bg-emerald-500" /> {w.status}
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {w.status}
                       </span>
                     </td>
                   </tr>
@@ -208,7 +208,7 @@ export function AdminWinnersPage() {
               })}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-xs text-slate-400 font-normal">
                     No winner records matching current filters.
                   </td>
                 </tr>
@@ -218,9 +218,9 @@ export function AdminWinnersPage() {
         </div>
 
         {/* Table Footer */}
-        <div className="flex items-center justify-between border-t border-[#e8decb] bg-[#faf6ee]/50 px-4 py-3 text-xs text-slate-600 font-normal">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-pink-50/30 px-4 py-3 text-xs text-slate-500 font-normal">
           <p>
-            Showing <strong className="font-semibold text-slate-900">{rows.length}</strong> official winner records
+            Showing <span className="font-semibold text-slate-800">{rows.length}</span> official winner records
           </p>
         </div>
       </div>

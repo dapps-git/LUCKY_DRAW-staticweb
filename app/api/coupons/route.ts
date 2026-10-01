@@ -67,7 +67,8 @@ export async function GET(request: Request) {
       batchesCol.find({}).sort({ createdAt: -1 }).toArray(),
     ])
 
-    const safeTotal = totalCoupons || 0
+    const batchesTotal = (batches || []).reduce((sum: number, b: any) => sum + (b.count || 0), 0)
+    const safeTotal = batchesTotal > 0 ? batchesTotal : (totalCoupons || 0)
     const safeFiltered = hasFilter ? (filteredCount || 0) : safeTotal
 
     return NextResponse.json(
