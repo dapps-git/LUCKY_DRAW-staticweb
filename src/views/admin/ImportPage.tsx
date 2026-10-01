@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Upload, Download, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { seedData } from '../../data/mockData'
 import { formatParticipantsForExcelCsv, downloadCsvFile, parseCsvText } from '../../lib/exportCsv'
 
 type Stage = 'idle' | 'uploading' | 'validating' | 'done'
@@ -17,9 +16,9 @@ export function ImportPage() {
     invalid: 0,
   })
 
-  // Download complete 20 participants sample template formatted specifically for Microsoft Excel
+  // Download sample template formatted specifically for Microsoft Excel
   const downloadSampleTemplate = () => {
-    const csvContent = formatParticipantsForExcelCsv(seedData.participants)
+    const csvContent = 'Name,Phone,Place,BillNumber,BillAmount\nParticipant Name,9876543210,Valanchery,BILL-001,1500'
     downloadCsvFile(csvContent, 'Sample-Participants-Template.csv')
   }
 

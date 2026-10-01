@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '../../../../src/lib/db'
+import { hashPassword } from '../../../../src/lib/authHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,14 +35,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Invalid OTP code. Password was not changed.' }, { status: 400 })
     }
 
-    // Set new custom password and invalidate OTP
+    const hashedPassword = await hashPassword(cleanPass)
+
+    // Set new custom bcrypt-hashed password and invalidate OTP
     await settingsCol.updateOne(
       { id: 'admin_credential' },
       {
         $set: {
           id: 'admin_credential',
           email: cleanEmail,
-          password: cleanPass,
+          password: hashedPassword,
           isCustomPassword: true, // Flags that default Admin@2026 is no longer valid
           otp: null,
           otpExpires: null,

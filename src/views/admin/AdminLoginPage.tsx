@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Confetti } from '../../components/Confetti'
 import { useApp } from '../../context/AppContext'
-import { ADMIN_EMAIL, ADMIN_PASSWORD } from '../../data/mockData'
+import { ADMIN_EMAIL } from '../../data/mockData'
 import { api } from '../../lib/api'
 import {
   Lock,
@@ -60,11 +60,7 @@ export function AdminLoginPage() {
     }
   }
 
-  const fillDemoAdmin = () => {
-    setEmail(ADMIN_EMAIL)
-    setPassword(ADMIN_PASSWORD)
-    setError('')
-  }
+
 
   const openForgotModal = () => {
     setForgotEmail(email || ADMIN_EMAIL)
@@ -266,16 +262,7 @@ export function AdminLoginPage() {
                 </button>
               </div>
 
-              {/* Auto-fill demo credentials */}
-              <div className="pt-1 text-center">
-                <button
-                  type="button"
-                  onClick={fillDemoAdmin}
-                  className="text-xs text-[#FF0B6B] hover:text-[#E0095E] transition font-medium cursor-pointer"
-                >
-                  Auto-fill demo credentials (Admin@2026)
-                </button>
-              </div>
+
             </form>
           </div>
         </div>

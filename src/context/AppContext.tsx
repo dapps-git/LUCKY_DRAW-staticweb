@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ADMIN_EMAIL, ADMIN_PASSWORD } from '../data/mockData'
+import { ADMIN_EMAIL } from '../data/mockData'
 import { nextParticipantId } from '../lib/format'
 import { createCouponBatch } from '../lib/couponPdfGenerator'
 import { api } from '../lib/api'
@@ -251,18 +251,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setIsAdmin(true)
             return true
           }
-          if (res && res.ok === false) {
-            return false
-          }
+          return false
         } catch {
-          // Offline fallback only if server is unreachable
-          if (cleanEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-            localStorage.setItem(AUTH_KEY, '1')
-            setIsAdmin(true)
-            return true
-          }
+          return false
         }
-        return false
       },
       logout: () => {
         localStorage.removeItem(AUTH_KEY)

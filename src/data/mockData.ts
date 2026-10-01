@@ -1,7 +1,4 @@
-import type { AppData } from '../types'
-
 export const ADMIN_EMAIL = 'admin@valancheryfestival.com'
-export const ADMIN_PASSWORD = 'Admin@2026'
 
 export const GIFT_PRESETS = [
   {
@@ -89,17 +86,3 @@ export const LOCATIONS = [
   'Kottakkal',
   'Perinthalmanna',
 ]
-
-export const NEXT_DRAW_AT = '2026-09-15T18:00:00+05:30'
-
-// Completely empty initial state — 100% real MongoDB data only
-export const seedData: AppData = {
-  prizes: [],
-  draws: [],
-  participants: [],
-  winners: [],
-  batches: [],
-  coupons: [],
-  totalCouponsCount: 0,
-  usedCouponsCount: 0,
-}

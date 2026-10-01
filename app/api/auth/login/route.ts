@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { connectDB } from '../../../../src/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +26,19 @@ export async function POST(request: Request) {
       const storedEmail = (adminDoc.email || DEFAULT_ADMIN_EMAIL).trim().toLowerCase()
       const storedPass = (adminDoc.password || '').trim()
 
-      if (cleanEmail === storedEmail && cleanPass === storedPass) {
+      let isMatch = false
+      if (storedPass.startsWith('$2a$') || storedPass.startsWith('$2b$') || storedPass.startsWith('$2y$')) {
+        isMatch = await bcrypt.compare(cleanPass, storedPass)
+      } else {
+        // Legacy plain text check (auto-upgrades to bcrypt hash)
+        isMatch = cleanPass === storedPass
+        if (isMatch) {
+          const newHash = await bcrypt.hash(cleanPass, 10)
+          await settingsCol.updateOne({ id: 'admin_credential' }, { $set: { password: newHash } })
+        }
+      }
+
+      if (cleanEmail === storedEmail && isMatch) {
         return NextResponse.json({ ok: true, role: 'admin' })
       }
       // Explicitly reject if custom password is set and password does not match (Default Admin@2026 will fail)
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     // Default credentials when no custom password has been set yet
-    if (cleanEmail === DEFAULT_ADMIN_EMAIL && (cleanPass === DEFAULT_ADMIN_PASSWORD || cleanPass === 'admin123')) {
+    if (cleanEmail === DEFAULT_ADMIN_EMAIL && cleanPass === DEFAULT_ADMIN_PASSWORD) {
       return NextResponse.json({ ok: true, role: 'admin' })
     }
 

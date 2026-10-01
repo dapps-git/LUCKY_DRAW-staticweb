@@ -1,8 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 
-const uri =
-  process.env.MONGODB_URI ||
-  'mongodb+srv://dappstech2025_db_user:dapps1234@cluster0.ecrnbjn.mongodb.net/FESTIVAL?retryWrites=true&w=majority&appName=Cluster0'
+const uri = process.env.MONGODB_URI || ''
 
 const options = {
   maxPoolSize: 5,
